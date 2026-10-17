@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { CART_URL } from '@/data/produtos';
 
 /**
  * Header — Cabeçalho fixo (sticky) da NIX 3D.
@@ -13,7 +14,7 @@ import { useEffect, useRef, useState } from 'react';
  *    rootMargin: '-20% 0px -65% 0px'
  *
  * URL do carrinho:
- *    Lida de process.env.NEXT_PUBLIC_CART_URL (variável única — .env.example).
+ *    Centralizada em @/data/produtos (lê process.env.NEXT_PUBLIC_CART_URL).
  *
  * PONTO DE INTEGRAÇÃO (programador back-end):
  *    Contador do ícone do carrinho — veja o comentário TODO abaixo.
@@ -22,8 +23,8 @@ export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState<string>('');
 
-  // URL de checkout centralizada — altere apenas em .env / .env.local
-  const cartUrl = process.env.NEXT_PUBLIC_CART_URL ?? 'https://checkout.infinitepay.io/nix3d';
+  // URL de checkout centralizada — altere em @/data/produtos ou .env.local
+  const cartUrl = CART_URL;
   const whatsappUrl =
     'https://wa.me/5511999999999?text=Ol%C3%A1!%20Gostaria%20de%20informa%C3%A7%C3%B5es%20sobre%20as%20Dry%20Boxes%20da%20NIX%203D';
 
