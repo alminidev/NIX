@@ -1,4 +1,5 @@
 import GlowAtmosphere from './GlowAtmosphere';
+import { CART_URL } from '@/data/produtos';
 
 /**
  * HeroStage — Seção hero do showroom NIX 3D.
@@ -8,10 +9,10 @@ import GlowAtmosphere from './GlowAtmosphere';
  * exatas de renderização definidas no CSS original (aspect-ratio: 16/9 via CSS).
  *
  * URL do checkout:
- *    Lida de process.env.NEXT_PUBLIC_CART_URL.
+ *    Centralizada em @/data/produtos (lê process.env.NEXT_PUBLIC_CART_URL).
  */
 export default function HeroStage() {
-  const cartUrl = process.env.NEXT_PUBLIC_CART_URL ?? 'https://checkout.infinitepay.io/nix3d';
+  const cartUrl = CART_URL;
 
   return (
     <section id="hero" className="hero-stage">

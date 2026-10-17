@@ -1,10 +1,18 @@
 import type { Produto } from '@/types/produto';
 
 /**
+ * URL oficial de checkout / carrinho (InfinitePay).
+ * PONTO ÚNICO DE CONFIGURAÇÃO:
+ * - Sobrescreva via variável de ambiente NEXT_PUBLIC_CART_URL no .env.local
+ * - Ou altere o fallback padrão diretamente na constante abaixo.
+ */
+export const CART_URL =
+  process.env.NEXT_PUBLIC_CART_URL ?? 'https://checkout.infinitepay.io/nix3d';
+
+/**
  * CATÁLOGO OFICIAL DOS 5 PRODUTOS DA LINHA NIX
  *
  * Para editar produtos, preços, SKUs ou descrições: altere o array abaixo.
- * Para alterar a URL de checkout, use a variável NEXT_PUBLIC_CART_URL no .env.
  */
 const PRODUTOS_NIX: Produto[] = [
   {

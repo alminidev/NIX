@@ -1,4 +1,4 @@
-import { getProdutos } from '@/data/produtos';
+import { getProdutos, CART_URL } from '@/data/produtos';
 import ProductCard from './ProductCard';
 
 /**
@@ -11,7 +11,7 @@ import ProductCard from './ProductCard';
  */
 export default function ProductGrid() {
   const produtos = getProdutos();
-  const cartUrl = process.env.NEXT_PUBLIC_CART_URL ?? 'https://checkout.infinitepay.io/nix3d';
+  const cartUrl = CART_URL;
 
   const armariosDryBox = produtos.filter((p) => p.sku.startsWith('NIX-DB'));
   const estacoesSetupLab = produtos.filter(
