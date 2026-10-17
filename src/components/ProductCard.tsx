@@ -3,6 +3,7 @@ import type { Produto } from '@/types/produto';
 interface ProductCardProps {
   produto: Produto;
   cartUrl: string;
+  onOpenLightbox?: (produto: Produto) => void;
 }
 
 /**
@@ -11,8 +12,9 @@ interface ProductCardProps {
  * data-sku e data-id preservados para compatibilidade futura.
  *
  * Usa <img> nativa (não next/image) — mesmas dimensões de renderização do original (320x320 contain via CSS).
+ * Ao clicar na imagem, abre o overlay de visualização ampliada (Lightbox).
  */
-export default function ProductCard({ produto, cartUrl }: ProductCardProps) {
+export default function ProductCard({ produto, cartUrl, onOpenLightbox }: ProductCardProps) {
   const urlCompra = `${cartUrl}?sku=${encodeURIComponent(produto.sku)}&id=${encodeURIComponent(produto.id)}`;
 
   return (
@@ -23,14 +25,21 @@ export default function ProductCard({ produto, cartUrl }: ProductCardProps) {
       </div>
 
       <div className="card-media">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={produto.imagem}
-          alt={`${produto.nome} — Armazenamento com controle térmico para filamentos 3D`}
-          loading="lazy"
-          width={320}
-          height={320}
-        />
+        <button
+          type="button"
+          className="card-media-btn"
+          onClick={() => onOpenLightbox?.(produto)}
+          aria-label={`Ampliar foto de ${produto.nome}`}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={produto.imagem}
+            alt={`${produto.nome} — Armazenamento com controle térmico para filamentos 3D`}
+            loading="lazy"
+            width={320}
+            height={320}
+          />
+        </button>
       </div>
 
       <div className="card-content">

@@ -29,8 +29,10 @@ export interface Produto {
   descricao: string;
   /** Lista de especificações técnicas exibidas no card */
   especificacoes: string[];
-  /** Caminho da imagem (relativo a /public, ex: '/images/dry-box-12.jpg') */
+  /** Caminho da imagem principal (relativo a /public, ex: '/images/dry-box-12.jpg') */
   imagem: string;
+  /** Galeria opcional de imagens para ampliação no Lightbox (se não informada, usa [imagem]) */
+  imagens?: string[];
   /** true = exibe badge "Mais Escolhido" */
   destaque: boolean;
 }

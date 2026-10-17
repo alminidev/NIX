@@ -1,5 +1,10 @@
+'use client';
+
+import { useState } from 'react';
 import { getProdutos, CART_URL } from '@/data/produtos';
+import type { Produto } from '@/types/produto';
 import ProductCard from './ProductCard';
+import ProductLightbox from './ProductLightbox';
 
 /**
  * ProductGrid — Vitrine de produtos com separação editorial por categoria.
@@ -8,10 +13,13 @@ import ProductCard from './ProductCard';
  * Grupos editoriais:
  *   - Grupo 1 (grid 3 colunas): SKUs que começam com NIX-DB (Armários Dry Box)
  *   - Grupo 2 (grid 2 colunas, centrado): SKUs que começam com NIX-STATION (Dry Box Station)
+ *
+ * Integrado com ProductLightbox para ampliação acessível de fotos.
  */
 export default function ProductGrid() {
   const produtos = getProdutos();
   const cartUrl = CART_URL;
+  const [activeLightboxProduto, setActiveLightboxProduto] = useState<Produto | null>(null);
 
   const armariosDryBox = produtos.filter((p) => p.sku.startsWith('NIX-DB'));
   const estacoesSetupLab = produtos.filter(
@@ -42,7 +50,12 @@ export default function ProductGrid() {
             </div>
             <div className="products-subgrid grid-3-cols">
               {armariosDryBox.map((produto) => (
-                <ProductCard key={produto.sku} produto={produto} cartUrl={cartUrl} />
+                <ProductCard
+                  key={produto.sku}
+                  produto={produto}
+                  cartUrl={cartUrl}
+                  onOpenLightbox={(prod) => setActiveLightboxProduto(prod)}
+                />
               ))}
             </div>
           </div>
@@ -62,7 +75,12 @@ export default function ProductGrid() {
             </div>
             <div className="products-subgrid grid-2-cols">
               {estacoesSetupLab.map((produto) => (
-                <ProductCard key={produto.sku} produto={produto} cartUrl={cartUrl} />
+                <ProductCard
+                  key={produto.sku}
+                  produto={produto}
+                  cartUrl={cartUrl}
+                  onOpenLightbox={(prod) => setActiveLightboxProduto(prod)}
+                />
               ))}
             </div>
           </div>
@@ -76,6 +94,13 @@ export default function ProductGrid() {
           </div>
         </div>
       </div>
+
+      {/* Modal Acessível de Ampliação da Imagem (Lightbox) */}
+      <ProductLightbox
+        produto={activeLightboxProduto}
+        isOpen={activeLightboxProduto !== null}
+        onClose={() => setActiveLightboxProduto(null)}
+      />
     </section>
   );
 }

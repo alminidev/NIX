@@ -53,6 +53,7 @@ const PRODUTOS_NIX: Produto[] = [
       'Passagens técnicas para alimentação direta',
     ],
     imagem: '/images/dry-box-24.jpg',
+    imagens: ['/images/dry-box-24.jpg', '/images/hero-showroom.jpg'],
     destaque: true, // Mais Escolhido
   },
   {
@@ -93,6 +94,7 @@ const PRODUTOS_NIX: Produto[] = [
       'Passagem limpa de tubos PTFE para AMS Lite',
     ],
     imagem: '/images/setup-lab-a1.png',
+    imagens: ['/images/setup-lab-a1.png', '/images/hero-showroom.jpg'],
     destaque: false,
   },
   {
@@ -113,6 +115,7 @@ const PRODUTOS_NIX: Produto[] = [
       'Armazenamento duplo climatizado de filamentos',
     ],
     imagem: '/images/setup-lab-a2.png',
+    imagens: ['/images/setup-lab-a2.png', '/images/hero-showroom.jpg'],
     destaque: false,
   },
 ];
