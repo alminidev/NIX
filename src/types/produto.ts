@@ -1,10 +1,7 @@
 /**
- * Interface Produto — tipagem dos itens do catálogo NIX 3D
- *
- * PONTO DE INTEGRAÇÃO (programador back-end):
- * Esta interface define o contrato de dados entre o front-end e o banco de dados.
- * Ao conectar o banco, a função getProdutos() em data/produtos.ts deve retornar
- * objetos que satisfaçam esta interface.
+ * Contrato de exibição do catálogo NIX 3D.
+ * Os dados persistidos ficam em Prisma; getProdutos() em lib/produtos.ts
+ * devolve objetos neste formato.
  */
 export interface Produto {
   /** Identificador numérico único do produto */

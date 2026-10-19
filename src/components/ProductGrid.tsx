@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { getProdutos, CART_URL } from '@/data/produtos';
+import { CART_URL } from '@/data/produtos';
 import type { Produto } from '@/types/produto';
 import ProductCard from './ProductCard';
 import ProductLightbox from './ProductLightbox';
@@ -16,8 +16,7 @@ import ProductLightbox from './ProductLightbox';
  *
  * Integrado com ProductLightbox para ampliação acessível de fotos.
  */
-export default function ProductGrid() {
-  const produtos = getProdutos();
+export default function ProductGrid({ produtos }: { produtos: Produto[] }) {
   const cartUrl = CART_URL;
   const [activeLightboxProduto, setActiveLightboxProduto] = useState<Produto | null>(null);
 
