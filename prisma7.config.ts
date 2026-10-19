@@ -13,7 +13,7 @@ export default defineConfig({
   datasource: {
     url:
       process.env.DATABASE_URL ??
-      "postgres://postgres:postgres@localhost:51214/nix?sslmode=disable",
+      "postgres://postgres:postgres@localhost:5432/nix?sslmode=disable",
     ...(process.env.SHADOW_DATABASE_URL
       ? { shadowDatabaseUrl: process.env.SHADOW_DATABASE_URL }
       : {}),
