@@ -3,7 +3,8 @@
  * Os dados persistidos ficam em Prisma; getProducts() em lib/products.ts
  * devolve objetos neste formato.
  */
-export interface Product {
+
+export interface IProduct {
   /** Identificador numérico único do produto */
   id: number;
   /** SKU oficial (ex: 'NIX-DB12', 'NIX-STATION-A1') */

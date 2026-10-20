@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import { FormEvent, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/auth-context';
+import { useAuthContext } from "@/contexts/AuthContext";
+import { useRouter } from "next/navigation";
+import { FormEvent, useState } from "react";
 
 export default function AdminLogin() {
-  const { signIn } = useAuth();
+  const { signIn } = useAuthContext();
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -22,7 +22,7 @@ export default function AdminLogin() {
     if (result.error) {
       setSubmitting(false);
       setError(result.error);
-      setPassword('');
+      setPassword("");
       return;
     }
 
@@ -70,8 +70,12 @@ export default function AdminLogin() {
           </p>
         ) : null}
 
-        <button className="btn-primary admin-submit" type="submit" disabled={submitting}>
-          {submitting ? 'Entrando…' : 'Entrar'}
+        <button
+          className="btn-primary admin-submit"
+          type="submit"
+          disabled={submitting}
+        >
+          {submitting ? "Entrando…" : "Entrar"}
         </button>
       </form>
     </div>

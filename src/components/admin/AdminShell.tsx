@@ -1,10 +1,10 @@
 "use client";
 
+import { useAuthContext } from "@/contexts/AuthContext";
 import { LayoutDashboard, LogOut } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useAuth } from "@/contexts/auth-context";
 
 type AdminShellUser = {
   name: string;
@@ -18,7 +18,7 @@ export default function AdminShell({
   user: AdminShellUser;
   children: React.ReactNode;
 }) {
-  const { signOut } = useAuth();
+  const { signOut } = useAuthContext();
   const router = useRouter();
   const [signingOut, setSigningOut] = useState(false);
   const inicial = user.name.trim().charAt(0).toUpperCase() || "A";

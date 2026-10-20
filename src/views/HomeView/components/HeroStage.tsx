@@ -1,6 +1,6 @@
-import { ArrowDown } from 'lucide-react';
-import GlowAtmosphere from './GlowAtmosphere';
-import { CART_URL } from '@/data/produtos';
+import { CART_URL } from "@/data/produtos";
+import { ArrowDown } from "lucide-react";
+import GlowAtmosphere from "../../../components/GlowAtmosphere";
 
 /**
  * HeroStage — Seção hero do showroom NIX 3D.
@@ -21,11 +21,13 @@ export default function HeroStage() {
 
       <div className="container">
         <div className="hero-content">
-          <h1 className="hero-title">A evolução definitiva do seu setup de impressão 3D.</h1>
+          <h1 className="hero-title">
+            A evolução definitiva do seu setup de impressão 3D.
+          </h1>
           <p className="hero-desc">
-            Controle térmico ativo permanente abaixo de 20% UR. Proteja seus filamentos contra
-            umidade, elimine falhas de impressão e transforme seu espaço em um showroom de alto
-            padrão.
+            Controle térmico ativo permanente abaixo de 20% UR. Proteja seus
+            filamentos contra umidade, elimine falhas de impressão e transforme
+            seu espaço em um showroom de alto padrão.
           </p>
         </div>
 

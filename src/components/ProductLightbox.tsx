@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { ChevronLeft, ChevronRight, X } from 'lucide-react';
-import { createPortal } from 'react-dom';
-import type { Product } from '@/types/product';
+import type { IProduct } from "@/types/product";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 interface ProductLightboxProps {
-  product: Product | null;
+  product: IProduct | null;
   isOpen: boolean;
   onClose: () => void;
   initialIndex?: number;
@@ -40,7 +40,9 @@ export default function ProductLightbox({
   const previousActiveElement = useRef<HTMLElement | null>(null);
 
   // Gestos de toque (Touch & Pinch)
-  const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(null);
+  const touchStartRef = useRef<{ x: number; y: number; time: number } | null>(
+    null,
+  );
   const pinchStartDistanceRef = useRef<number | null>(null);
   const initialScaleRef = useRef<number>(1);
   const panStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -88,14 +90,16 @@ export default function ProductLightbox({
     if (!isOpen) return;
 
     // Guarda o elemento de origem para devolver o foco
-    previousActiveElement.current = document.activeElement as HTMLElement | null;
+    previousActiveElement.current =
+      document.activeElement as HTMLElement | null;
 
     // Trava de rolagem do body
     const originalOverflow = document.body.style.overflow;
     const originalPaddingRight = document.body.style.paddingRight;
-    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    const scrollbarWidth =
+      window.innerWidth - document.documentElement.clientWidth;
 
-    document.body.style.overflow = 'hidden';
+    document.body.style.overflow = "hidden";
     if (scrollbarWidth > 0) {
       document.body.style.paddingRight = `${scrollbarWidth}px`;
     }
@@ -117,30 +121,31 @@ export default function ProductLightbox({
     if (!isOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      if (e.key === "Escape") {
         e.preventDefault();
         onClose();
         return;
       }
 
-      if (e.key === 'ArrowRight' && temMultiplasFotos) {
+      if (e.key === "ArrowRight" && temMultiplasFotos) {
         e.preventDefault();
         proximaFoto();
         return;
       }
 
-      if (e.key === 'ArrowLeft' && temMultiplasFotos) {
+      if (e.key === "ArrowLeft" && temMultiplasFotos) {
         e.preventDefault();
         fotoAnterior();
         return;
       }
 
       // Focus trap
-      if (e.key === 'Tab') {
+      if (e.key === "Tab") {
         if (!dialogRef.current) return;
-        const focusableElements = dialogRef.current.querySelectorAll<HTMLElement>(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-        );
+        const focusableElements =
+          dialogRef.current.querySelectorAll<HTMLElement>(
+            'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+          );
         if (focusableElements.length === 0) return;
 
         const firstElement = focusableElements[0];
@@ -160,8 +165,8 @@ export default function ProductLightbox({
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose, proximaFoto, fotoAnterior, temMultiplasFotos]);
 
   // Manipuladores de Toque Mobile (Swipe e Pinça)
@@ -169,13 +174,23 @@ export default function ProductLightbox({
     if (e.touches.length === 2) {
       // Início do pinch-to-zoom
       const [t1, t2] = [e.touches[0], e.touches[1]];
-      const distance = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+      const distance = Math.hypot(
+        t2.clientX - t1.clientX,
+        t2.clientY - t1.clientY,
+      );
       pinchStartDistanceRef.current = distance;
       initialScaleRef.current = zoomScale;
     } else if (e.touches.length === 1) {
       const touch = e.touches[0];
-      touchStartRef.current = { x: touch.clientX, y: touch.clientY, time: Date.now() };
-      panStartRef.current = { x: touch.clientX - panOffset.x, y: touch.clientY - panOffset.y };
+      touchStartRef.current = {
+        x: touch.clientX,
+        y: touch.clientY,
+        time: Date.now(),
+      };
+      panStartRef.current = {
+        x: touch.clientX - panOffset.x,
+        y: touch.clientY - panOffset.y,
+      };
     }
   };
 
@@ -183,9 +198,15 @@ export default function ProductLightbox({
     if (e.touches.length === 2 && pinchStartDistanceRef.current !== null) {
       // Executa o pinch-to-zoom (limitado entre 1x e 2.5x para preservar nitidez)
       const [t1, t2] = [e.touches[0], e.touches[1]];
-      const currentDistance = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+      const currentDistance = Math.hypot(
+        t2.clientX - t1.clientX,
+        t2.clientY - t1.clientY,
+      );
       const ratio = currentDistance / pinchStartDistanceRef.current;
-      const newScale = Math.min(Math.max(initialScaleRef.current * ratio, 1), 2.5);
+      const newScale = Math.min(
+        Math.max(initialScaleRef.current * ratio, 1),
+        2.5,
+      );
       setZoomScale(newScale);
     } else if (e.touches.length === 1 && zoomScale > 1 && panStartRef.current) {
       // Pan quando a imagem está com zoom
@@ -213,7 +234,12 @@ export default function ProductLightbox({
       const duration = Date.now() - touchStartRef.current.time;
 
       // Se foi um swipe horizontal rápido (mínimo 45px de deslocamento e pouco movimento vertical)
-      if (Math.abs(deltaX) > 45 && Math.abs(deltaY) < 60 && duration < 500 && temMultiplasFotos) {
+      if (
+        Math.abs(deltaX) > 45 &&
+        Math.abs(deltaY) < 60 &&
+        duration < 500 &&
+        temMultiplasFotos
+      ) {
         if (deltaX < 0) {
           proximaFoto();
         } else {
@@ -308,7 +334,7 @@ export default function ProductLightbox({
             className="nix-lightbox-image"
             style={{
               transform: `scale(${zoomScale}) translate(${panOffset.x / zoomScale}px, ${panOffset.y / zoomScale}px)`,
-              cursor: zoomScale > 1 ? 'grab' : 'zoom-in',
+              cursor: zoomScale > 1 ? "grab" : "zoom-in",
             }}
             onDoubleClick={handleDoubleClick}
             draggable={false}
@@ -331,12 +357,16 @@ export default function ProductLightbox({
       </div>
 
       {temMultiplasFotos && (
-        <div className="nix-lightbox-dots" role="tablist" aria-label="Fotos do produto">
+        <div
+          className="nix-lightbox-dots"
+          role="tablist"
+          aria-label="Fotos do produto"
+        >
           {fotos.map((_, i) => (
             <button
               key={i}
               type="button"
-              className={`nix-lightbox-dot ${i === currentIndex ? 'active' : ''}`}
+              className={`nix-lightbox-dot ${i === currentIndex ? "active" : ""}`}
               onClick={() => {
                 setZoomScale(1);
                 setPanOffset({ x: 0, y: 0 });

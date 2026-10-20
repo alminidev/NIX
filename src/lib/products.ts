@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import type { Product } from "@/types/product";
+import type { IProduct } from "@/types/product";
 import { cacheLife, cacheTag } from "next/cache";
 
 const currency = new Intl.NumberFormat("pt-BR", {
@@ -7,7 +7,7 @@ const currency = new Intl.NumberFormat("pt-BR", {
   currency: "BRL",
 });
 
-export async function getProducts(): Promise<Product[]> {
+export async function getProducts(): Promise<IProduct[]> {
   "use cache";
   cacheLife("hours");
   cacheTag("products");

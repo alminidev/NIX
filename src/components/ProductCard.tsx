@@ -1,10 +1,10 @@
-import { ArrowRight, Lock } from 'lucide-react';
-import type { Product } from '@/types/product';
+import type { IProduct } from "@/types/product";
+import { ArrowRight, Lock } from "lucide-react";
 
 interface ProductCardProps {
-  product: Product;
+  product: IProduct;
   cartUrl: string;
-  onOpenLightbox?: (product: Product) => void;
+  onOpenLightbox?: (product: IProduct) => void;
 }
 
 /**
@@ -15,14 +15,24 @@ interface ProductCardProps {
  * Usa <img> nativa (não next/image) — mesmas dimensões de renderização do original (320x320 contain via CSS).
  * Ao clicar na imagem, abre o overlay de visualização ampliada (Lightbox).
  */
-export default function ProductCard({ product, cartUrl, onOpenLightbox }: ProductCardProps) {
+export default function ProductCard({
+  product,
+  cartUrl,
+  onOpenLightbox,
+}: ProductCardProps) {
   const purchaseUrl = `${cartUrl}?sku=${encodeURIComponent(product.sku)}&id=${encodeURIComponent(product.id)}`;
 
   return (
-    <article className="product-card" data-sku={product.sku} data-id={product.id}>
+    <article
+      className="product-card"
+      data-sku={product.sku}
+      data-id={product.id}
+    >
       <div className="card-badge-top">
         <span className="tag-capacity">{product.capacity}</span>
-        {product.featured && <span className="tag-featured">Mais Escolhido</span>}
+        {product.featured && (
+          <span className="tag-featured">Mais Escolhido</span>
+        )}
       </div>
 
       <div className="card-media">
@@ -87,7 +97,9 @@ export default function ProductCard({ product, cartUrl, onOpenLightbox }: Produc
             <span>Ambiente Seguro InfinitePay</span>
           </div>
 
-          <span className="card-shipping-notice">Enviamos para todo o Brasil • Frete a consultar</span>
+          <span className="card-shipping-notice">
+            Enviamos para todo o Brasil • Frete a consultar
+          </span>
         </div>
       </div>
     </article>
