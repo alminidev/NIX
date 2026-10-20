@@ -1,3 +1,5 @@
+import { ArrowRight } from 'lucide-react';
+
 /**
  * CtaFinal — Banner de encerramento / CTA final.
  * Idêntico ao <section class="section-cta-final"> do HTML original.
@@ -14,20 +16,7 @@ export default function CtaFinal() {
           </p>
           <a href="#produtos" className="btn-primary">
             Escolher Meu Modelo
-            <svg
-              width={16}
-              height={16}
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M5 12h14" />
-              <path d="M12 5l7 7-7 7" />
-            </svg>
+            <ArrowRight size={16} aria-hidden />
           </a>
         </div>
       </div>

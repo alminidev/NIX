@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import type { Produto } from '@/types/produto';
 
@@ -15,7 +16,6 @@ interface ProductLightboxProps {
  * ProductLightbox — Componente acessível de ampliação de imagem (Lightbox).
  *
  * Características Técnicas:
- * - 100% React + TypeScript puro, sem dependências externas.
  * - Acessibilidade WCAG 2.1 AA: role="dialog", aria-modal="true", focus trap,
  *   foco devolvido ao fechamento, botões com aria-label descritivo.
  * - Teclado: Escape fecha, Setas Esquerda/Direita navegam entre fotos.
@@ -271,20 +271,7 @@ export default function ProductLightbox({
           onClick={onClose}
           aria-label="Fechar ampliação da imagem (ou pressione Esc)"
         >
-          <svg
-            width={24}
-            height={24}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
+          <X size={24} aria-hidden />
         </button>
       </div>
 
@@ -309,19 +296,7 @@ export default function ProductLightbox({
             }}
             aria-label="Foto anterior (ou pressione Seta Esquerda)"
           >
-            <svg
-              width={28}
-              height={28}
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2.5}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
+            <ChevronLeft size={28} strokeWidth={2.5} aria-hidden />
           </button>
         )}
 
@@ -350,19 +325,7 @@ export default function ProductLightbox({
             }}
             aria-label="Próxima foto (ou pressione Seta Direita)"
           >
-            <svg
-              width={28}
-              height={28}
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2.5}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
+            <ChevronRight size={28} strokeWidth={2.5} aria-hidden />
           </button>
         )}
       </div>

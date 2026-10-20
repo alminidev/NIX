@@ -1,12 +1,13 @@
+@import "tailwindcss";
+
 /* ==========================================================================
-   NIX — DESIGN SYSTEM & VISUAL BLUEPRINT
-   Implementação estrita de 04-design/design-system.md
-   Stack: Next.js + React + TypeScript (migrado de HTML5 / CSS3 Puro)
-   CSS global idêntico ao original — classes, variáveis e keyframes inalterados
+   NIX — DESIGN SYSTEM
+   Tokens em @theme viram utilitários do Tailwind
+   (bg-brand-blue, text-ink-primary, rounded-card, shadow-card-hover…).
+   O CSS existente fica em @layer base para as utilities poderem sobrescrever.
    ========================================================================== */
 
-/* --- 1. TOKENS & VARIÁVEIS (:root) --- */
-:root {
+@theme {
   /* Cores de Marca & Ação */
   --color-brand-blue: #176bff;
   --color-brand-blue-hover: #0d57db;
@@ -29,8 +30,9 @@
   --color-border-dark-hairline: #22252c;
   --color-border-focus: #176bff;
 
-  /* Tipografia */
-  --font-primary: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  /* Tipografia — next/font expõe --font-inter no <html> */
+  --font-sans: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-primary: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 
   /* Raios de Borda */
   --radius-pill: 9999px;
@@ -40,7 +42,25 @@
   /* Sombras Funcionais */
   --shadow-sticky-nav: 0 1px 3px rgba(0, 0, 0, 0.05);
   --shadow-card-hover: 0 12px 32px rgba(0, 0, 0, 0.06);
+}
 
+/*
+  O Tailwind também emite .container, com max-width de 40rem / 48rem / 64rem…
+  Essa regra fica em @layer utilities e vencia o container do design system.
+  Fora de layer, a largura volta a ser 1200px, com o padding original.
+*/
+.container {
+  width: 100%;
+  max-width: var(--container-max-width);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--container-padding);
+  padding-right: var(--container-padding);
+}
+
+@layer base {
+/* --- 1. TOKENS DE LAYOUT (fora do namespace do Tailwind) --- */
+:root {
   /* Transições & Motion */
   --transition-fast: 200ms cubic-bezier(0.16, 1, 0.3, 1);
   --transition-medium: 250ms cubic-bezier(0.16, 1, 0.3, 1);
@@ -479,7 +499,9 @@ h3 {
 
 .hero-media-wrapper {
   position: relative;
+  width: min(100%, 1120px, max(280px, calc((100svh - 540px) * 16 / 9)));
   max-width: 1120px;
+  aspect-ratio: 16 / 9;
   margin: 0 auto;
   border-radius: var(--radius-card);
   overflow: hidden;
@@ -490,7 +512,7 @@ h3 {
 
 .hero-media-wrapper img {
   width: 100%;
-  aspect-ratio: 16 / 9;
+  height: 100%;
   object-fit: cover;
   object-position: center bottom;
 }
@@ -1204,7 +1226,8 @@ h3 {
     width: 100%;
   }
 
-  .hero-media-wrapper img {
+  .hero-media-wrapper {
+    width: min(100%, max(240px, calc((100svh - 460px) * 4 / 3)));
     aspect-ratio: 4 / 3;
   }
 
@@ -1558,4 +1581,5 @@ h3 {
   .nix-lightbox-footer-hint {
     font-size: 0.75rem;
   }
+}
 }

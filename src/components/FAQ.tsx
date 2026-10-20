@@ -1,3 +1,5 @@
+import { ChevronDown } from 'lucide-react';
+
 /**
  * FAQ — Seção de perguntas frequentes com accordion nativo HTML (<details>/<summary>).
  * Idêntico ao <section id="faq" class="section-faq"> do HTML original.
@@ -41,9 +43,7 @@ export default function FAQ() {
             <details key={i} className="faq-item">
               <summary className="faq-summary">
                 <span>{item.pergunta}</span>
-                <svg className="faq-chevron" viewBox="0 0 24 24" aria-hidden="true">
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
+                <ChevronDown className="faq-chevron" aria-hidden />
               </summary>
               <div className="faq-content">{item.resposta}</div>
             </details>

@@ -1,4 +1,15 @@
 import type { DashboardMetrics } from "@/lib/dashboard";
+import {
+  BookOpen,
+  ChartLine,
+  DollarSign,
+  LayoutGrid,
+  Package,
+  ShoppingBag,
+  Star,
+  Ticket,
+  type LucideIcon,
+} from "lucide-react";
 
 const moeda = new Intl.NumberFormat("pt-BR", {
   style: "currency",
@@ -25,91 +36,20 @@ type MetricCard = {
     | "featured";
 };
 
+const icons: Record<MetricCard["icon"], LucideIcon> = {
+  sales: ShoppingBag,
+  revenue: DollarSign,
+  ticket: Ticket,
+  products: Package,
+  average: ChartLine,
+  catalog: BookOpen,
+  categories: LayoutGrid,
+  featured: Star,
+};
+
 function Icon({ name }: { name: MetricCard["icon"] }) {
-  const common = {
-    viewBox: "0 0 24 24",
-    width: 20,
-    height: 20,
-    fill: "none",
-    stroke: "currentColor",
-    strokeWidth: 2,
-    strokeLinecap: "round" as const,
-    strokeLinejoin: "round" as const,
-    "aria-hidden": true,
-  };
-
-  if (name === "sales") {
-    return (
-      <svg {...common}>
-        <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
-        <path d="M3 6h18" />
-        <path d="M16 10a4 4 0 0 1-8 0" />
-      </svg>
-    );
-  }
-
-  if (name === "revenue") {
-    return (
-      <svg {...common}>
-        <path d="M12 2v20" />
-        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-      </svg>
-    );
-  }
-
-  if (name === "ticket") {
-    return (
-      <svg {...common}>
-        <path d="M3 8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2a2 2 0 0 0 0-4Z" />
-        <path d="M12 6v12" />
-      </svg>
-    );
-  }
-
-  if (name === "products") {
-    return (
-      <svg {...common}>
-        <path d="M21 8 12 3 3 8l9 5 9-5Z" />
-        <path d="M3 8v8l9 5 9-5V8" />
-        <path d="M12 13v8" />
-      </svg>
-    );
-  }
-
-  if (name === "average") {
-    return (
-      <svg {...common}>
-        <path d="M3 3v18h18" />
-        <path d="m7 14 4-4 3 3 5-6" />
-      </svg>
-    );
-  }
-
-  if (name === "catalog") {
-    return (
-      <svg {...common}>
-        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z" />
-      </svg>
-    );
-  }
-
-  if (name === "categories") {
-    return (
-      <svg {...common}>
-        <rect x="3" y="3" width="7" height="7" rx="1" />
-        <rect x="14" y="3" width="7" height="7" rx="1" />
-        <rect x="3" y="14" width="7" height="7" rx="1" />
-        <rect x="14" y="14" width="7" height="7" rx="1" />
-      </svg>
-    );
-  }
-
-  return (
-    <svg {...common}>
-      <path d="m12 2 2.4 6.8H22l-6 4.4 2.3 6.8L12 16.8 5.7 20l2.3-6.8-6-4.4h7.6Z" />
-    </svg>
-  );
+  const Glyph = icons[name];
+  return <Glyph size={20} aria-hidden />;
 }
 
 export default function Dashboard({ metrics }: { metrics: DashboardMetrics }) {

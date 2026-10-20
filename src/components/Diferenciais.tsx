@@ -1,3 +1,5 @@
+import { DollarSign, Layers, Lock, Thermometer } from 'lucide-react';
+
 /**
  * Diferenciais — Seção de diferenciais e engenharia da NIX 3D.
  * Idêntico ao <section id="diferenciais" class="section-features"> do HTML original.
@@ -26,9 +28,7 @@ export default function Diferenciais() {
 
             <div className="feature-box">
               <div className="feature-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24">
-                  <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z" />
-                </svg>
+                <Thermometer size={22} aria-hidden />
               </div>
               <h3>Controle Térmico Ativo (&lt; 20% UR)</h3>
               <p>
@@ -39,10 +39,7 @@ export default function Diferenciais() {
 
             <div className="feature-box">
               <div className="feature-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                </svg>
+                <Lock size={22} aria-hidden />
               </div>
               <h3>Vedação Estanque Automotiva</h3>
               <p>
@@ -53,10 +50,7 @@ export default function Diferenciais() {
 
             <div className="feature-box">
               <div className="feature-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24">
-                  <path d="M12 2v20" />
-                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                </svg>
+                <DollarSign size={22} aria-hidden />
               </div>
               <h3>Alimentação Direta sem Atrito</h3>
               <p>
@@ -67,11 +61,7 @@ export default function Diferenciais() {
 
             <div className="feature-box">
               <div className="feature-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24">
-                  <polygon points="12 2 2 7 12 12 22 7 12 2" />
-                  <polyline points="2 17 12 22 22 17" />
-                  <polyline points="2 12 12 17 22 12" />
-                </svg>
+                <Layers size={22} aria-hidden />
               </div>
               <h3>Estrutura Rígida em Alumínio</h3>
               <p>

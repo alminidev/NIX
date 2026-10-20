@@ -1,3 +1,4 @@
+import { ArrowRight, Lock } from 'lucide-react';
 import type { Produto } from '@/types/produto';
 
 interface ProductCardProps {
@@ -78,27 +79,11 @@ export default function ProductCard({ produto, cartUrl, onOpenLightbox }: Produc
             aria-label={`Comprar ${produto.nome} no checkout seguro`}
           >
             Comprar
-            <svg
-              width={16}
-              height={16}
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M5 12h14" />
-              <path d="M12 5l7 7-7 7" />
-            </svg>
+            <ArrowRight size={16} aria-hidden />
           </a>
 
           <div className="card-security-badge" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width={12} height={12} fill="none" stroke="currentColor" strokeWidth={2}>
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-            </svg>
+            <Lock size={12} aria-hidden />
             <span>Ambiente Seguro InfinitePay</span>
           </div>
 
