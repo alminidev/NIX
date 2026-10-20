@@ -1,7 +1,7 @@
 import type { IProduct } from "@/types/product";
 import { ArrowRight, Lock } from "lucide-react";
 
-interface ProductCardProps {
+interface IProductCardProps {
   product: IProduct;
   cartUrl: string;
   onOpenLightbox?: (product: IProduct) => void;
@@ -19,7 +19,7 @@ export default function ProductCard({
   product,
   cartUrl,
   onOpenLightbox,
-}: ProductCardProps) {
+}: IProductCardProps) {
   const purchaseUrl = `${cartUrl}?sku=${encodeURIComponent(product.sku)}&id=${encodeURIComponent(product.id)}`;
 
   return (

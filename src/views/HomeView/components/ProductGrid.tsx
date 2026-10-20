@@ -6,6 +6,10 @@ import { useState } from "react";
 import ProductCard from "../../../components/ProductCard";
 import ProductLightbox from "../../../components/ProductLightbox";
 
+interface IProductGridProps {
+  products: IProduct[];
+}
+
 /**
  * ProductGrid — Vitrine de produtos com separação editorial por categoria.
  * Idêntico ao layout gerado por renderizarProdutos() + gerarCardHtml() no JS original.
@@ -16,7 +20,7 @@ import ProductLightbox from "../../../components/ProductLightbox";
  *
  * Integrado com ProductLightbox para ampliação acessível de fotos.
  */
-export default function ProductGrid({ products }: { products: IProduct[] }) {
+export default function ProductGrid({ products }: IProductGridProps) {
   const cartUrl = CART_URL;
   const [activeLightboxProduct, setActiveLightboxProduct] =
     useState<IProduct | null>(null);

@@ -6,18 +6,17 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-type AdminShellUser = {
+interface IAdminShellUser {
   name: string;
   email: string;
-};
+}
 
-export default function AdminShell({
-  user,
-  children,
-}: {
-  user: AdminShellUser;
+interface IAdminShellProps {
+  user: IAdminShellUser;
   children: React.ReactNode;
-}) {
+}
+
+export default function AdminShell({ user, children }: IAdminShellProps) {
   const { signOut } = useAuthContext();
   const router = useRouter();
   const [signingOut, setSigningOut] = useState(false);

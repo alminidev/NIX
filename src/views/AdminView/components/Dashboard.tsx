@@ -1,4 +1,4 @@
-import type { DashboardMetrics } from "@/lib/dashboard";
+import { IDashboardMetrics } from "@/types/dashboard";
 import {
   BookOpen,
   ChartLine,
@@ -21,7 +21,7 @@ function formatarMoeda(valor: number | null) {
   return moeda.format(valor);
 }
 
-type MetricCard = {
+interface IMetricCard {
   label: string;
   value: string;
   hint: string;
@@ -34,9 +34,21 @@ type MetricCard = {
     | "catalog"
     | "categories"
     | "featured";
-};
+}
 
-const icons: Record<MetricCard["icon"], LucideIcon> = {
+interface IDashboardProps {
+  metrics: IDashboardMetrics;
+}
+
+interface IMetricProps {
+  card: IMetricCard;
+}
+
+interface IMetricIconProps {
+  name: IMetricCard["icon"];
+}
+
+const icons: Record<IMetricCard["icon"], LucideIcon> = {
   sales: ShoppingBag,
   revenue: DollarSign,
   ticket: Ticket,
@@ -47,13 +59,13 @@ const icons: Record<MetricCard["icon"], LucideIcon> = {
   featured: Star,
 };
 
-function Icon({ name }: { name: MetricCard["icon"] }) {
+function Icon({ name }: IMetricIconProps) {
   const Glyph = icons[name];
   return <Glyph size={20} aria-hidden />;
 }
 
-export default function Dashboard({ metrics }: { metrics: DashboardMetrics }) {
-  const comercial: MetricCard[] = [
+export default function Dashboard({ metrics }: IDashboardProps) {
+  const comercial: IMetricCard[] = [
     {
       label: "Vendas",
       value: String(metrics.orders),
@@ -74,7 +86,7 @@ export default function Dashboard({ metrics }: { metrics: DashboardMetrics }) {
     },
   ];
 
-  const catalog: MetricCard[] = [
+  const catalog: IMetricCard[] = [
     {
       label: "Produtos ativos",
       value: String(metrics.activeProducts),
@@ -165,7 +177,7 @@ export default function Dashboard({ metrics }: { metrics: DashboardMetrics }) {
   );
 }
 
-function Metric({ card }: { card: MetricCard }) {
+function Metric({ card }: IMetricProps) {
   return (
     <article className="admin-metric">
       <span className="admin-metric-icon">

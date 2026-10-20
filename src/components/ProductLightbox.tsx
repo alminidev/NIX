@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
-interface ProductLightboxProps {
+interface IProductLightboxProps {
   product: IProduct | null;
   isOpen: boolean;
   onClose: () => void;
@@ -29,7 +29,7 @@ export default function ProductLightbox({
   isOpen,
   onClose,
   initialIndex = 0,
-}: ProductLightboxProps) {
+}: IProductLightboxProps) {
   const [mounted, setMounted] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [zoomScale, setZoomScale] = useState(1);

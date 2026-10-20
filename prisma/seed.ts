@@ -1,3 +1,4 @@
+import { MissingEnvironmentVariableError } from '../src/app/_errors/missing-environment-variable.error';
 import { randomUUID } from 'node:crypto';
 import { hashPassword } from 'better-auth/crypto';
 import { PrismaPg } from '@prisma/adapter-pg';
@@ -11,7 +12,7 @@ const ADMIN_NAME = 'Administrador';
 const connectionString = process.env.DATABASE_URL;
 
 if (!connectionString) {
-  throw new Error('DATABASE_URL não está definida.');
+  throw new MissingEnvironmentVariableError('DATABASE_URL');
 }
 
 const prisma = new PrismaClient({

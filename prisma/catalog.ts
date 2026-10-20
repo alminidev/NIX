@@ -1,4 +1,4 @@
-export type ProductSeed = {
+export interface IProductSeed {
   sku: string;
   name: string;
   categorySlug: 'armarios' | 'stations';
@@ -18,7 +18,7 @@ export const CATEGORIES = [
   { id: 2, slug: 'stations', name: 'Dry Box Station', sortOrder: 2 },
 ] as const;
 
-export const PRODUCTS: ProductSeed[] = [
+export const PRODUCTS: IProductSeed[] = [
   {
     sku: 'NIX-DB12',
     name: 'DRY BOX 12',
