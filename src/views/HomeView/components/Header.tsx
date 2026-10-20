@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { MessageCircle, ShoppingCart } from 'lucide-react';
 import { CART_URL } from '@/data/produtos';
 
@@ -8,10 +8,10 @@ import { CART_URL } from '@/data/produtos';
  * Header — Cabeçalho fixo (sticky) da NIX 3D.
  *
  * Comportamentos migrados do JS vanilla:
- * 1. inicializarCabecalho(): adiciona classe "scrolled" quando scrollY > 20
+ * 1. inicializarCabecalho(): sombra quando scrollY > 20
  *    → useEffect + useState + window.scroll (passive listener)
- * 2. inicializarScrollSpy(): destaca o nav-link da seção visível
- *    → useEffect + IntersectionObserver com os mesmos parâmetros do original
+ * 2. inicializarScrollSpy(): destaca o link da seção visível
+ *    → useEffect + IntersectionObserver
  *    rootMargin: '-20% 0px -65% 0px'
  *
  * URL do carrinho:
@@ -70,22 +70,32 @@ export default function Header() {
   ];
 
   return (
-    <header id="site-header" className={`site-header${scrolled ? ' scrolled' : ''}`}>
-      <div className="container header-container">
-        <a href="#hero" className="brand-logo" aria-label="NIX 3D — Página Inicial">
+    <header
+      id="site-header"
+      className={`sticky top-0 z-[100] h-16 w-full border-b border-border-hairline bg-white transition-shadow duration-200 ease-nix max-[640px]:h-14 ${scrolled ? 'shadow-sticky-nav' : ''}`}
+    >
+      <div className="mx-auto flex h-full w-full max-w-[1200px] items-center justify-between px-4 min-[640px]:px-6">
+        <a href="#hero" className="flex items-center" aria-label="NIX 3D — Página Inicial">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/images/logo-nix.png" alt="Logotipo NIX" width={110} height={32} />
+          <img
+            src="/images/logo-nix.png"
+            alt="Logotipo NIX"
+            width={110}
+            height={32}
+            className="h-8 w-auto object-contain"
+          />
         </a>
 
-        <nav className="nav-desktop" aria-label="Navegação Principal">
-          <ul className="nav-links">
+        <nav aria-label="Navegação Principal">
+          <ul className="hidden items-center gap-8 min-[992px]:flex">
             {navItems.map(({ href, label }) => {
               const sectionId = href.slice(1); // remove o '#'
+              const isActive = activeSection === sectionId;
               return (
                 <li key={href}>
                   <a
                     href={href}
-                    className={`nav-link${activeSection === sectionId ? ' active' : ''}`}
+                    className={`text-sm font-medium transition-colors hover:text-brand-blue ${isActive ? 'text-brand-blue' : 'text-ink-secondary'}`}
                   >
                     {label}
                   </a>
@@ -95,10 +105,10 @@ export default function Header() {
           </ul>
         </nav>
 
-        <div className="header-actions">
+        <div className="flex items-center gap-4">
           <a
             href={whatsappUrl}
-            className="btn-whatsapp"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-pill border border-border-hairline bg-transparent px-4 py-2.5 text-sm font-medium text-ink-secondary transition-all duration-200 ease-nix hover:-translate-y-px hover:border-brand-blue hover:text-brand-blue"
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Fale com a Nix pelo WhatsApp"
@@ -110,7 +120,7 @@ export default function Header() {
           <a
             id="btn-header-cart"
             href={cartUrl}
-            className="btn-cart"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-pill border border-[rgba(23,107,255,0.2)] bg-brand-blue-subtle px-[18px] py-2.5 text-sm font-semibold text-brand-blue-hover transition-all duration-200 ease-nix hover:-translate-y-px hover:bg-brand-blue hover:text-ink-inverse"
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Ir para o carrinho de compras seguro"
@@ -120,8 +130,7 @@ export default function Header() {
             {/*
               TODO (programador back-end):
               Conecte aqui a quantidade de itens do carrinho para exibir o badge.
-              Exemplo: <span className="cart-badge">{cartCount}</span>
-              O CSS do badge deve ser adicionado ao globals.css.
+              Exemplo: <span className="rounded-pill bg-brand-blue px-1.5 text-xs text-white">{cartCount}</span>
             */}
           </a>
         </div>

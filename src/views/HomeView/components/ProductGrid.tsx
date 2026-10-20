@@ -12,7 +12,6 @@ interface IProductGridProps {
 
 /**
  * ProductGrid — Vitrine de produtos com separação editorial por categoria.
- * Idêntico ao layout gerado por renderizarProdutos() + gerarCardHtml() no JS original.
  *
  * Grupos editoriais:
  *   - Grupo 1 (grid 3 colunas): SKUs que começam com NIX-DB (Armários Dry Box)
@@ -36,20 +35,21 @@ export default function ProductGrid({ products }: IProductGridProps) {
 
   return (
     <>
-      <div id="products-grid" className="products-grid">
-        {/* Grupo 1: Armários Dry Box */}
-        <div className="catalog-group">
-          <div className="catalog-group-header">
-            <span className="catalog-group-kicker">Armazenamento Ativo</span>
-            <h3 className="catalog-group-title">
+      <div id="products-grid" className="w-full">
+        <div className="mb-6">
+          <div className="mb-8">
+            <span className="mb-1.5 inline-block text-xs font-bold tracking-[0.06em] text-brand-blue-hover uppercase">
+              Armazenamento Ativo
+            </span>
+            <h3 className="mb-1.5 text-[clamp(1.25rem,2vw+0.5rem,1.625rem)] leading-[1.25] font-semibold tracking-[-0.01em] text-ink-primary">
               Armários de Filamentos Dry Box
             </h3>
-            <p className="catalog-group-desc">
+            <p className="max-w-[620px] text-[0.9375rem] text-ink-secondary">
               Estufas estanques com desumidificação ativa permanente para 12, 24
               ou 48 filamentos.
             </p>
           </div>
-          <div className="products-subgrid grid-3-cols">
+          <div className="grid w-full grid-cols-1 gap-5 min-[640px]:grid-cols-2 min-[992px]:grid-cols-3 min-[992px]:gap-7">
             {dryBoxCabinets.map((product) => (
               <ProductCard
                 key={product.sku}
@@ -61,20 +61,22 @@ export default function ProductGrid({ products }: IProductGridProps) {
           </div>
         </div>
 
-        {/* Divisor sutil entre categorias */}
-        <div className="catalog-divider" aria-hidden="true"></div>
+        <div className="my-14 h-px w-full bg-border-hairline" aria-hidden="true" />
 
-        {/* Grupo 2: Dry Box Station Combos */}
-        <div className="catalog-group">
-          <div className="catalog-group-header">
-            <span className="catalog-group-kicker">Estações Integradas</span>
-            <h3 className="catalog-group-title">Dry Box Station Combos</h3>
-            <p className="catalog-group-desc">
+        <div className="mb-6">
+          <div className="mb-8">
+            <span className="mb-1.5 inline-block text-xs font-bold tracking-[0.06em] text-brand-blue-hover uppercase">
+              Estações Integradas
+            </span>
+            <h3 className="mb-1.5 text-[clamp(1.25rem,2vw+0.5rem,1.625rem)] leading-[1.25] font-semibold tracking-[-0.01em] text-ink-primary">
+              Dry Box Station Combos
+            </h3>
+            <p className="max-w-[620px] text-[0.9375rem] text-ink-secondary">
               Soluções completas com bancada integrada antivibração e
               armazenamento climatizado para Bambu Lab.
             </p>
           </div>
-          <div className="products-subgrid grid-2-cols">
+          <div className="mx-auto grid w-full max-w-full grid-cols-1 gap-5 min-[640px]:grid-cols-2 min-[992px]:max-w-[820px] min-[992px]:gap-7">
             {setupLabStations.map((product) => (
               <ProductCard
                 key={product.sku}
@@ -86,9 +88,11 @@ export default function ProductGrid({ products }: IProductGridProps) {
           </div>
         </div>
 
-        {/* Aviso Oficial de Ilustração */}
-        <div className="catalog-disclaimer" role="note">
-          <p>
+        <div
+          className="mt-10 rounded-card border border-border-hairline bg-white px-5 py-[14px] text-center"
+          role="note"
+        >
+          <p className="text-[0.8125rem] text-ink-secondary">
             ⚠️ <strong>Observação Importante:</strong> Imagens ilustrativas. A
             impressora e os filamentos não acompanham o produto.
           </p>

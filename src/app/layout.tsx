@@ -42,7 +42,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" className={inter.variable}>
+    <html
+      lang="pt-BR"
+      className={`${inter.variable} scroll-smooth scroll-pt-[90px] bg-surface-canvas-fog text-base text-ink-secondary antialiased`}
+    >
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
@@ -55,7 +58,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className={inter.className}>
+      <body className={`${inter.className} flex min-h-screen flex-col`}>
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>

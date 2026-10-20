@@ -27,7 +27,9 @@ export default async function AdminWrapper() {
   return (
     <Suspense
       fallback={
-        <p className="admin-status admin-pending">Carregando dados…</p>
+        <p className="grid min-h-screen place-items-center bg-surface-canvas-fog text-[0.9375rem] text-ink-muted">
+          Carregando dados…
+        </p>
       }
     >
       <Admin />

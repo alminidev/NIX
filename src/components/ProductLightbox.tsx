@@ -269,7 +269,7 @@ export default function ProductLightbox({
   const lightboxContent = (
     <div
       ref={dialogRef}
-      className="nix-lightbox-overlay"
+      className="fixed inset-0 z-[9999] flex animate-lightbox-in flex-col items-center justify-between bg-[rgba(10,11,14,0.94)] px-6 py-4 backdrop-blur-md select-none motion-reduce:animate-none! max-[641px]:px-3.5 max-[641px]:py-3"
       role="dialog"
       aria-modal="true"
       aria-label={`Visualização ampliada de ${product.name}`}
@@ -280,11 +280,13 @@ export default function ProductLightbox({
         }
       }}
     >
-      <div className="nix-lightbox-header">
-        <div className="nix-lightbox-info">
-          <span className="nix-lightbox-title">{product.name}</span>
+      <div className="z-10 flex w-full max-w-[1200px] items-center justify-between py-2">
+        <div className="flex items-center gap-3">
+          <span className="text-[1.0625rem] font-semibold tracking-[-0.01em] text-white max-[641px]:max-w-[200px] max-[641px]:truncate max-[641px]:text-[0.9375rem]">
+            {product.name}
+          </span>
           {temMultiplasFotos && (
-            <span className="nix-lightbox-counter">
+            <span className="rounded-pill border border-white/10 bg-[rgba(255,255,255,0.12)] px-2.5 py-0.5 text-[0.8125rem] font-medium text-white/75">
               {currentIndex + 1} / {fotos.length}
             </span>
           )}
@@ -293,7 +295,7 @@ export default function ProductLightbox({
         <button
           ref={closeButtonRef}
           type="button"
-          className="nix-lightbox-close-btn"
+          className="flex size-11 cursor-pointer items-center justify-center rounded-full border border-white/20 bg-[rgba(255,255,255,0.12)] text-white transition-[background-color,scale] duration-200 ease-nix hover:scale-105 hover:bg-[rgba(255,255,255,0.22)] focus-visible:outline-brand-blue"
           onClick={onClose}
           aria-label="Fechar ampliação da imagem (ou pressione Esc)"
         >
@@ -302,7 +304,7 @@ export default function ProductLightbox({
       </div>
 
       <div
-        className="nix-lightbox-stage"
+        className="relative flex w-full flex-1 items-center justify-center overflow-hidden touch-none"
         onClick={(e) => {
           if (e.target === e.currentTarget) {
             onClose();
@@ -315,7 +317,7 @@ export default function ProductLightbox({
         {temMultiplasFotos && (
           <button
             type="button"
-            className="nix-lightbox-nav-btn prev"
+            className="absolute top-1/2 left-6 z-10 flex size-[50px] min-h-11 min-w-11 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-white/20 bg-[rgba(10,11,14,0.75)] text-white backdrop-blur-sm transition-[background-color,scale] duration-200 ease-nix hover:scale-[1.08] hover:border-brand-blue hover:bg-brand-blue focus-visible:outline-brand-blue max-[641px]:left-2 max-[641px]:size-11 max-[641px]:bg-[rgba(10,11,14,0.85)]"
             onClick={(e) => {
               e.stopPropagation();
               fotoAnterior();
@@ -326,12 +328,12 @@ export default function ProductLightbox({
           </button>
         )}
 
-        <div className="nix-lightbox-image-wrapper">
+        <div className="flex max-h-[75vh] max-w-[90vw] items-center justify-center max-[641px]:max-h-[72vh] max-[641px]:max-w-[96vw]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={currentFoto}
             alt={altText}
-            className="nix-lightbox-image"
+            className="max-h-[75vh] max-w-full rounded-input object-contain shadow-lightbox transition-transform duration-[120ms] ease-out max-[641px]:max-h-[72vh] motion-reduce:transition-none!"
             style={{
               transform: `scale(${zoomScale}) translate(${panOffset.x / zoomScale}px, ${panOffset.y / zoomScale}px)`,
               cursor: zoomScale > 1 ? "grab" : "zoom-in",
@@ -344,7 +346,7 @@ export default function ProductLightbox({
         {temMultiplasFotos && (
           <button
             type="button"
-            className="nix-lightbox-nav-btn next"
+            className="absolute top-1/2 right-6 z-10 flex size-[50px] min-h-11 min-w-11 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border border-white/20 bg-[rgba(10,11,14,0.75)] text-white backdrop-blur-sm transition-[background-color,scale] duration-200 ease-nix hover:scale-[1.08] hover:border-brand-blue hover:bg-brand-blue focus-visible:outline-brand-blue max-[641px]:right-2 max-[641px]:size-11 max-[641px]:bg-[rgba(10,11,14,0.85)]"
             onClick={(e) => {
               e.stopPropagation();
               proximaFoto();
@@ -358,7 +360,7 @@ export default function ProductLightbox({
 
       {temMultiplasFotos && (
         <div
-          className="nix-lightbox-dots"
+          className="z-10 mt-2.5 flex items-center justify-center gap-2"
           role="tablist"
           aria-label="Fotos do produto"
         >
@@ -366,7 +368,7 @@ export default function ProductLightbox({
             <button
               key={i}
               type="button"
-              className={`nix-lightbox-dot ${i === currentIndex ? "active" : ""}`}
+              className={`flex size-9 cursor-pointer items-center justify-center bg-transparent p-0 after:block after:h-2 after:w-2 after:rounded-full after:bg-white/35 after:transition-[width,background-color,border-radius] after:duration-200 after:ease-nix after:content-[''] ${i === currentIndex ? "after:w-6 after:rounded-pill after:bg-brand-blue" : ""}`}
               onClick={() => {
                 setZoomScale(1);
                 setPanOffset({ x: 0, y: 0 });
@@ -380,7 +382,7 @@ export default function ProductLightbox({
       )}
 
       {/* Dica de navegação e atalhos */}
-      <div className="nix-lightbox-footer-hint" aria-hidden="true">
+      <div className="z-10 mt-1.5 flex items-center justify-center gap-2 text-[0.8125rem] text-white/50 max-[641px]:text-xs" aria-hidden="true">
         <span>Toque duas vezes ou pinça para zoom</span>
         {temMultiplasFotos && <span>• Deslize para trocar de foto</span>}
         <span>• Esc para fechar</span>
