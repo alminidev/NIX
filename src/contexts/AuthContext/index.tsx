@@ -1,6 +1,6 @@
 "use client";
 
-import { ContextOutOfScopeError } from "@/domain/errors/context-out-of-scope.error";
+import { ContextOutOfScopeError } from "@/app/_errors/context-out-of-scope.error";
 import { authClient, useSession } from "@/lib/auth-client";
 import { createContext, useCallback, useContext, useMemo } from "react";
 
