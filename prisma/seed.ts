@@ -1,6 +1,12 @@
+import { randomUUID } from 'node:crypto';
+import { hashPassword } from 'better-auth/crypto';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../src/generated/prisma/client';
 import { CATEGORIAS, PRODUTOS } from './catalogo';
+
+const ADMIN_EMAIL = 'admin@admin.com';
+const ADMIN_PASSWORD = 'admin';
+const ADMIN_NAME = 'Administrador';
 
 const connectionString = process.env.DATABASE_URL;
 
@@ -12,7 +18,73 @@ const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString }),
 });
 
+async function seedAdmin() {
+  const passwordHash = await hashPassword(ADMIN_PASSWORD);
+  const existing = await prisma.user.findUnique({
+    where: { email: ADMIN_EMAIL },
+  });
+
+  if (existing) {
+    await prisma.user.update({
+      where: { id: existing.id },
+      data: {
+        name: ADMIN_NAME,
+        role: 'admin',
+        emailVerified: true,
+      },
+    });
+
+    const account = await prisma.account.findFirst({
+      where: { userId: existing.id, providerId: 'credential' },
+    });
+
+    if (account) {
+      await prisma.account.update({
+        where: { id: account.id },
+        data: {
+          accountId: existing.id,
+          password: passwordHash,
+        },
+      });
+      return;
+    }
+
+    await prisma.account.create({
+      data: {
+        id: randomUUID(),
+        accountId: existing.id,
+        providerId: 'credential',
+        userId: existing.id,
+        password: passwordHash,
+      },
+    });
+    return;
+  }
+
+  const userId = randomUUID();
+
+  await prisma.user.create({
+    data: {
+      id: userId,
+      name: ADMIN_NAME,
+      email: ADMIN_EMAIL,
+      emailVerified: true,
+      role: 'admin',
+      accounts: {
+        create: {
+          id: randomUUID(),
+          accountId: userId,
+          providerId: 'credential',
+          password: passwordHash,
+        },
+      },
+    },
+  });
+}
+
 async function main() {
+  await seedAdmin();
+
   for (const categoria of CATEGORIAS) {
     await prisma.categoria.upsert({
       where: { slug: categoria.slug },
