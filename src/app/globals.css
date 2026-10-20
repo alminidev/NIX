@@ -611,6 +611,62 @@ h3 {
   border-color: rgba(23, 107, 255, 0.3);
 }
 
+.product-card-skeleton {
+  pointer-events: none;
+}
+
+.product-card-skeleton .card-media,
+.product-card-skeleton .skeleton-line,
+.product-card-skeleton .skeleton-button {
+  background-color: var(--color-surface-canvas-fog);
+  animation: product-skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+.skeleton-line,
+.skeleton-button {
+  display: block;
+  border-radius: var(--radius-input);
+}
+
+.skeleton-line {
+  height: 0.875rem;
+  margin-bottom: 10px;
+}
+
+.skeleton-line-badge {
+  width: 7.5rem;
+  height: 1.5rem;
+  border-radius: var(--radius-pill);
+  margin-bottom: 0;
+}
+
+.skeleton-line-title {
+  width: 58%;
+  height: 1.25rem;
+  margin-bottom: 12px;
+}
+
+.skeleton-line-short {
+  width: 72%;
+}
+
+.skeleton-dimensions {
+  height: 3rem;
+  margin: 8px 0 16px;
+}
+
+.skeleton-button {
+  height: 2.75rem;
+  margin-top: 12px;
+  border-radius: var(--radius-pill);
+}
+
+@keyframes product-skeleton-pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+
 .card-badge-top {
   display: flex;
   align-items: center;
