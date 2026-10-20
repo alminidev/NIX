@@ -56,47 +56,47 @@ export default function Dashboard({ metrics }: { metrics: DashboardMetrics }) {
   const comercial: MetricCard[] = [
     {
       label: "Vendas",
-      value: String(metrics.pedidos),
+      value: String(metrics.orders),
       hint: "Pedidos registrados",
       icon: "sales",
     },
     {
       label: "Receita",
-      value: formatarMoeda(metrics.receita),
+      value: formatarMoeda(metrics.revenue),
       hint: "Soma dos pedidos",
       icon: "revenue",
     },
     {
       label: "Ticket médio",
-      value: formatarMoeda(metrics.ticketMedio),
+      value: formatarMoeda(metrics.averageTicket),
       hint: "Receita dividida pelas vendas",
       icon: "ticket",
     },
   ];
 
-  const catalogo: MetricCard[] = [
+  const catalog: MetricCard[] = [
     {
       label: "Produtos ativos",
-      value: String(metrics.produtosAtivos),
+      value: String(metrics.activeProducts),
       hint: "Publicados no catálogo",
       icon: "products",
     },
     {
       label: "Preço médio",
-      value: formatarMoeda(metrics.precoMedio),
+      value: formatarMoeda(metrics.averagePrice),
       hint: "Média da tabela atual",
       icon: "average",
     },
     {
       label: "Valor do catálogo",
-      value: formatarMoeda(metrics.valorCatalogo),
+      value: formatarMoeda(metrics.catalogValue),
       hint: "Soma dos preços ativos",
       icon: "catalog",
     },
     {
       label: "Categorias",
-      value: String(metrics.categorias),
-      hint: `${metrics.destaques} em destaque`,
+      value: String(metrics.categories),
+      hint: `${metrics.featuredCount} em destaque`,
       icon: "categories",
     },
   ];
@@ -135,7 +135,7 @@ export default function Dashboard({ metrics }: { metrics: DashboardMetrics }) {
           <h2 id="metricas-catalogo">Catálogo</h2>
         </div>
         <div className="admin-metrics admin-metrics-4">
-          {catalogo.map((card) => (
+          {catalog.map((card) => (
             <Metric key={card.label} card={card} />
           ))}
         </div>
@@ -145,17 +145,17 @@ export default function Dashboard({ metrics }: { metrics: DashboardMetrics }) {
         <div className="admin-group-heading">
           <h2 id="destaques-catalogo">Em destaque</h2>
         </div>
-        {metrics.produtosDestaque.length === 0 ? (
+        {metrics.featuredProducts.length === 0 ? (
           <p className="admin-empty">Nenhum produto marcado como destaque.</p>
         ) : (
           <ul className="admin-product-list">
-            {metrics.produtosDestaque.map((produto) => (
-              <li key={produto.nome}>
+            {metrics.featuredProducts.map((product) => (
+              <li key={product.name}>
                 <div>
-                  <strong>{produto.nome}</strong>
-                  <span>{produto.categoria}</span>
+                  <strong>{product.name}</strong>
+                  <span>{product.category}</span>
                 </div>
-                <b>{formatarMoeda(produto.preco)}</b>
+                <b>{formatarMoeda(product.price)}</b>
               </li>
             ))}
           </ul>

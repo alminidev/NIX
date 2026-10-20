@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { CART_URL } from '@/data/produtos';
-import type { Produto } from '@/types/produto';
+import type { Product } from '@/types/product';
 import ProductCard from './ProductCard';
 import ProductLightbox from './ProductLightbox';
 
@@ -16,13 +16,13 @@ import ProductLightbox from './ProductLightbox';
  *
  * Integrado com ProductLightbox para ampliação acessível de fotos.
  */
-export default function ProductGrid({ produtos }: { produtos: Produto[] }) {
+export default function ProductGrid({ products }: { products: Product[] }) {
   const cartUrl = CART_URL;
-  const [activeLightboxProduto, setActiveLightboxProduto] = useState<Produto | null>(null);
+  const [activeLightboxProduct, setActiveLightboxProduct] = useState<Product | null>(null);
 
-  const armariosDryBox = produtos.filter((p) => p.sku.startsWith('NIX-DB'));
-  const estacoesSetupLab = produtos.filter(
-    (p) => p.sku.startsWith('NIX-STATION') || p.categoria.includes('Station')
+  const dryBoxCabinets = products.filter((product) => product.sku.startsWith('NIX-DB'));
+  const setupLabStations = products.filter(
+    (product) => product.sku.startsWith('NIX-STATION') || product.category.includes('Station')
   );
 
   return (
@@ -48,12 +48,12 @@ export default function ProductGrid({ produtos }: { produtos: Produto[] }) {
               </p>
             </div>
             <div className="products-subgrid grid-3-cols">
-              {armariosDryBox.map((produto) => (
+              {dryBoxCabinets.map((product) => (
                 <ProductCard
-                  key={produto.sku}
-                  produto={produto}
+                  key={product.sku}
+                  product={product}
                   cartUrl={cartUrl}
-                  onOpenLightbox={(prod) => setActiveLightboxProduto(prod)}
+                  onOpenLightbox={(item) => setActiveLightboxProduct(item)}
                 />
               ))}
             </div>
@@ -73,12 +73,12 @@ export default function ProductGrid({ produtos }: { produtos: Produto[] }) {
               </p>
             </div>
             <div className="products-subgrid grid-2-cols">
-              {estacoesSetupLab.map((produto) => (
+              {setupLabStations.map((product) => (
                 <ProductCard
-                  key={produto.sku}
-                  produto={produto}
+                  key={product.sku}
+                  product={product}
                   cartUrl={cartUrl}
-                  onOpenLightbox={(prod) => setActiveLightboxProduto(prod)}
+                  onOpenLightbox={(item) => setActiveLightboxProduct(item)}
                 />
               ))}
             </div>
@@ -96,9 +96,9 @@ export default function ProductGrid({ produtos }: { produtos: Produto[] }) {
 
       {/* Modal Acessível de Ampliação da Imagem (Lightbox) */}
       <ProductLightbox
-        produto={activeLightboxProduto}
-        isOpen={activeLightboxProduto !== null}
-        onClose={() => setActiveLightboxProduto(null)}
+        product={activeLightboxProduct}
+        isOpen={activeLightboxProduct !== null}
+        onClose={() => setActiveLightboxProduct(null)}
       />
     </section>
   );

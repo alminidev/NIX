@@ -7,14 +7,14 @@ import Diferenciais from '@/components/Diferenciais';
 import FAQ from '@/components/FAQ';
 import CtaFinal from '@/components/CtaFinal';
 import Footer from '@/components/Footer';
-import { getProdutos } from '@/lib/produtos';
+import { getProducts } from '@/lib/products';
 
 /**
  * Página Principal da NIX 3D (Single-page catalog).
  * Estrutura 1:1 idêntica ao HTML original (05-build/index.html).
  */
 export default async function Home() {
-  const produtos = await getProdutos();
+  const products = await getProducts();
 
   return (
     <>
@@ -22,7 +22,7 @@ export default async function Home() {
       <Header />
       <main id="main-content">
         <HeroStage />
-        <ProductGrid produtos={produtos} />
+        <ProductGrid products={products} />
         <LogisticsBar />
         <Diferenciais />
         <FAQ />

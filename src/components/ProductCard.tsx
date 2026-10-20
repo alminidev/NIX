@@ -1,10 +1,10 @@
 import { ArrowRight, Lock } from 'lucide-react';
-import type { Produto } from '@/types/produto';
+import type { Product } from '@/types/product';
 
 interface ProductCardProps {
-  produto: Produto;
+  product: Product;
   cartUrl: string;
-  onOpenLightbox?: (produto: Produto) => void;
+  onOpenLightbox?: (product: Product) => void;
 }
 
 /**
@@ -15,27 +15,27 @@ interface ProductCardProps {
  * Usa <img> nativa (não next/image) — mesmas dimensões de renderização do original (320x320 contain via CSS).
  * Ao clicar na imagem, abre o overlay de visualização ampliada (Lightbox).
  */
-export default function ProductCard({ produto, cartUrl, onOpenLightbox }: ProductCardProps) {
-  const urlCompra = `${cartUrl}?sku=${encodeURIComponent(produto.sku)}&id=${encodeURIComponent(produto.id)}`;
+export default function ProductCard({ product, cartUrl, onOpenLightbox }: ProductCardProps) {
+  const purchaseUrl = `${cartUrl}?sku=${encodeURIComponent(product.sku)}&id=${encodeURIComponent(product.id)}`;
 
   return (
-    <article className="product-card" data-sku={produto.sku} data-id={produto.id}>
+    <article className="product-card" data-sku={product.sku} data-id={product.id}>
       <div className="card-badge-top">
-        <span className="tag-capacity">{produto.capacidade}</span>
-        {produto.destaque && <span className="tag-featured">Mais Escolhido</span>}
+        <span className="tag-capacity">{product.capacity}</span>
+        {product.featured && <span className="tag-featured">Mais Escolhido</span>}
       </div>
 
       <div className="card-media">
         <button
           type="button"
           className="card-media-btn"
-          onClick={() => onOpenLightbox?.(produto)}
-          aria-label={`Ampliar foto de ${produto.nome}`}
+          onClick={() => onOpenLightbox?.(product)}
+          aria-label={`Ampliar foto de ${product.name}`}
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={produto.imagem}
-            alt={`${produto.nome} — Armazenamento com controle térmico para filamentos 3D`}
+            src={product.image}
+            alt={`${product.name} — Armazenamento com controle térmico para filamentos 3D`}
             loading="lazy"
             width={320}
             height={320}
@@ -44,17 +44,17 @@ export default function ProductCard({ produto, cartUrl, onOpenLightbox }: Produc
       </div>
 
       <div className="card-content">
-        <h3 className="card-title">{produto.nome}</h3>
-        <p className="card-desc">{produto.descricao}</p>
+        <h3 className="card-title">{product.name}</h3>
+        <p className="card-desc">{product.description}</p>
 
         <div className="card-dimensions-box">
           <span className="card-dimensions-label">Dimensões (C x L x A)</span>
-          <span className="card-dimensions-val">{produto.dimensoes}</span>
+          <span className="card-dimensions-val">{product.dimensions}</span>
         </div>
 
-        {produto.especificacoes.length > 0 && (
+        {product.specifications.length > 0 && (
           <ul className="card-specs">
-            {produto.especificacoes.map((spec, i) => (
+            {product.specifications.map((spec, i) => (
               <li key={i}>{spec}</li>
             ))}
           </ul>
@@ -64,19 +64,19 @@ export default function ProductCard({ produto, cartUrl, onOpenLightbox }: Produc
           <div className="card-price-row">
             <div className="card-price-col">
               <span className="card-price-label">Preço à vista</span>
-              <span className="card-price">{produto.precoFormatado}</span>
+              <span className="card-price">{product.formattedPrice}</span>
             </div>
-            <span className="card-installment">{produto.parcelamento}</span>
+            <span className="card-installment">{product.installments}</span>
           </div>
 
           <a
-            href={urlCompra}
+            href={purchaseUrl}
             className="btn-buy"
-            data-sku={produto.sku}
-            data-id={produto.id}
+            data-sku={product.sku}
+            data-id={product.id}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label={`Comprar ${produto.nome} no checkout seguro`}
+            aria-label={`Comprar ${product.name} no checkout seguro`}
           >
             Comprar
             <ArrowRight size={16} aria-hidden />

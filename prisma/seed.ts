@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { hashPassword } from 'better-auth/crypto';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../src/generated/prisma/client';
-import { CATEGORIAS, PRODUTOS } from './catalogo';
+import { CATEGORIES, PRODUCTS } from './catalog';
 
 const ADMIN_EMAIL = 'admin@admin.com';
 const ADMIN_PASSWORD = 'admin';
@@ -85,71 +85,71 @@ async function seedAdmin() {
 async function main() {
   await seedAdmin();
 
-  for (const categoria of CATEGORIAS) {
-    await prisma.categoria.upsert({
-      where: { slug: categoria.slug },
+  for (const category of CATEGORIES) {
+    await prisma.category.upsert({
+      where: { slug: category.slug },
       update: {
-        nome: categoria.nome,
-        ordem: categoria.ordem,
+        name: category.name,
+        sortOrder: category.sortOrder,
       },
-      create: categoria,
+      create: category,
     });
   }
 
-  for (const produto of PRODUTOS) {
-    const dados = {
-      sku: produto.sku,
-      nome: produto.nome,
-      capacidade: produto.capacidade,
-      dimensoes: produto.dimensoes,
-      preco: produto.preco,
-      parcelamento: produto.parcelamento,
-      descricao: produto.descricao,
-      destaque: produto.destaque,
-      ativo: true,
-      ordem: produto.ordem,
-      categoria: {
-        connect: { slug: produto.categoriaSlug },
+  for (const product of PRODUCTS) {
+    const data = {
+      sku: product.sku,
+      name: product.name,
+      capacity: product.capacity,
+      dimensions: product.dimensions,
+      price: product.price,
+      installments: product.installments,
+      description: product.description,
+      featured: product.featured,
+      active: true,
+      sortOrder: product.sortOrder,
+      category: {
+        connect: { slug: product.categorySlug },
       },
     };
 
-    const salvo = await prisma.produto.upsert({
-      where: { sku: produto.sku },
-      update: dados,
-      create: dados,
+    const saved = await prisma.product.upsert({
+      where: { sku: product.sku },
+      update: data,
+      create: data,
     });
 
-    await prisma.especificacao.deleteMany({ where: { produtoId: salvo.id } });
-    await prisma.produtoImagem.deleteMany({ where: { produtoId: salvo.id } });
+    await prisma.specification.deleteMany({ where: { productId: saved.id } });
+    await prisma.productImage.deleteMany({ where: { productId: saved.id } });
 
-    await prisma.especificacao.createMany({
-      data: produto.especificacoes.map((texto, ordem) => ({
-        texto,
-        ordem,
-        produtoId: salvo.id,
+    await prisma.specification.createMany({
+      data: product.specifications.map((text, sortOrder) => ({
+        text,
+        sortOrder,
+        productId: saved.id,
       })),
     });
 
-    await prisma.produtoImagem.createMany({
-      data: produto.imagens.map((imagem, ordem) => ({
-        url: imagem.url,
-        ordem,
-        principal: imagem.principal ?? ordem === 0,
-        produtoId: salvo.id,
+    await prisma.productImage.createMany({
+      data: product.images.map((image, sortOrder) => ({
+        url: image.url,
+        sortOrder,
+        isPrimary: image.isPrimary ?? sortOrder === 0,
+        productId: saved.id,
       })),
     });
   }
 
   await prisma.$queryRaw`
     SELECT setval(
-      pg_get_serial_sequence('categoria', 'id'),
-      COALESCE((SELECT MAX(id) FROM categoria), 1)
+      pg_get_serial_sequence('category', 'id'),
+      COALESCE((SELECT MAX(id) FROM category), 1)
     )
   `;
   await prisma.$queryRaw`
     SELECT setval(
-      pg_get_serial_sequence('produto', 'id'),
-      COALESCE((SELECT MAX(id) FROM produto), 1)
+      pg_get_serial_sequence('product', 'id'),
+      COALESCE((SELECT MAX(id) FROM product), 1)
     )
   `;
 }

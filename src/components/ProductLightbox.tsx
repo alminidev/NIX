@@ -3,10 +3,10 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { createPortal } from 'react-dom';
-import type { Produto } from '@/types/produto';
+import type { Product } from '@/types/product';
 
 interface ProductLightboxProps {
-  produto: Produto | null;
+  product: Product | null;
   isOpen: boolean;
   onClose: () => void;
   initialIndex?: number;
@@ -25,7 +25,7 @@ interface ProductLightboxProps {
  * - Respeita prefers-reduced-motion (sem animações nesse modo).
  */
 export default function ProductLightbox({
-  produto,
+  product,
   isOpen,
   onClose,
   initialIndex = 0,
@@ -46,10 +46,10 @@ export default function ProductLightbox({
   const panStartRef = useRef<{ x: number; y: number } | null>(null);
 
   // Lista de imagens do produto (se não houver galeria, usa a imagem principal)
-  const fotos: string[] = produto
-    ? produto.imagens && produto.imagens.length > 0
-      ? produto.imagens
-      : [produto.imagem]
+  const fotos: string[] = product
+    ? product.images && product.images.length > 0
+      ? product.images
+      : [product.image]
     : [];
 
   const temMultiplasFotos = fotos.length > 1;
@@ -235,10 +235,10 @@ export default function ProductLightbox({
     }
   };
 
-  if (!mounted || !isOpen || !produto) return null;
+  if (!mounted || !isOpen || !product) return null;
 
-  const currentFoto = fotos[currentIndex] || produto.imagem;
-  const altText = `${produto.nome} — Foto ampliada ${currentIndex + 1} de ${fotos.length}`;
+  const currentFoto = fotos[currentIndex] || product.image;
+  const altText = `${product.name} — Foto ampliada ${currentIndex + 1} de ${fotos.length}`;
 
   const lightboxContent = (
     <div
@@ -246,7 +246,7 @@ export default function ProductLightbox({
       className="nix-lightbox-overlay"
       role="dialog"
       aria-modal="true"
-      aria-label={`Visualização ampliada de ${produto.nome}`}
+      aria-label={`Visualização ampliada de ${product.name}`}
       onClick={(e) => {
         // Fecha ao clicar no backdrop (fora da imagem ou controles)
         if (e.target === e.currentTarget) {
@@ -256,7 +256,7 @@ export default function ProductLightbox({
     >
       <div className="nix-lightbox-header">
         <div className="nix-lightbox-info">
-          <span className="nix-lightbox-title">{produto.nome}</span>
+          <span className="nix-lightbox-title">{product.name}</span>
           {temMultiplasFotos && (
             <span className="nix-lightbox-counter">
               {currentIndex + 1} / {fotos.length}

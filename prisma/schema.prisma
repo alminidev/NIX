@@ -76,61 +76,61 @@ model Verification {
   @@map("verification")
 }
 
-model Categoria {
+model Category {
   id        Int       @id @default(autoincrement())
   slug      String    @unique
-  nome      String
-  ordem     Int       @default(0)
-  produtos  Produto[]
+  name      String
+  sortOrder Int       @default(0)
+  products  Product[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
-  @@map("categoria")
+  @@map("category")
 }
 
-model Produto {
-  id             Int             @id @default(autoincrement())
-  sku            String          @unique
-  nome           String
-  capacidade     String
-  dimensoes      String
-  preco          Decimal         @db.Decimal(10, 2)
-  parcelamento   String
-  descricao      String
-  destaque       Boolean         @default(false)
-  ativo          Boolean         @default(true)
-  ordem          Int             @default(0)
-  categoriaId    Int
-  categoria      Categoria       @relation(fields: [categoriaId], references: [id])
-  especificacoes Especificacao[]
-  imagens        ProdutoImagem[]
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+model Product {
+  id             Int            @id @default(autoincrement())
+  sku            String         @unique
+  name           String
+  capacity       String
+  dimensions     String
+  price          Decimal        @db.Decimal(10, 2)
+  installments   String
+  description    String
+  featured       Boolean        @default(false)
+  active         Boolean        @default(true)
+  sortOrder      Int            @default(0)
+  categoryId     Int
+  category       Category       @relation(fields: [categoryId], references: [id])
+  specifications Specification[]
+  images         ProductImage[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
 
-  @@index([categoriaId])
-  @@index([ativo, ordem])
-  @@map("produto")
+  @@index([categoryId])
+  @@index([active, sortOrder])
+  @@map("product")
 }
 
-model Especificacao {
+model Specification {
   id        Int     @id @default(autoincrement())
-  texto     String
-  ordem     Int     @default(0)
-  produtoId Int
-  produto   Produto @relation(fields: [produtoId], references: [id], onDelete: Cascade)
+  text      String
+  sortOrder Int     @default(0)
+  productId Int
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  @@index([produtoId])
-  @@map("especificacao")
+  @@index([productId])
+  @@map("specification")
 }
 
-model ProdutoImagem {
+model ProductImage {
   id        Int     @id @default(autoincrement())
   url       String
-  ordem     Int     @default(0)
-  principal Boolean @default(false)
-  produtoId Int
-  produto   Produto @relation(fields: [produtoId], references: [id], onDelete: Cascade)
+  sortOrder Int     @default(0)
+  isPrimary Boolean @default(false)
+  productId Int
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  @@index([produtoId])
-  @@map("produto_imagem")
+  @@index([productId])
+  @@map("product_image")
 }

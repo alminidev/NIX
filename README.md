@@ -118,35 +118,30 @@ nix-nextjs/
 
 ## 📦 4. Onde Editar Produtos, Preços e Galeria
 
-Todo o catálogo de produtos está isolado em um único arquivo:  
-👉 **`src/data/produtos.ts`**
+O catálogo persistido é semeado a partir de:  
+👉 **`prisma/catalog.ts`**
 
 ### Como alterar um preço ou descrição:
-Abra `src/data/produtos.ts` e localize o produto no array `PRODUTOS_NIX`. Exemplo:
+Abra `prisma/catalog.ts` e localize o produto no array `PRODUCTS`. Exemplo:
 ```ts
 {
-  id: 1,
   sku: 'NIX-DB12',
-  nome: 'DRY BOX 12',
-  categoria: 'Armários Dry Box',
-  capacidade: '12 filamentos',
-  dimensoes: '46 x 35 x 60 cm',
-  preco: 1190.00,                      // Valor numérico
-  precoFormatado: 'R$ 1.190,00',        // Valor formatado em tela
-  parcelamento: 'Até 3x sem juros',
-  descricao: 'Compacta e eficiente para o seu dia a dia.',
-  especificacoes: [
+  name: 'DRY BOX 12',
+  categorySlug: 'armarios',
+  capacity: '12 filamentos',
+  dimensions: '46 x 35 x 60 cm',
+  price: '1190.00',
+  installments: 'Até 3x sem juros',
+  description: 'Compacta e eficiente para o seu dia a dia.',
+  specifications: [
     'Capacidade: 12 filamentos',
     'Dimensões (C x L x A): 46 x 35 x 60 cm',
     'Controle térmico ativo permanente < 20% UR',
     'Display digital de temperatura e umidade',
   ],
-  imagem: '/images/dry-box-12.jpg',    // Foto principal
-  imagens: [                           // Opcional: galeria com mais fotos
-    '/images/dry-box-12.jpg',
-    '/images/hero-showroom.jpg'
-  ],
-  destaque: false,                     // true = badge "Mais Escolhido"
+  images: [{ url: '/images/dry-box-12.jpg', isPrimary: true }],
+  featured: false,
+  sortOrder: 1,
 }
 ```
 
@@ -177,33 +172,33 @@ Todos os botões *"Comprar"* dos cards, o botão *"Carrinho"* do topo e o botão
 Este front-end foi projetado para desacoplar a camada de apresentação do armazenamento de dados.
 
 ### 1. Contrato da Interface de Dados
-Localizado em **`src/types/produto.ts`**:
+Localizado em **`src/types/product.ts`**:
 ```ts
-export interface Produto {
+export interface Product {
   id: number;
   sku: string;
-  nome: string;
-  categoria: string;
-  capacidade: string;
-  dimensoes: string;
-  preco: number;
-  precoFormatado: string;
-  parcelamento: string;
-  descricao: string;
-  especificacoes: string[];
-  imagem: string;
-  imagens?: string[];
-  destaque: boolean;
+  name: string;
+  category: string;
+  capacity: string;
+  dimensions: string;
+  price: number;
+  formattedPrice: string;
+  installments: string;
+  description: string;
+  specifications: string[];
+  image: string;
+  images?: string[];
+  featured: boolean;
 }
 ```
 
 ### 2. Conectando com Banco de Dados (ex: Prisma, PostgreSQL, MongoDB)
-No arquivo **`src/data/produtos.ts`**, basta substituir o retorno estático da função `getProdutos()` pela chamada ao seu banco ou API:
+A leitura do catálogo fica em **`src/lib/products.ts`**, na função `getProducts()`:
 ```ts
-// Exemplo com Prisma / ORM:
-export async function getProdutos(): Promise<Produto[]> {
-  return await prisma.produto.findMany({
-    orderBy: { id: 'asc' }
+export async function getProducts(): Promise<Product[]> {
+  return prisma.product.findMany({
+    where: { active: true },
+    orderBy: { sortOrder: 'asc' },
   });
 }
 ```
