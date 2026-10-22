@@ -9,6 +9,13 @@ export interface IFeaturedProduct {
   price: number;
 }
 
+export interface IOutOfStockProduct {
+  id: number;
+  name: string;
+  sku: string;
+  category: string;
+}
+
 export interface IDashboardMetrics {
   orders: number;
   revenue: number;
@@ -19,4 +26,5 @@ export interface IDashboardMetrics {
   categories: number;
   featuredCount: number;
   featuredProducts: IFeaturedProduct[];
+  outOfStock: IOutOfStockProduct[];
 }

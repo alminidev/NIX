@@ -99,6 +99,7 @@ model Product {
   description    String
   featured       Boolean        @default(false)
   active         Boolean        @default(true)
+  stock          Int            @default(0)
   sortOrder      Int            @default(0)
   categoryId     Int
   category       Category       @relation(fields: [categoryId], references: [id])

@@ -128,6 +128,55 @@ export default function Dashboard({ metrics }: IDashboardProps) {
         </p>
       </header>
 
+      {metrics.outOfStock.length > 0 ? (
+        <section
+          className="flex flex-col gap-4 rounded-card border border-[#f0c7c7] bg-[#fff1f1] p-6"
+          aria-labelledby="sem-estoque"
+        >
+          <div className="flex flex-col gap-3 min-[720px]:flex-row min-[720px]:items-end min-[720px]:justify-between">
+            <div>
+              <h2
+                id="sem-estoque"
+                className="text-lg leading-[1.15] font-semibold tracking-[-0.02em] text-[#9b1c1c]"
+              >
+                Sem estoque
+              </h2>
+              <p className="mt-2 text-[0.9375rem] text-[#9b1c1c]">
+                {metrics.outOfStock.length === 1
+                  ? "1 produto está zerado."
+                  : `${metrics.outOfStock.length} produtos estão zerados.`}
+              </p>
+            </div>
+            <Link
+              href="/admin/stock"
+              className="text-sm font-semibold text-[#9b1c1c]"
+            >
+              Ver estoque
+            </Link>
+          </div>
+          <ul className="flex list-none flex-col">
+            {metrics.outOfStock.map((product) => (
+              <li
+                key={product.id}
+                className="flex items-center justify-between gap-4 border-t border-[#f0c7c7] py-3.5 first:border-t-0 first:pt-1"
+              >
+                <div>
+                  <strong className="block text-[0.9375rem] font-semibold text-ink-primary">
+                    {product.name}
+                  </strong>
+                  <span className="mt-0.5 block text-[0.8125rem] text-[#9b1c1c]">
+                    {product.sku} · {product.category}
+                  </span>
+                </div>
+                <b className="text-[0.9375rem] font-bold tracking-[-0.02em] whitespace-nowrap text-[#9b1c1c]">
+                  0
+                </b>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
       <section
         className="flex flex-col gap-4"
         aria-labelledby="metricas-comerciais"

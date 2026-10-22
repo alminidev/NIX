@@ -3,26 +3,42 @@ import { prisma } from "@/lib/prisma";
 import type { IDashboardMetrics } from "@/types/dashboard";
 
 export async function getDashboardMetrics(): Promise<IDashboardMetrics> {
-  const [activeProducts, categories, featuredCount, aggregates, featuredProducts] =
-    await Promise.all([
-      prisma.product.count({ where: { active: true } }),
-      prisma.category.count(),
-      prisma.product.count({ where: { active: true, featured: true } }),
-      prisma.product.aggregate({
-        where: { active: true },
-        _avg: { price: true },
-        _sum: { price: true },
-      }),
-      prisma.product.findMany({
-        where: { active: true, featured: true },
-        orderBy: { sortOrder: "asc" },
-        select: {
-          name: true,
-          price: true,
-          category: { select: { name: true } },
-        },
-      }),
-    ]);
+  const [
+    activeProducts,
+    categories,
+    featuredCount,
+    aggregates,
+    featuredProducts,
+    outOfStock,
+  ] = await Promise.all([
+    prisma.product.count({ where: { active: true } }),
+    prisma.category.count(),
+    prisma.product.count({ where: { active: true, featured: true } }),
+    prisma.product.aggregate({
+      where: { active: true },
+      _avg: { price: true },
+      _sum: { price: true },
+    }),
+    prisma.product.findMany({
+      where: { active: true, featured: true },
+      orderBy: { sortOrder: "asc" },
+      select: {
+        name: true,
+        price: true,
+        category: { select: { name: true } },
+      },
+    }),
+    prisma.product.findMany({
+      where: { stock: 0 },
+      orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+      select: {
+        id: true,
+        name: true,
+        sku: true,
+        category: { select: { name: true } },
+      },
+    }),
+  ]);
 
   return {
     orders: 0,
@@ -39,6 +55,12 @@ export async function getDashboardMetrics(): Promise<IDashboardMetrics> {
       name: product.name,
       category: product.category.name,
       price: Number(product.price),
+    })),
+    outOfStock: outOfStock.map((product) => ({
+      id: product.id,
+      name: product.name,
+      sku: product.sku,
+      category: product.category.name,
     })),
   };
 }

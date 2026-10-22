@@ -2,6 +2,7 @@
 
 import { useAuthContext } from "@/contexts/AuthContext";
 import {
+  Boxes,
   LayoutDashboard,
   LogOut,
   Package,
@@ -29,6 +30,7 @@ const navItems: {
 }[] = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/admin/products", label: "Produtos", icon: Package, exact: false },
+  { href: "/admin/stock", label: "Estoque", icon: Boxes, exact: true },
 ];
 
 function isCurrent(pathname: string, href: string, exact: boolean) {
