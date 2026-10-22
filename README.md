@@ -5,6 +5,7 @@
 ---
 
 ## 📋 Sumário
+
 1. [Pré-requisitos do Sistema](#-1-pré-requisitos-do-sistema)
 2. [Instalação e Comandos Rápidos](#-2-instalação-e-comandos-rápidos-passo-a-passo-para-iniciantes)
 3. [Estrutura de Pastas e Arquivos](#-3-estrutura-de-pastas-e-arquivos)
@@ -19,11 +20,13 @@
 ## ⚡ 1. Pré-requisitos do Sistema
 
 Antes de iniciar, certifique-se de ter instalado em seu computador:
+
 - **Node.js:** Versão `v18.17+` ou `v20+` (LTS recomendada; testado com sucesso no Node.js v24).
 - **npm:** Versão `v10+` (já acompanha a instalação do Node.js).
 - **Git:** Para controle de versão e download do repositório.
 
 Para verificar se estão instalados, abra o terminal e digite:
+
 ```bash
 node -v
 npm -v
@@ -34,18 +37,23 @@ npm -v
 ## 🚀 2. Instalação e Comandos Rápidos (Passo a Passo para Iniciantes)
 
 ### Passo 1: Entrar na pasta do projeto
+
 ```bash
 cd nix-nextjs
 ```
 
 ### Passo 2: Instalar as dependências
+
 Baixa e configura todos os pacotes necessários listados no `package.json`:
+
 ```bash
 npm install
 ```
 
 ### Passo 3: Configurar o arquivo de ambiente local
+
 Copie o template de exemplo para criar o seu arquivo de ambiente local:
+
 ```bash
 # No Windows (PowerShell):
 Copy-Item .env.example .env.local
@@ -55,13 +63,17 @@ cp .env.example .env.local
 ```
 
 ### Passo 4: Iniciar o servidor de desenvolvimento
+
 ```bash
 npm run dev
 ```
+
 Abra o navegador no endereço: **[http://localhost:3000](http://localhost:3000)**. O site recarrega automaticamente ao salvar alterações nos arquivos.
 
 ### Passo 5: Gerar o build de produção (para publicar)
+
 Para testar a compilação final otimizada antes do deploy:
+
 ```bash
 # Compila e valida todos os tipos TypeScript
 npm run build
@@ -121,8 +133,10 @@ nix-nextjs/
 O catálogo persistido é semeado a partir de:  
 👉 **`prisma/catalog.ts`**
 
-### Como alterar um preço ou descrição:
+### Como alterar um preço ou descrição
+
 Abra `prisma/catalog.ts` e localize o produto no array `PRODUCTS`. Exemplo:
+
 ```ts
 {
   sku: 'NIX-DB12',
@@ -153,17 +167,22 @@ A URL do checkout da **InfinitePay** é gerenciada de forma centralizada em um *
 
 1. **Via Variável de Ambiente (Recomendado em Produção):**  
    Edite o arquivo `.env.local` (ou configure no painel da sua hospedagem):
+
    ```env
    NEXT_PUBLIC_CART_URL=https://checkout.infinitepay.io/nix3d
    ```
+
 2. **Via Código (Fallback Central):**  
-   Caso nenhuma variável de ambiente seja definida, o endereço padrão fica centralizado em:  
-   👉 **`src/data/produtos.ts`** (linhas 9-10):
+    Caso nenhuma variável de ambiente seja definida, o endereço padrão fica centralizado em:  
+    👉 **`src/data/produtos.ts`** (linhas 9-10):
+
    ```ts
    export const CART_URL =
-     process.env.NEXT_PUBLIC_CART_URL ?? 'https://checkout.infinitepay.io/nix3d';
+     process.env.NEXT_PUBLIC_CART_URL ??
+     "https://checkout.infinitepay.io/nix3d";
    ```
-Todos os botões *"Comprar"* dos cards, o botão *"Carrinho"* do topo e o botão da Hero utilizam esse mesmo valor automaticamente.
+
+   Todos os botões _"Comprar"_ dos cards, o botão _"Carrinho"_ do topo e o botão da Hero utilizam esse mesmo valor automaticamente.
 
 ---
 
@@ -172,7 +191,9 @@ Todos os botões *"Comprar"* dos cards, o botão *"Carrinho"* do topo e o botão
 Este front-end foi projetado para desacoplar a camada de apresentação do armazenamento de dados.
 
 ### 1. Contrato da Interface de Dados
+
 Localizado em **`src/types/product.ts`**:
+
 ```ts
 export interface Product {
   id: number;
@@ -193,15 +214,18 @@ export interface Product {
 ```
 
 ### 2. Conectando com Banco de Dados (ex: Prisma, PostgreSQL, MongoDB)
+
 A leitura do catálogo fica em **`src/lib/products.ts`**, na função `getProducts()`:
+
 ```ts
 export async function getProducts(): Promise<Product[]> {
   return prisma.product.findMany({
     where: { active: true },
-    orderBy: { sortOrder: 'asc' },
+    orderBy: { sortOrder: "asc" },
   });
 }
 ```
+
 Como a página utiliza o modelo de componentes do Next.js App Router, a integração é direta.
 
 ---
@@ -210,7 +234,8 @@ Como a página utiliza o modelo de componentes do Next.js App Router, a integra�
 
 O componente **`src/components/ProductLightbox.tsx`** é responsável pela experiência imersiva de visualização dos produtos.
 
-### Comportamento e Funcionalidades:
+### Comportamento e Funcionalidades
+
 - **No Card de Produto (Repouso):** A aparência visual do card permanece 100% idêntica ao baseline original. A única diferença intencional é o cursor `zoom-in` sobre a foto, indicando que ela pode ser ampliada.
 - **No Desktop:**
   - Overlay escuro e neutro com efeito de vidro (`rgba(10, 11, 14, 0.94)` + `backdrop-filter`).
@@ -238,20 +263,55 @@ O componente **`src/components/ProductLightbox.tsx`** é responsável pela exper
 > **Status:** O método de publicação final pode ser definido de acordo com a preferência da equipe e do cliente. Abaixo estão as opções recomendadas prontas para uso:
 
 ### Opção A: Vercel (Recomendada pela infraestrutura Next.js)
+
 1. Crie uma conta em [vercel.com](https://vercel.com) e importe o repositório.
 2. Defina o **Root Directory** como `nix-nextjs`.
 3. Adicione a variável de ambiente `NEXT_PUBLIC_CART_URL` nas configurações do projeto.
 4. Clique em **Deploy**. A Vercel executará `npm run build` e configurará CDN global e SSL automaticamente.
 
 ### Opção B: Netlify
+
 1. Conecte o repositório no painel da [Netlify](https://netlify.com).
 2. Configure o Base Directory: `nix-nextjs`, Build command: `npm run build`, Publish directory: `.next`.
 3. Instale o plugin oficial `@netlify/plugin-nextjs`.
 
 ### Opção C: Cloudflare Pages / Servidor Node.js Próprio (VPS / Docker)
+
 Caso opte por hospedar em VPS Linux própria (Ubuntu / Debian com Docker ou PM2):
+
 ```bash
 npm run build
 npm run start
 ```
+
+\*Desempenho (Zero Layout Shift):\*\* A foto ampliada é renderizada sob demanda (lazy) via Portal React diretamente no `document.body`, não alterando a geometria dos cards.
+
+---
+
+## 🚢 8. Deploy e Hospedagem (A Definir)
+
+> **Status:** O método de publicação final pode ser definido de acordo com a preferência da equipe e do cliente. Abaixo estão as opções recomendadas prontas para uso:
+
+### Opção A: Vercel (Recomendada pela infraestrutura Next.js)
+
+1. Crie uma conta em [vercel.com](https://vercel.com) e importe o repositório.
+2. Defina o **Root Directory** como `nix-nextjs`.
+3. Adicione a variável de ambiente `NEXT_PUBLIC_CART_URL` nas configurações do projeto.
+4. Clique em **Deploy**. A Vercel executará `npm run build` e configurará CDN global e SSL automaticamente.
+
+### Opção B: Netlify
+
+1. Conecte o repositório no painel da [Netlify](https://netlify.com).
+2. Configure o Base Directory: `nix-nextjs`, Build command: `npm run build`, Publish directory: `.next`.
+3. Instale o plugin oficial `@netlify/plugin-nextjs`.
+
+### Opção C: Cloudflare Pages / Servidor Node.js Próprio (VPS / Docker)
+
+Caso opte por hospedar em VPS Linux própria (Ubuntu / Debian com Docker ou PM2):
+
+```bash
+npm run build
+npm run start
+```
+
 Configure um proxy reverso no Nginx apontando para a porta `3000` com certificado SSL gratuito do Let's Encrypt.

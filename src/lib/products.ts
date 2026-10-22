@@ -32,6 +32,8 @@ export async function getProducts(): Promise<IProduct[]> {
       sku: product.sku,
       name: product.name,
       category: product.category.name,
+      categorySlug: product.category.slug,
+      categorySortOrder: product.category.sortOrder,
       capacity: product.capacity,
       dimensions: product.dimensions,
       price: Number(product.price),

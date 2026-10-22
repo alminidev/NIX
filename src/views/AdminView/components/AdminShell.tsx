@@ -1,9 +1,14 @@
 "use client";
 
 import { useAuthContext } from "@/contexts/AuthContext";
-import { LayoutDashboard, LogOut } from "lucide-react";
+import {
+  LayoutDashboard,
+  LogOut,
+  Package,
+  type LucideIcon,
+} from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
 interface IAdminShellUser {
@@ -16,11 +21,35 @@ interface IAdminShellProps {
   children: React.ReactNode;
 }
 
+const navItems: {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+  exact: boolean;
+}[] = [
+  { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
+  { href: "/admin/products", label: "Produtos", icon: Package, exact: false },
+];
+
+function isCurrent(pathname: string, href: string, exact: boolean) {
+  if (exact) return pathname === href;
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function isProductEditor(pathname: string) {
+  return (
+    pathname === "/admin/products/new" ||
+    /^\/admin\/products\/\d+$/.test(pathname)
+  );
+}
+
 export default function AdminShell({ user, children }: IAdminShellProps) {
   const { signOut } = useAuthContext();
   const router = useRouter();
+  const pathname = usePathname();
   const [signingOut, setSigningOut] = useState(false);
   const inicial = user.name.trim().charAt(0).toUpperCase() || "A";
+  const editor = isProductEditor(pathname);
 
   async function handleSignOut() {
     setSigningOut(true);
@@ -30,7 +59,7 @@ export default function AdminShell({ user, children }: IAdminShellProps) {
 
   return (
     <div className="flex min-h-screen w-full flex-1 flex-col items-stretch bg-surface-canvas-fog min-[861px]:flex-row">
-      <aside className="static flex h-auto w-full shrink-0 flex-col justify-between gap-6 border-b border-border-hairline bg-surface-card px-4 pt-5 pb-4 min-[861px]:sticky min-[861px]:top-0 min-[861px]:h-screen min-[861px]:w-[264px] min-[861px]:border-r min-[861px]:border-b-0">
+      <aside className="static flex h-auto w-full shrink-0 flex-col justify-between gap-6 border-b border-border-hairline bg-surface-card px-4 pt-5 pb-4 min-[861px]:sticky min-[861px]:top-0 min-[861px]:h-screen min-[861px]:w-66 min-[861px]:border-r min-[861px]:border-b-0">
         <div>
           <Link
             href="/admin"
@@ -46,18 +75,32 @@ export default function AdminShell({ user, children }: IAdminShellProps) {
             />
           </Link>
 
-          <nav className="mt-3 flex flex-col gap-1" aria-label="Painel administrativo">
-            <p className="mx-2 mb-2 text-[0.6875rem] font-semibold tracking-[0.05em] text-ink-muted uppercase">
+          <nav
+            className="mt-3 flex flex-col gap-1"
+            aria-label="Painel administrativo"
+          >
+            <p className="mx-2 mb-2 text-[0.6875rem] font-semibold tracking-wider text-ink-muted uppercase">
               Navegação
             </p>
-            <Link
-              href="/admin"
-              className="flex min-h-11 items-center gap-2.5 rounded-pill border border-[rgba(23,107,255,0.2)] bg-brand-blue-subtle px-3 text-sm font-semibold text-brand-blue-hover transition-[background-color,color,border-color] duration-200 ease-nix hover:bg-brand-blue-subtle hover:text-brand-blue-hover"
-              aria-current="page"
-            >
-              <LayoutDashboard size={18} aria-hidden />
-              Dashboard
-            </Link>
+            {navItems.map((item) => {
+              const current = isCurrent(pathname, item.href, item.exact);
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={
+                    current
+                      ? "flex min-h-11 items-center gap-2.5 rounded-pill border border-[rgba(23,107,255,0.2)] bg-brand-blue-subtle px-3 text-sm font-semibold text-brand-blue-hover transition-[background-color,color,border-color] duration-200 ease-nix"
+                      : "flex min-h-11 items-center gap-2.5 rounded-pill border border-transparent px-3 text-sm font-semibold text-ink-secondary transition-[background-color,color,border-color] duration-200 ease-nix hover:bg-brand-blue-subtle hover:text-brand-blue-hover"
+                  }
+                  aria-current={current ? "page" : undefined}
+                >
+                  <Icon size={18} aria-hidden />
+                  {item.label}
+                </Link>
+              );
+            })}
           </nav>
         </div>
 
@@ -91,7 +134,13 @@ export default function AdminShell({ user, children }: IAdminShellProps) {
         </div>
       </aside>
 
-      <main className="flex w-full min-w-0 flex-1 flex-col px-5 pt-7 pb-12 min-[861px]:px-10 min-[861px]:pt-10 min-[861px]:pb-16">
+      <main
+        className={
+          editor
+            ? "flex w-full min-w-0 flex-1 flex-col"
+            : "flex w-full min-w-0 flex-1 flex-col px-5 pt-7 pb-12 min-[861px]:px-10 min-[861px]:pt-10 min-[861px]:pb-16"
+        }
+      >
         {children}
       </main>
     </div>

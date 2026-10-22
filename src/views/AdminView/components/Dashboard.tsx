@@ -10,6 +10,7 @@ import {
   Ticket,
   type LucideIcon,
 } from "lucide-react";
+import Link from "next/link";
 
 const moeda = new Intl.NumberFormat("pt-BR", {
   style: "currency",
@@ -122,7 +123,7 @@ export default function Dashboard({ metrics }: IDashboardProps) {
         <h1 className="text-[1.75rem] leading-[1.15] font-semibold tracking-[-0.02em] text-ink-primary">
           Dashboard
         </h1>
-        <p className="mt-2 max-w-[560px] text-[0.9375rem] text-ink-secondary">
+        <p className="mt-2 max-w-140 text-[0.9375rem] text-ink-secondary">
           Movimento comercial e posição atual do catálogo NIX.
         </p>
       </header>
@@ -138,7 +139,7 @@ export default function Dashboard({ metrics }: IDashboardProps) {
           >
             Comercial
           </h2>
-          <p className="mt-2 max-w-[560px] text-[0.9375rem] text-ink-secondary">
+          <p className="mt-2 max-w-140 text-[0.9375rem] text-ink-secondary">
             Pedidos ainda não entram neste painel. Os valores ficam zerados até
             a integração de checkout.
           </p>
@@ -150,14 +151,23 @@ export default function Dashboard({ metrics }: IDashboardProps) {
         </div>
       </section>
 
-      <section className="flex flex-col gap-4" aria-labelledby="metricas-catalogo">
-        <div>
+      <section
+        className="flex flex-col gap-4"
+        aria-labelledby="metricas-catalogo"
+      >
+        <div className="flex items-end justify-between gap-4">
           <h2
             id="metricas-catalogo"
             className="text-lg leading-[1.15] font-semibold tracking-[-0.02em] text-ink-primary"
           >
             Catálogo
           </h2>
+          <Link
+            href="/admin/products"
+            className="text-sm font-semibold text-brand-blue-hover"
+          >
+            Gerenciar produtos
+          </Link>
         </div>
         <div className="grid grid-cols-1 gap-4 min-[861px]:grid-cols-2 min-[1081px]:grid-cols-4">
           {catalog.map((card) => (

@@ -13,6 +13,10 @@ export interface IProduct {
   name: string;
   /** Categoria editorial (ex: 'Armários Dry Box', 'Dry Box Station') */
   category: string;
+  /** Slug estável da categoria (ex: 'armarios', 'stations') */
+  categorySlug: string;
+  /** Ordem da categoria no catálogo */
+  categorySortOrder: number;
   /** Capacidade em texto (ex: '12 filamentos') */
   capacity: string;
   /** Dimensões em texto (ex: '46 x 35 x 60 cm') */
