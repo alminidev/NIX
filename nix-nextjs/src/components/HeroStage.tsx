@@ -9,7 +9,7 @@ export default function HeroStage() {
       <div className="hero-media-wrapper">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/images/hero-showroom.jpg"
+          src="/images/hero-showroom-oficial.png"
           alt="Linha completa NIX em estúdio showroom"
           width={1920}
           height={1080}
@@ -19,7 +19,9 @@ export default function HeroStage() {
 
       <div className="container hero-container">
         <div className="hero-content">
-          <h1 className="hero-title">A evolução definitiva do seu setup de impressão 3D.</h1>
+          <h1 className="hero-title">
+            A evolução definitiva do seu<br />setup de impressão 3D.
+          </h1>
         </div>
       </div>
     </section>
