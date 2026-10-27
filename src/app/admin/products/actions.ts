@@ -85,7 +85,9 @@ export async function saveProduct(
         sku: input.sku,
         name: input.name,
         capacity: input.capacity,
-        dimensions: input.dimensions,
+        width: input.dimensions.width,
+        height: input.dimensions.height,
+        depth: input.dimensions.depth,
         price: input.price,
         installments: input.installments,
         description: input.description,
@@ -163,6 +165,13 @@ export async function deleteProduct(
   } catch (error) {
     if (prismaCode(error) === "P2025") {
       return { status: "error", message: "Este produto não existe mais." };
+    }
+    if (prismaCode(error) === "P2003") {
+      return {
+        status: "error",
+        message:
+          "Este produto tem pedidos e não pode ser excluído. Desative-o para tirá-lo da vitrine.",
+      };
     }
     throw error;
   }

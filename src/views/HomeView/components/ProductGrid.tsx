@@ -1,6 +1,5 @@
 "use client";
 
-import { CART_URL } from "@/data/produtos";
 import type { IProduct } from "@/types/product";
 import { useState } from "react";
 import ProductCard from "../../../components/ProductCard";
@@ -60,7 +59,6 @@ function groupByCategory(products: IProduct[]) {
  * Todo produto ativo entra na seção da própria categoria, independente do SKU.
  */
 export default function ProductGrid({ products }: IProductGridProps) {
-  const cartUrl = CART_URL;
   const [activeLightboxProduct, setActiveLightboxProduct] =
     useState<IProduct | null>(null);
   const sections = groupByCategory(products);
@@ -109,7 +107,6 @@ export default function ProductGrid({ products }: IProductGridProps) {
                     <ProductCard
                       key={product.sku}
                       product={product}
-                      cartUrl={cartUrl}
                       onOpenLightbox={(item) => setActiveLightboxProduct(item)}
                     />
                   ))}

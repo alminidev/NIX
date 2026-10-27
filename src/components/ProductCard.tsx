@@ -1,9 +1,14 @@
+"use client";
+
+import { useCartContext, type TAddItemResult } from "@/contexts/CartContext";
+import { formatDimensions } from "@/lib/product-dimensions";
 import type { IProduct } from "@/types/product";
-import { ArrowRight, Lock } from "lucide-react";
+import { Lock, ShoppingCart } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
 
 interface IProductCardProps {
   product: IProduct;
-  cartUrl: string;
   onOpenLightbox?: (product: IProduct) => void;
 }
 
@@ -16,10 +21,24 @@ interface IProductCardProps {
  */
 export default function ProductCard({
   product,
-  cartUrl,
   onOpenLightbox,
 }: IProductCardProps) {
-  const purchaseUrl = `${cartUrl}?sku=${encodeURIComponent(product.sku)}&id=${encodeURIComponent(product.id)}`;
+  const { addItem } = useCartContext();
+  const [adding, setAdding] = useState(false);
+  const [result, setResult] = useState<TAddItemResult | null>(null);
+
+  async function handleAdd() {
+    setAdding(true);
+    setResult(await addItem(product.id));
+    setAdding(false);
+  }
+
+  const feedback: Record<TAddItemResult, string> = {
+    added: "Produto adicionado ao carrinho.",
+    limit: "Você já tem todas as unidades disponíveis no carrinho.",
+    unavailable: "Este produto está indisponível no momento.",
+    error: "Não foi possível adicionar. Tente novamente.",
+  };
 
   return (
     <article
@@ -70,7 +89,7 @@ export default function ProductCard({
             Dimensões (C x L x A)
           </span>
           <span className="text-[0.8125rem] font-semibold text-ink-primary">
-            {product.dimensions}
+            {formatDimensions(product.dimensions)}
           </span>
         </div>
 
@@ -102,18 +121,40 @@ export default function ProductCard({
             </span>
           </div>
 
-          <a
-            href={purchaseUrl}
-            className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-pill bg-brand-blue px-6 py-3 text-[0.9375rem] font-semibold text-ink-inverse transition-all duration-200 ease-nix hover:-translate-y-px hover:bg-brand-blue-hover"
+          <button
+            type="button"
+            onClick={handleAdd}
+            disabled={!product.inStock || adding}
+            className="inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-pill bg-brand-blue px-6 py-3 text-[0.9375rem] font-semibold text-ink-inverse transition-all duration-200 ease-nix hover:-translate-y-px hover:bg-brand-blue-hover disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
             data-sku={product.sku}
             data-id={product.id}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={`Comprar ${product.name} no checkout seguro`}
+            aria-label={
+              product.inStock
+                ? `Adicionar ${product.name} ao carrinho`
+                : `${product.name} indisponível`
+            }
           >
-            Comprar
-            <ArrowRight size={16} aria-hidden />
-          </a>
+            {product.inStock ? "Adicionar ao carrinho" : "Indisponível"}
+            <ShoppingCart size={16} aria-hidden />
+          </button>
+
+          <p
+            className="text-center text-xs font-medium text-ink-secondary empty:hidden [&:not(:empty)]:mt-2"
+            role="status"
+          >
+            {result ? feedback[result] : null}
+            {result === "added" || result === "limit" ? (
+              <>
+                {" "}
+                <Link
+                  href="/cart"
+                  className="font-semibold text-brand-blue-hover underline"
+                >
+                  Ver carrinho
+                </Link>
+              </>
+            ) : null}
+          </p>
 
           <div
             className="mt-2.5 flex items-center justify-center gap-1.5 text-[0.6875rem] font-medium text-ink-muted"

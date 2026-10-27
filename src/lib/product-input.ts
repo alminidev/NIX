@@ -1,4 +1,6 @@
+import { maxDimension, parseDimension } from "@/lib/product-dimensions";
 import type { IProductFieldErrors } from "@/types/admin-product";
+import type { IProductDimensions } from "@/types/product";
 
 export interface IProductImageInput {
   url: string;
@@ -10,7 +12,7 @@ export interface IProductInput {
   name: string;
   categoryId: number;
   capacity: string;
-  dimensions: string;
+  dimensions: IProductDimensions;
   price: string;
   installments: string;
   description: string;
@@ -31,7 +33,6 @@ export const productFieldLimits = {
   sku: 64,
   name: 160,
   capacity: 120,
-  dimensions: 120,
   installments: 120,
   description: 1000,
   specification: 240,
@@ -102,7 +103,9 @@ export function readProductForm(formData: FormData): IParsedProductForm {
   const name = readString(formData, "name");
   const categoryRaw = readString(formData, "categoryId");
   const capacity = readString(formData, "capacity");
-  const dimensions = readString(formData, "dimensions");
+  const depth = parseDimension(readString(formData, "dimensionDepth"));
+  const width = parseDimension(readString(formData, "dimensionWidth"));
+  const height = parseDimension(readString(formData, "dimensionHeight"));
   const installments = readString(formData, "installments");
   const description = readString(formData, "description");
   const sortRaw = readString(formData, "sortOrder");
@@ -130,10 +133,8 @@ export function readProductForm(formData: FormData): IParsedProductForm {
     fieldErrors.capacity = `A capacidade pode ter no máximo ${productFieldLimits.capacity} caracteres.`;
   }
 
-  if (!dimensions) {
-    fieldErrors.dimensions = "Informe as dimensões.";
-  } else if (dimensions.length > productFieldLimits.dimensions) {
-    fieldErrors.dimensions = `As dimensões podem ter no máximo ${productFieldLimits.dimensions} caracteres.`;
+  if (depth === null || width === null || height === null) {
+    fieldErrors.dimensions = `Informe comprimento, largura e altura em cm, de 0,1 a ${maxDimension.toLocaleString("pt-BR")}, com no máximo uma casa decimal.`;
   }
 
   if (!installments) {
@@ -183,7 +184,13 @@ export function readProductForm(formData: FormData): IParsedProductForm {
     fieldErrors.images = "Use um caminho do site (/images/...) ou um endereço http(s).";
   }
 
-  if (Object.keys(fieldErrors).length > 0 || !("value" in priceResult)) {
+  if (
+    Object.keys(fieldErrors).length > 0 ||
+    !("value" in priceResult) ||
+    depth === null ||
+    width === null ||
+    height === null
+  ) {
     return { id, input: null, fieldErrors };
   }
 
@@ -203,7 +210,7 @@ export function readProductForm(formData: FormData): IParsedProductForm {
       name,
       categoryId: Number(categoryRaw),
       capacity,
-      dimensions,
+      dimensions: { depth, width, height },
       price: priceResult.value,
       installments,
       description,

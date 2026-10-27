@@ -33,7 +33,11 @@ function toAdminProduct(product: TProductRecord): IAdminProduct {
     categoryId: product.categoryId,
     category: product.category.name,
     capacity: product.capacity,
-    dimensions: product.dimensions,
+    dimensions: {
+      width: Number(product.width),
+      height: Number(product.height),
+      depth: Number(product.depth),
+    },
     price: priceInput.format(Number(product.price)),
     formattedPrice: currency.format(Number(product.price)),
     installments: product.installments,

@@ -1,6 +1,11 @@
 "use client";
 
 import { saveProduct } from "@/app/admin/products/actions";
+import {
+  formatDimensionInput,
+  formatDimensions,
+  parseDimension,
+} from "@/lib/product-dimensions";
 import { productFieldLimits } from "@/lib/product-input";
 import {
   productFormInitialState,
@@ -74,7 +79,15 @@ export default function ProductForm({
     product?.installments ?? "Até 3x sem juros",
   );
   const [capacity, setCapacity] = useState(product?.capacity ?? "");
-  const [dimensions, setDimensions] = useState(product?.dimensions ?? "");
+  const [depth, setDepth] = useState(
+    product ? formatDimensionInput(product.dimensions.depth) : "",
+  );
+  const [width, setWidth] = useState(
+    product ? formatDimensionInput(product.dimensions.width) : "",
+  );
+  const [height, setHeight] = useState(
+    product ? formatDimensionInput(product.dimensions.height) : "",
+  );
   const [description, setDescription] = useState(product?.description ?? "");
   const [active, setActive] = useState(product?.active ?? true);
   const [featured, setFeatured] = useState(product?.featured ?? false);
@@ -93,6 +106,17 @@ export default function ProductForm({
     categories.find((category) => category.id === categoryId)?.name ?? "";
   const primaryImage = images.find((image) => image.isPrimary) ?? images[0];
   const visibleSpecs = specs.map((spec) => spec.value.trim()).filter(Boolean);
+  const parsedDepth = parseDimension(depth);
+  const parsedWidth = parseDimension(width);
+  const parsedHeight = parseDimension(height);
+  const dimensions =
+    parsedDepth !== null && parsedWidth !== null && parsedHeight !== null
+      ? formatDimensions({
+          depth: parsedDepth,
+          width: parsedWidth,
+          height: parsedHeight,
+        })
+      : "";
   const title = name.trim() || (product ? "Editar produto" : "Novo produto");
 
   function addSpec() {
@@ -403,24 +427,53 @@ export default function ProductForm({
               </Field>
 
               <Field
-                label="Dimensões"
+                label="Dimensões (cm)"
                 error={errors.dimensions}
                 errorId="dimensions-error"
               >
-                <input
-                  name="dimensions"
-                  value={dimensions}
-                  onChange={(event) => setDimensions(event.target.value)}
-                  placeholder="46 x 35 x 60 cm"
-                  required
-                  maxLength={productFieldLimits.dimensions}
-                  disabled={pending}
-                  aria-invalid={Boolean(errors.dimensions)}
-                  aria-describedby={
-                    errors.dimensions ? "dimensions-error" : undefined
-                  }
-                  className={controlClass(Boolean(errors.dimensions))}
-                />
+                <div className="grid grid-cols-3 gap-3">
+                  {[
+                    {
+                      name: "dimensionDepth",
+                      label: "Comprimento",
+                      placeholder: "46",
+                      value: depth,
+                      onChange: setDepth,
+                    },
+                    {
+                      name: "dimensionWidth",
+                      label: "Largura",
+                      placeholder: "35",
+                      value: width,
+                      onChange: setWidth,
+                    },
+                    {
+                      name: "dimensionHeight",
+                      label: "Altura",
+                      placeholder: "60",
+                      value: height,
+                      onChange: setHeight,
+                    },
+                  ].map((side) => (
+                    <input
+                      key={side.name}
+                      name={side.name}
+                      value={side.value}
+                      onChange={(event) => side.onChange(event.target.value)}
+                      placeholder={side.placeholder}
+                      aria-label={`${side.label} em cm`}
+                      inputMode="decimal"
+                      required
+                      maxLength={7}
+                      disabled={pending}
+                      aria-invalid={Boolean(errors.dimensions)}
+                      aria-describedby={
+                        errors.dimensions ? "dimensions-error" : undefined
+                      }
+                      className={controlClass(Boolean(errors.dimensions))}
+                    />
+                  ))}
+                </div>
               </Field>
 
               <Field

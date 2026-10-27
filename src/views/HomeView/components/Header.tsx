@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { MessageCircle, ShoppingCart } from 'lucide-react';
-import { CART_URL } from '@/data/produtos';
+import { useCartContext } from '@/contexts/CartContext';
+import Link from 'next/link';
 
 /**
  * Header — Cabeçalho fixo (sticky) da NIX 3D.
@@ -14,18 +15,17 @@ import { CART_URL } from '@/data/produtos';
  *    → useEffect + IntersectionObserver
  *    rootMargin: '-20% 0px -65% 0px'
  *
- * URL do carrinho:
- *    Centralizada em @/data/produtos (lê process.env.NEXT_PUBLIC_CART_URL).
+ * Carrinho:
+ *    O botão leva a /cart e mostra a quantidade de itens guardada no navegador.
  *
- * PONTO DE INTEGRAÇÃO (programador back-end):
- *    Contador do ícone do carrinho — veja o comentário TODO abaixo.
+ * Em outras páginas (ex: /cart), passe homePath="/" para que os links de
+ * seção voltem para a página inicial.
  */
-export default function Header() {
+export default function Header({ homePath = '' }: { homePath?: string }) {
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState<string>('');
 
-  // URL de checkout centralizada — altere em @/data/produtos ou .env.local
-  const cartUrl = CART_URL;
+  const { itemCount, isReady } = useCartContext();
   const whatsappUrl =
     'https://wa.me/5511999999999?text=Ol%C3%A1!%20Gostaria%20de%20informa%C3%A7%C3%B5es%20sobre%20as%20Dry%20Boxes%20da%20NIX%203D';
 
@@ -75,7 +75,7 @@ export default function Header() {
       className={`sticky top-0 z-[100] h-16 w-full border-b border-border-hairline bg-white transition-shadow duration-200 ease-nix max-[640px]:h-14 ${scrolled ? 'shadow-sticky-nav' : ''}`}
     >
       <div className="mx-auto flex h-full w-full max-w-[1200px] items-center justify-between px-4 min-[640px]:px-6">
-        <a href="#hero" className="flex items-center" aria-label="NIX 3D — Página Inicial">
+        <a href={`${homePath}#hero`} className="flex items-center" aria-label="NIX 3D — Página Inicial">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/images/logo-nix.png"
@@ -94,7 +94,7 @@ export default function Header() {
               return (
                 <li key={href}>
                   <a
-                    href={href}
+                    href={`${homePath}${href}`}
                     className={`text-sm font-medium transition-colors hover:text-brand-blue ${isActive ? 'text-brand-blue' : 'text-ink-secondary'}`}
                   >
                     {label}
@@ -117,22 +117,24 @@ export default function Header() {
             <span>Fale com a Nix</span>
           </a>
 
-          <a
+          <Link
             id="btn-header-cart"
-            href={cartUrl}
+            href="/cart"
             className="inline-flex min-h-11 items-center justify-center gap-2 rounded-pill border border-[rgba(23,107,255,0.2)] bg-brand-blue-subtle px-[18px] py-2.5 text-sm font-semibold text-brand-blue-hover transition-all duration-200 ease-nix hover:-translate-y-px hover:bg-brand-blue hover:text-ink-inverse"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Ir para o carrinho de compras seguro"
+            aria-label={
+              isReady && itemCount > 0
+                ? `Ir para o carrinho de compras, ${itemCount} ${itemCount === 1 ? 'item' : 'itens'}`
+                : 'Ir para o carrinho de compras'
+            }
           >
             <ShoppingCart size={18} aria-hidden />
             <span>Carrinho</span>
-            {/*
-              TODO (programador back-end):
-              Conecte aqui a quantidade de itens do carrinho para exibir o badge.
-              Exemplo: <span className="rounded-pill bg-brand-blue px-1.5 text-xs text-white">{cartCount}</span>
-            */}
-          </a>
+            {isReady && itemCount > 0 ? (
+              <span className="rounded-pill bg-brand-blue px-1.5 text-xs text-white">
+                {itemCount}
+              </span>
+            ) : null}
+          </Link>
         </div>
       </div>
     </header>

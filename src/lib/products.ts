@@ -35,7 +35,11 @@ export async function getProducts(): Promise<IProduct[]> {
       categorySlug: product.category.slug,
       categorySortOrder: product.category.sortOrder,
       capacity: product.capacity,
-      dimensions: product.dimensions,
+      dimensions: {
+        width: Number(product.width),
+        height: Number(product.height),
+        depth: Number(product.depth),
+      },
       price: Number(product.price),
       formattedPrice: currency.format(Number(product.price)),
       installments: product.installments,
@@ -43,6 +47,7 @@ export async function getProducts(): Promise<IProduct[]> {
       specifications: product.specifications.map((item) => item.text),
       image: primary?.url ?? "",
       images: urls.length > 1 ? urls : undefined,
+      inStock: product.stock > 0,
       featured: product.featured,
     };
   });

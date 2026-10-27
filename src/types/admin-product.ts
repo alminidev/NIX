@@ -3,6 +3,8 @@
  * getAdminProducts() em lib/admin-products.ts devolve objetos neste formato.
  */
 
+import type { IProductDimensions } from "@/types/product";
+
 export interface IAdminCategory {
   id: number;
   name: string;
@@ -20,7 +22,7 @@ export interface IAdminProduct {
   categoryId: number;
   category: string;
   capacity: string;
-  dimensions: string;
+  dimensions: IProductDimensions;
   /** Valor editável em pt-BR, sem símbolo (ex: '1.190,00') */
   price: string;
   formattedPrice: string;
