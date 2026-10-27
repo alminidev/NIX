@@ -107,6 +107,7 @@ model Product {
   category       Category       @relation(fields: [categoryId], references: [id])
   specifications Specification[]
   images         ProductImage[]
+  orderItems     OrderItem[]
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
@@ -136,4 +137,66 @@ model ProductImage {
 
   @@index([productId])
   @@map("product_image")
+}
+
+enum OrderStatus {
+  AWAITING_PAYMENT
+  PAID
+  IN_PRODUCTION
+  READY
+  SHIPPED
+  CANCELLED
+
+  @@map("order_status")
+}
+
+enum OrderSource {
+  SITE
+  WHATSAPP
+  INSTAGRAM
+
+  @@map("order_source")
+}
+
+model Order {
+  id            Int         @id @default(autoincrement())
+  status        OrderStatus @default(AWAITING_PAYMENT)
+  source        OrderSource @default(SITE)
+  subtotal      Decimal     @db.Decimal(10, 2)
+  // null enquanto o frete não foi cotado
+  shipping      Decimal?    @db.Decimal(10, 2)
+  total         Decimal     @db.Decimal(10, 2)
+  customerName  String
+  customerEmail String
+  customerPhone String
+  postalCode    String
+  street        String
+  number        String
+  complement    String?
+  neighborhood  String
+  city          String
+  state         String
+  trackingCode  String?
+  items         OrderItem[]
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([status, createdAt])
+  @@index([customerEmail])
+  @@map("order")
+}
+
+model OrderItem {
+  id        Int     @id @default(autoincrement())
+  quantity  Int
+  // preço unitário congelado no momento do pedido
+  unitPrice Decimal @db.Decimal(10, 2)
+  orderId   Int
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_item")
 }
