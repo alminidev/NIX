@@ -42,6 +42,8 @@ export interface IOrderCreated {
   subtotal: number;
   shipping: number | null;
   total: number;
+  /** Prazo para pagar; depois dele o pedido expira */
+  expiresAt: Date;
 }
 
 export interface ICheckoutFieldErrors {

@@ -1,7 +1,9 @@
 import { InsufficientStockError } from "@/app/_errors/insufficient-stock.error";
 import { AppError } from "@/app/_errors/app.error";
 import { calculateSubtotal, calculateTotal } from "@/lib/cart-calculation";
+import { calculateExpiresAt } from "@/lib/order-expiration";
 import { prisma } from "@/lib/prisma";
+import type { OrderStatus } from "@/generated/prisma/enums";
 import type { IOrderCreated, IOrderInput } from "@/types/order";
 import "server-only";
 
@@ -12,13 +14,17 @@ import "server-only";
  *    (stock >= quantidade), que é atômico no banco. Duas compras ao mesmo
  *    tempo nunca deixam o estoque negativo: a que perder falha;
  * 2. lê o preço atual de cada produto e o congela no item do pedido;
- * 3. grava o pedido com o subtotal, o frete e o total.
+ * 3. grava o pedido com o subtotal, o frete, o total e o prazo para pagar
+ *    (expiresAt); passado o prazo sem pagamento, o pedido expira e o estoque
+ *    volta (veja expireOverdueOrders).
  *
  * Se qualquer produto não tiver estoque, nada é gravado e o erro explica qual.
  */
 export async function createOrder(input: IOrderInput): Promise<IOrderCreated> {
   // Ordem fixa por produto: evita deadlock entre pedidos simultâneos.
   const items = [...input.items].sort((a, b) => a.productId - b.productId);
+
+  const expiresAt = calculateExpiresAt(new Date());
 
   return prisma.$transaction(async (tx) => {
     for (const item of items) {
@@ -72,6 +78,7 @@ export async function createOrder(input: IOrderInput): Promise<IOrderCreated> {
 
     const order = await tx.order.create({
       data: {
+        expiresAt,
         source: input.source ?? "SITE",
         subtotal,
         shipping: input.shipping,
@@ -91,6 +98,96 @@ export async function createOrder(input: IOrderInput): Promise<IOrderCreated> {
       select: { id: true },
     });
 
-    return { id: order.id, subtotal, shipping: input.shipping, total };
+    return {
+      id: order.id,
+      subtotal,
+      shipping: input.shipping,
+      total,
+      expiresAt,
+    };
   });
+}
+
+/**
+ * Tira o pedido de "aguardando pagamento" (ou de "pago", no cancelamento) e
+ * devolve o estoque, tudo numa transação. A troca de status é condicional
+ * (updateMany por status): só quem de fato mudou o pedido devolve o estoque,
+ * então chamadas repetidas ou simultâneas nunca devolvem duas vezes.
+ *
+ * Devolve false quando o pedido não existe ou já saiu dos status permitidos.
+ */
+async function releaseOrder(
+  orderId: number,
+  status: "CANCELLED" | "EXPIRED",
+  from: OrderStatus[],
+  now?: Date,
+): Promise<boolean> {
+  return prisma.$transaction(async (tx) => {
+    const released = await tx.order.updateMany({
+      where: {
+        id: orderId,
+        status: { in: from },
+        ...(now ? { expiresAt: { lte: now } } : {}),
+      },
+      data: { status },
+    });
+
+    if (released.count === 0) return false;
+
+    const items = await tx.orderItem.findMany({
+      where: { orderId },
+      select: { productId: true, quantity: true },
+      orderBy: { productId: "asc" },
+    });
+
+    for (const item of items) {
+      await tx.product.update({
+        where: { id: item.productId },
+        data: { stock: { increment: item.quantity } },
+      });
+    }
+
+    return true;
+  });
+}
+
+/**
+ * Cancela o pedido e devolve o estoque. Só vale enquanto o pedido ainda não
+ * entrou em produção: aguardando pagamento ou pago.
+ */
+export function cancelOrder(orderId: number): Promise<boolean> {
+  return releaseOrder(orderId, "CANCELLED", ["AWAITING_PAYMENT", "PAID"]);
+}
+
+/**
+ * Expira um pedido que passou do prazo sem pagamento e devolve o estoque.
+ * Um pedido pago ou cancelado no meio do caminho não é tocado.
+ */
+export function expireOrder(
+  orderId: number,
+  now: Date = new Date(),
+): Promise<boolean> {
+  return releaseOrder(orderId, "EXPIRED", ["AWAITING_PAYMENT"], now);
+}
+
+/**
+ * Expira todos os pedidos aguardando pagamento cujo prazo passou. Roda ao
+ * criar um pedido e pela rota de cron (app/api/orders/expire/route.ts).
+ * Devolve quantos pedidos expiraram; quem chama invalida o cache "products".
+ */
+export async function expireOverdueOrders(
+  now: Date = new Date(),
+): Promise<number> {
+  const overdue = await prisma.order.findMany({
+    where: { status: "AWAITING_PAYMENT", expiresAt: { lte: now } },
+    select: { id: true },
+    orderBy: { id: "asc" },
+  });
+
+  let expired = 0;
+  for (const order of overdue) {
+    if (await expireOrder(order.id, now)) expired += 1;
+  }
+
+  return expired;
 }

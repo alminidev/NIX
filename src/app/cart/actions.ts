@@ -4,7 +4,7 @@ import { AppError } from "@/app/_errors/app.error";
 import { resolveCart } from "@/lib/cart";
 import { parseCartItems, parsePostalCode } from "@/lib/cart-input";
 import { readCheckoutForm } from "@/lib/order-input";
-import { createOrder } from "@/lib/orders";
+import { createOrder, expireOverdueOrders } from "@/lib/orders";
 import { calculateShipping } from "@/lib/shipping";
 import type { ICartSummary, IShippingResult } from "@/types/cart";
 import type { ICheckoutFormState } from "@/types/order";
@@ -49,6 +49,9 @@ export async function quoteShipping(
       quote: null,
     };
   }
+
+  // Libera o estoque de pedidos vencidos antes de conferir o carrinho.
+  if ((await expireOverdueOrders()) > 0) updateTag("products");
 
   const summary = await resolveCart(items);
 

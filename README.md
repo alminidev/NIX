@@ -175,11 +175,17 @@ O carrinho fica em **`/cart`**. O navegador guarda apenas `productId` e `quantit
 | `src/lib/shipping.ts` | **Ponto de integração do frete** (`calculateShipping`) |
 | `src/lib/orders.ts` | `createOrder`: cria o pedido e baixa o estoque numa transação |
 | `src/lib/order-input.ts` | Validação do formulário de entrega (nome, e-mail, telefone, endereço) |
+| `src/lib/order-expiration.ts` | Prazo do pedido: `ORDER_EXPIRATION_MINUTES` (padrão 60) |
+| `src/app/api/orders/expire/route.ts` | Rota de cron que expira pedidos vencidos (protegida por `CRON_SECRET`) |
 | `src/types/order.ts` | Tipos do pedido (`IOrderInput`, `IOrderCreated`, `ICheckoutFormState`) |
 
 - **Estoque:** a quantidade nunca passa do estoque cadastrado nem de 99 por produto. A conferência acontece ao adicionar, ao abrir o carrinho, ao alterar a quantidade e antes de seguir para o checkout.
 - **Frete (Jadlog):** `calculateShipping` em `src/lib/shipping.ts` devolve uma cotação pendente. A integração com a Jadlog deve ser feita nessa função; o restante já usa o contrato `IShippingQuote`.
 - **Pedidos:** o botão _"Ir para o checkout"_ envia os dados de entrega e chama a server action `placeOrder`, que confere o carrinho no servidor e grava `Order` e `OrderItem` (status `AWAITING_PAYMENT`, origem `SITE`) numa única transação. Cada item guarda o preço unitário do momento do pedido. O estoque é baixado na mesma transação com `UPDATE ... WHERE stock >= quantidade`, então nunca fica negativo, nem com compras simultâneas; se faltar estoque, nada é gravado e a mensagem diz qual produto. Pedidos feitos pelo WhatsApp ou Instagram usam `OrderSource` (`WHATSAPP`, `INSTAGRAM`). O frete fica vazio (`null`) até a cotação existir.
+- **Expiração:** todo pedido nasce com `expiresAt` (agora + `ORDER_EXPIRATION_MINUTES`, padrão 60). Passado o prazo sem pagamento, ele vira `EXPIRED` e o estoque volta. `cancelOrder` (pedido aguardando pagamento ou pago, ainda sem produção) também devolve o estoque e deixa o pedido `CANCELLED`. Expirar e cancelar são idempotentes: a troca de status é um `updateMany` condicional na mesma transação da devolução, e só quem de fato mudou o pedido devolve o estoque (chamadas repetidas ou simultâneas não devolvem duas vezes).
+  - **Quando roda:** (1) a cada `placeOrder`, que libera o estoque vencido antes de conferir o carrinho; (2) pela rota `GET /api/orders/expire`, para um cron.
+  - **Rota de cron:** exige `Authorization: Bearer <CRON_SECRET>` (segredo só no servidor, defina em `.env.example`/ambiente; sem ele a rota recusa tudo com 401). Na Vercel, o cron envia esse cabeçalho sozinho; exemplo de `vercel.json`: `{ "crons": [{ "path": "/api/orders/expire", "schedule": "*/15 * * * *" }] }` (planos gratuitos limitam a frequência dos crons; qualquer outro agendador que faça a chamada com o cabeçalho serve).
+  - A rota responde `{ "expired": <quantidade> }`.
 - **Checkout (InfinitePay):** depois que o pedido é criado, o carrinho é esvaziado e o navegador segue para `NEXT_PUBLIC_CART_URL` (veja `.env.example`; padrão em `src/data/produtos.ts`). A integração real entra no `useEffect` de `src/views/CartView/CartContent.tsx` que trata o pedido criado.
 
 ### Testes
