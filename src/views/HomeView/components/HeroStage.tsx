@@ -1,5 +1,5 @@
-import { CART_URL } from "@/data/produtos";
 import { ArrowDown } from "lucide-react";
+import Link from "next/link";
 import GlowAtmosphere from "../../../components/GlowAtmosphere";
 
 /**
@@ -7,13 +7,8 @@ import GlowAtmosphere from "../../../components/GlowAtmosphere";
  *
  * Usa <img> nativa (não next/image) para preservar o markup e as dimensões
  * exatas de renderização (aspect-ratio 16/9, 4/3 no mobile).
- *
- * URL do checkout:
- *    Centralizada em @/data/produtos (lê process.env.NEXT_PUBLIC_CART_URL).
  */
 export default function HeroStage() {
-  const cartUrl = CART_URL;
-
   return (
     <section
       id="hero"
@@ -53,15 +48,13 @@ export default function HeroStage() {
             Ver Vitrine de Produtos
             <ArrowDown size={16} aria-hidden />
           </a>
-          <a
+          <Link
             id="btn-hero-checkout"
-            href={cartUrl}
+            href="/cart"
             className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-pill border border-white/40 bg-transparent px-7.5 py-3.25 text-[0.9375rem] font-medium whitespace-nowrap text-ink-inverse transition-all duration-200 ease-nix hover:-translate-y-px hover:border-ink-inverse hover:bg-ink-inverse hover:text-ink-primary active:translate-y-0 min-[640px]:w-auto"
-            target="_blank"
-            rel="noopener noreferrer"
           >
-            Ir para Checkout
-          </a>
+            Ir para o Carrinho
+          </Link>
         </div>
       </div>
     </section>

@@ -44,6 +44,8 @@ export interface IProduct {
   image: string;
   /** Galeria opcional de imagens para ampliação no Lightbox (se não informada, usa [image]) */
   images?: string[];
+  /** false quando o estoque cadastrado está zerado */
+  inStock: boolean;
   /** true = exibe badge "Mais Escolhido" */
   featured: boolean;
 }

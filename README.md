@@ -10,7 +10,7 @@
 2. [Instalação e Comandos Rápidos](#-2-instalação-e-comandos-rápidos-passo-a-passo-para-iniciantes)
 3. [Estrutura de Pastas e Arquivos](#-3-estrutura-de-pastas-e-arquivos)
 4. [Onde Editar Produtos, Preços e Galeria](#-4-onde-editar-produtos-preços-e-galeria)
-5. [Onde Trocar a URL do Carrinho / Checkout](#-5-onde-trocar-a-url-do-carrinho--checkout)
+5. [Carrinho, Frete e Checkout](#-5-carrinho-frete-e-checkout)
 6. [Guia para o Programador Back-End (Banco de Dados & APIs)](#-6-guia-para-o-programador-back-end-banco-de-dados--apis)
 7. [Fase 2: Componente de Lightbox (Ampliação de Imagens)](#-7-fase-2-componente-de-lightbox-ampliação-de-imagens)
 8. [Deploy e Hospedagem (A Definir)](#-8-deploy-e-hospedagem-a-definir)
@@ -161,28 +161,30 @@ Abra `prisma/catalog.ts` e localize o produto no array `PRODUCTS`. Exemplo:
 
 ---
 
-## 🛒 5. Onde Trocar a URL do Carrinho / Checkout
+## 🛒 5. Carrinho, Frete e Checkout
 
-A URL do checkout da **InfinitePay** é gerenciada de forma centralizada em um **único ponto** da aplicação:
+O carrinho fica em **`/cart`**. O navegador guarda apenas `productId` e `quantity` (`localStorage`, chave `nix-cart`); preço, estoque e totais são sempre lidos do banco pelo servidor.
 
-1. **Via Variável de Ambiente (Recomendado em Produção):**  
-   Edite o arquivo `.env.local` (ou configure no painel da sua hospedagem):
+| Arquivo | Papel |
+| --- | --- |
+| `src/contexts/CartContext/index.tsx` | Estado do carrinho no navegador (adicionar, alterar, remover) |
+| `src/app/cart/actions.ts` | Server actions: `getCartSummary` (valida itens e estoque) e `quoteShipping` (CEP) |
+| `src/lib/cart.ts` | Lê produtos no banco e monta o resumo |
+| `src/lib/cart-calculation.ts` | Regras puras: limite por estoque, subtotal e total em centavos |
+| `src/lib/cart-input.ts` | Validação da entrada vinda do navegador e do CEP |
+| `src/lib/shipping.ts` | **Ponto de integração do frete** (`calculateShipping`) |
 
-   ```env
-   NEXT_PUBLIC_CART_URL=https://checkout.infinitepay.io/nix3d
-   ```
+- **Estoque:** a quantidade nunca passa do estoque cadastrado nem de 99 por produto. A conferência acontece ao adicionar, ao abrir o carrinho, ao alterar a quantidade e antes de seguir para o checkout.
+- **Frete (Jadlog):** `calculateShipping` em `src/lib/shipping.ts` devolve uma cotação pendente. A integração com a Jadlog deve ser feita nessa função; o restante já usa o contrato `IShippingQuote`.
+- **Checkout (InfinitePay):** o botão _"Ir para o checkout"_ reconfere o carrinho no servidor e segue para `NEXT_PUBLIC_CART_URL` (veja `.env.example`; padrão em `src/data/produtos.ts`). A integração real entra no `handleCheckout` de `src/views/CartView/components/OrderSummary.tsx`.
 
-2. **Via Código (Fallback Central):**  
-    Caso nenhuma variável de ambiente seja definida, o endereço padrão fica centralizado em:  
-    👉 **`src/data/produtos.ts`** (linhas 9-10):
+### Testes
 
-   ```ts
-   export const CART_URL =
-     process.env.NEXT_PUBLIC_CART_URL ??
-     "https://checkout.infinitepay.io/nix3d";
-   ```
+```bash
+npm test
+```
 
-   Todos os botões _"Comprar"_ dos cards, o botão _"Carrinho"_ do topo e o botão da Hero utilizam esse mesmo valor automaticamente.
+Executa os testes de `tests/` (Node test runner) sobre as regras do carrinho, CEP, dimensões e leitura do formulário de produto.
 
 ---
 

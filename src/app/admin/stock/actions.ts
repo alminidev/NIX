@@ -3,7 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import type { IAdjustStockState } from "@/types/admin-stock";
-import { refresh } from "next/cache";
+import { refresh, updateTag } from "next/cache";
 
 const denied: IAdjustStockState = {
   status: "error",
@@ -103,6 +103,7 @@ export async function adjustStock(
     select: { stock: true },
   });
 
+  updateTag("products");
   refresh();
 
   const stock = updated?.stock ?? 0;

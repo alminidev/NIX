@@ -47,6 +47,7 @@ export async function getProducts(): Promise<IProduct[]> {
       specifications: product.specifications.map((item) => item.text),
       image: primary?.url ?? "",
       images: urls.length > 1 ? urls : undefined,
+      inStock: product.stock > 0,
       featured: product.featured,
     };
   });
