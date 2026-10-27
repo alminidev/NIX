@@ -146,6 +146,7 @@ enum OrderStatus {
   READY
   SHIPPED
   CANCELLED
+  EXPIRED
 
   @@map("order_status")
 }
@@ -177,11 +178,14 @@ model Order {
   city          String
   state         String
   trackingCode  String?
+  // prazo para pagar; passado esse prazo o pedido expira e devolve o estoque
+  expiresAt     DateTime?
   items         OrderItem[]
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
   @@index([status, createdAt])
+  @@index([status, expiresAt])
   @@index([customerEmail])
   @@map("order")
 }
