@@ -4,6 +4,15 @@
  * devolve objetos neste formato.
  */
 
+export interface IProductDimensions {
+  /** Largura em cm */
+  width: number;
+  /** Altura em cm */
+  height: number;
+  /** Profundidade (comprimento) em cm */
+  depth: number;
+}
+
 export interface IProduct {
   /** Identificador numérico único do produto */
   id: number;
@@ -19,8 +28,8 @@ export interface IProduct {
   categorySortOrder: number;
   /** Capacidade em texto (ex: '12 filamentos') */
   capacity: string;
-  /** Dimensões em texto (ex: '46 x 35 x 60 cm') */
-  dimensions: string;
+  /** Dimensões em centímetros */
+  dimensions: IProductDimensions;
   /** Preço numérico em reais (usado para cálculos futuros) */
   price: number;
   /** Preço formatado em PT-BR para exibição (ex: 'R$ 1.190,00') */

@@ -93,7 +93,9 @@ model Product {
   sku            String         @unique
   name           String
   capacity       String
-  dimensions     String
+  width          Decimal        @db.Decimal(6, 1)
+  height         Decimal        @db.Decimal(6, 1)
+  depth          Decimal        @db.Decimal(6, 1)
   price          Decimal        @db.Decimal(10, 2)
   installments   String
   description    String

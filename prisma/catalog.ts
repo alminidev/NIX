@@ -3,7 +3,8 @@ export interface IProductSeed {
   name: string;
   categorySlug: 'armarios' | 'stations';
   capacity: string;
-  dimensions: string;
+  /** Medidas em cm */
+  dimensions: { depth: number; width: number; height: number };
   price: string;
   installments: string;
   description: string;
@@ -24,7 +25,7 @@ export const PRODUCTS: IProductSeed[] = [
     name: 'DRY BOX 12',
     categorySlug: 'armarios',
     capacity: '12 filamentos',
-    dimensions: '46 x 35 x 60 cm',
+    dimensions: { depth: 46, width: 35, height: 60 },
     price: '1190.00',
     installments: 'Até 3x sem juros',
     description: 'Compacta e eficiente para o seu dia a dia.',
@@ -43,7 +44,7 @@ export const PRODUCTS: IProductSeed[] = [
     name: 'DRY BOX 24',
     categorySlug: 'armarios',
     capacity: '24 filamentos',
-    dimensions: '46 x 50 x 60 cm',
+    dimensions: { depth: 46, width: 50, height: 60 },
     price: '1590.00',
     installments: 'Até 3x sem juros',
     description: 'Mais espaço para seus projetos.',
@@ -65,7 +66,7 @@ export const PRODUCTS: IProductSeed[] = [
     name: 'DRY BOX 48',
     categorySlug: 'armarios',
     capacity: '48 filamentos',
-    dimensions: '46 x 50 x 100 cm',
+    dimensions: { depth: 46, width: 50, height: 100 },
     price: '2150.00',
     installments: 'Até 3x sem juros',
     description: 'Alta capacidade para grandes demandas.',
@@ -84,7 +85,7 @@ export const PRODUCTS: IProductSeed[] = [
     name: 'DRY BOX STATION BAMBU LAB A1 COMBO',
     categorySlug: 'stations',
     capacity: '18 filamentos + 4 AMS',
-    dimensions: '46 x 50 x 100 cm',
+    dimensions: { depth: 46, width: 50, height: 100 },
     price: '2200.00',
     installments: 'Até 3x sem juros',
     description: 'Solução completa para a sua Bambu Lab A1.',
@@ -106,7 +107,7 @@ export const PRODUCTS: IProductSeed[] = [
     name: 'DRY BOX STATION BAMBU LAB A2L COMBO',
     categorySlug: 'stations',
     capacity: '24 filamentos + 4 AMS',
-    dimensions: '56 x 60 x 100 cm',
+    dimensions: { depth: 56, width: 60, height: 100 },
     price: '2600.00',
     installments: 'Até 3x sem juros',
     description: 'Mais capacidade para o seu setup.',

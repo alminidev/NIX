@@ -1,3 +1,4 @@
+import { formatDimensions } from "@/lib/product-dimensions";
 import type { IProduct } from "@/types/product";
 import { ArrowRight, Lock } from "lucide-react";
 
@@ -70,7 +71,7 @@ export default function ProductCard({
             Dimensões (C x L x A)
           </span>
           <span className="text-[0.8125rem] font-semibold text-ink-primary">
-            {product.dimensions}
+            {formatDimensions(product.dimensions)}
           </span>
         </div>
 

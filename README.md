@@ -143,7 +143,7 @@ Abra `prisma/catalog.ts` e localize o produto no array `PRODUCTS`. Exemplo:
   name: 'DRY BOX 12',
   categorySlug: 'armarios',
   capacity: '12 filamentos',
-  dimensions: '46 x 35 x 60 cm',
+  dimensions: { depth: 46, width: 35, height: 60 }, // cm
   price: '1190.00',
   installments: 'Até 3x sem juros',
   description: 'Compacta e eficiente para o seu dia a dia.',
@@ -201,7 +201,7 @@ export interface Product {
   name: string;
   category: string;
   capacity: string;
-  dimensions: string;
+  dimensions: { width: number; height: number; depth: number }; // cm
   price: number;
   formattedPrice: string;
   installments: string;
