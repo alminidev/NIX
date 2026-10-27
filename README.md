@@ -182,11 +182,53 @@ O carrinho fica em **`/cart`**. O navegador guarda apenas `productId` e `quantit
 - **Estoque:** a quantidade nunca passa do estoque cadastrado nem de 99 por produto. A conferência acontece ao adicionar, ao abrir o carrinho, ao alterar a quantidade e antes de seguir para o checkout.
 - **Frete (Jadlog):** `calculateShipping` em `src/lib/shipping.ts` devolve uma cotação pendente. A integração com a Jadlog deve ser feita nessa função; o restante já usa o contrato `IShippingQuote`.
 - **Pedidos:** o botão _"Ir para o checkout"_ envia os dados de entrega e chama a server action `placeOrder`, que confere o carrinho no servidor e grava `Order` e `OrderItem` (status `AWAITING_PAYMENT`, origem `SITE`) numa única transação. Cada item guarda o preço unitário do momento do pedido. O estoque é baixado na mesma transação com `UPDATE ... WHERE stock >= quantidade`, então nunca fica negativo, nem com compras simultâneas; se faltar estoque, nada é gravado e a mensagem diz qual produto. Pedidos feitos pelo WhatsApp ou Instagram usam `OrderSource` (`WHATSAPP`, `INSTAGRAM`). O frete fica vazio (`null`) até a cotação existir.
-- **Expiração:** todo pedido nasce com `expiresAt` (agora + `ORDER_EXPIRATION_MINUTES`, padrão 60). Passado o prazo sem pagamento, ele vira `EXPIRED` e o estoque volta. `cancelOrder` (pedido aguardando pagamento ou pago, ainda sem produção) também devolve o estoque e deixa o pedido `CANCELLED`. Expirar e cancelar são idempotentes: a troca de status é um `updateMany` condicional na mesma transação da devolução, e só quem de fato mudou o pedido devolve o estoque (chamadas repetidas ou simultâneas não devolvem duas vezes).
-  - **Quando roda:** (1) a cada `placeOrder`, que libera o estoque vencido antes de conferir o carrinho; (2) pela rota `GET /api/orders/expire`, para um cron.
-  - **Rota de cron:** exige `Authorization: Bearer <CRON_SECRET>` (segredo só no servidor, defina em `.env.example`/ambiente; sem ele a rota recusa tudo com 401). Na Vercel, o cron envia esse cabeçalho sozinho; exemplo de `vercel.json`: `{ "crons": [{ "path": "/api/orders/expire", "schedule": "*/15 * * * *" }] }` (planos gratuitos limitam a frequência dos crons; qualquer outro agendador que faça a chamada com o cabeçalho serve).
-  - A rota responde `{ "expired": <quantidade> }`.
+- **Expiração:** todo pedido nasce com `expiresAt` (agora + `ORDER_EXPIRATION_MINUTES`, padrão 60). Passado o prazo sem pagamento, ele vira `EXPIRED` e o estoque volta. `cancelOrder` (pedido aguardando pagamento ou pago, ainda sem produção) também devolve o estoque e deixa o pedido `CANCELLED`. Expirar e cancelar são idempotentes: a troca de status é um `updateMany` condicional na mesma transação da devolução, e só quem de fato mudou o pedido devolve o estoque (chamadas repetidas ou simultâneas não devolvem duas vezes). Variáveis, agendamento e funcionamento estão em [Expiração de pedidos](#expiração-de-pedidos).
 - **Checkout (InfinitePay):** depois que o pedido é criado, o carrinho é esvaziado e o navegador segue para `NEXT_PUBLIC_CART_URL` (veja `.env.example`; padrão em `src/data/produtos.ts`). A integração real entra no `useEffect` de `src/views/CartView/CartContent.tsx` que trata o pedido criado.
+
+### Expiração de pedidos
+
+Um pedido aguardando pagamento segura o estoque até o prazo acabar. Depois disso ele expira e o estoque volta para a vitrine.
+
+**Variáveis de ambiente** (modelo em `.env.example`; em desenvolvimento ficam no `.env.local`, em produção no painel da hospedagem):
+
+| Variável | Para que serve | Padrão |
+| --- | --- | --- |
+| `ORDER_EXPIRATION_MINUTES` | Minutos que um pedido aguardando pagamento segura o estoque. Deve ser um número inteiro maior que 0; valor ausente ou inválido usa o padrão. Vale para os pedidos criados depois da mudança (cada pedido guarda o próprio `expiresAt`). | `60` |
+| `CRON_SECRET` | Segredo que autoriza a chamada de `GET /api/orders/expire`. Fica só no servidor (nunca use o prefixo `NEXT_PUBLIC_`). Gere com `openssl rand -base64 32`. **Sem ele a rota recusa qualquer chamada com 401.** | _(sem padrão, obrigatório para o cron)_ |
+
+**Quando um pedido vencido expira**
+
+1. **Ao criar um pedido:** cada `placeOrder` expira os pedidos vencidos antes de conferir o carrinho. Esse é o único gatilho automático, sem nenhuma configuração.
+2. **Pela rota de cron** `GET /api/orders/expire`, que precisa ser agendada (veja abaixo).
+
+> **Atenção:** se a rota não for agendada, os pedidos vencidos **só expiram quando um novo pedido é feito**. Enquanto ninguém comprar, o estoque deles continua reservado e a vitrine mostra esse estoque como indisponível. Em produção, agende a rota.
+
+**A rota** exige o cabeçalho `Authorization: Bearer <CRON_SECRET>` e responde `{ "expired": <quantidade> }` (`401` se o cabeçalho faltar ou estiver errado). É segura para chamar quantas vezes quiser: chamadas repetidas ou simultâneas não devolvem o estoque duas vezes. Teste manualmente:
+
+```bash
+curl -H "Authorization: Bearer $CRON_SECRET" https://SEU-DOMINIO/api/orders/expire
+# {"expired":0}
+```
+
+**Opção A: cron da Vercel.** Defina `CRON_SECRET` nas variáveis de ambiente do projeto na Vercel (a Vercel envia sozinha o cabeçalho `Authorization: Bearer <CRON_SECRET>` nas chamadas de cron) e crie o arquivo `vercel.json` na raiz do projeto:
+
+```json
+{
+  "crons": [{ "path": "/api/orders/expire", "schedule": "*/15 * * * *" }]
+}
+```
+
+O exemplo roda a cada 15 minutos (horário UTC). O plano gratuito (Hobby) limita os crons a uma execução por dia; para rodar com mais frequência é preciso um plano pago ou a opção B.
+
+**Opção B: cron externo** (cron-job.org, GitHub Actions agendado, `crontab` de um servidor etc.). Qualquer agendador que faça uma requisição `GET` com o cabeçalho serve. Exemplo de `crontab` a cada 15 minutos:
+
+```bash
+*/15 * * * * curl -fsS -H "Authorization: Bearer SEU_CRON_SECRET" https://SEU-DOMINIO/api/orders/expire
+```
+
+No cron-job.org: crie um job com a URL `https://SEU-DOMINIO/api/orders/expire`, método `GET`, intervalo de 15 minutos, e em _Advanced → Headers_ adicione `Authorization` com o valor `Bearer SEU_CRON_SECRET`.
+
+Use um intervalo menor ou igual a `ORDER_EXPIRATION_MINUTES` para que o estoque não fique preso muito além do prazo.
 
 ### Testes
 
