@@ -88,7 +88,7 @@ export default function ProductGrid() {
           {/* Aviso Oficial de Ilustração */}
           <div className="catalog-disclaimer" role="note">
             <p>
-              ⚠️ <strong>Observação Importante:</strong> Imagens ilustrativas. A impressora e os
+              <strong>Observação Importante:</strong> Imagens ilustrativas. A impressora e os
               filamentos não acompanham o produto.
             </p>
           </div>

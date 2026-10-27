@@ -140,7 +140,7 @@ function renderizarProdutos() {
 
     <!-- Aviso Oficial de Ilustração -->
     <div class="catalog-disclaimer" role="note">
-      <p>⚠️ <strong>Observação Importante:</strong> Imagens ilustrativas. A impressora e os filamentos não acompanham o produto.</p>
+      <p><strong>Observação Importante:</strong> Imagens ilustrativas. A impressora e os filamentos não acompanham o produto.</p>
     </div>
   `;
 }

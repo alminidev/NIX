@@ -36,6 +36,7 @@
   --radius-pill: 9999px;
   --radius-card: 8px;
   --radius-input: 6px;
+  --radius-button: 6px;
 
   /* Sombras Funcionais */
   --shadow-sticky-nav: 0 1px 3px rgba(0, 0, 0, 0.05);
@@ -194,7 +195,7 @@ h3 {
   font-size: 0.9375rem;
   font-weight: 500;
   padding: 14px 32px;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-button, 6px);
   transition: background-color var(--transition-fast), transform var(--transition-fast);
   min-height: 48px;
   white-space: nowrap;
@@ -220,7 +221,7 @@ h3 {
   font-weight: 500;
   padding: 13px 30px;
   border: 1px solid rgba(255, 255, 255, 0.4);
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-button, 6px);
   transition: all var(--transition-fast);
   min-height: 48px;
   white-space: nowrap;
@@ -306,7 +307,7 @@ h3 {
   font-weight: 500;
   padding: 6px 14px;
   min-height: 36px;
-  border-radius: 6px;
+  border-radius: var(--radius-button, 6px);
   border: 1px solid var(--color-brand-blue);
   transition: all var(--transition-fast);
 }
@@ -340,7 +341,7 @@ h3 {
   font-weight: 500;
   padding: 10px 16px;
   min-height: 44px;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-button, 6px);
   border: 1px solid var(--color-border-hairline);
   transition: all var(--transition-fast);
 }
@@ -680,7 +681,7 @@ h3 {
   font-size: 0.9375rem;
   font-weight: 600;
   padding: 12px 24px;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-button, 6px);
   transition: all var(--transition-fast);
   min-height: 48px;
 }

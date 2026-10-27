@@ -18,7 +18,7 @@ export default function Footer() {
               manufatura aditiva e impressão 3D.
             </p>
             <div className="footer-disclaimer-note">
-              ⚠️ <strong>Observação Importante:</strong> Imagens ilustrativas. A impressora e os
+              <strong>Observação Importante:</strong> Imagens ilustrativas. A impressora e os
               filamentos não acompanham o produto.
             </div>
           </div>
