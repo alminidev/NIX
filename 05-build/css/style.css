@@ -299,34 +299,36 @@ h3 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  background-color: var(--color-brand-blue);
-  color: #ffffff;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  padding: 6px 14px;
-  min-height: 36px;
-  border-radius: var(--radius-button, 6px);
-  border: 1px solid var(--color-brand-blue);
-  transition: all var(--transition-fast);
+  background: transparent;
+  background-color: transparent;
+  border: none;
+  outline: none;
+  box-shadow: none;
+  padding: 6px;
+  cursor: pointer;
+  transition: opacity var(--transition-fast);
 }
 
 .btn-cart:hover {
-  background-color: var(--color-brand-blue-hover);
-  border-color: var(--color-brand-blue-hover);
-  color: #ffffff;
-  transform: translateY(-1px);
-  box-shadow: 0 3px 10px rgba(23, 107, 255, 0.25);
+  background: transparent;
+  background-color: transparent;
+  border: none;
+  box-shadow: none;
+  opacity: 0.7;
 }
 
+.btn-cart:active {
+  opacity: 0.5;
+}
+
+.btn-cart img,
 .btn-cart svg {
-  width: 15px;
-  height: 15px;
-  fill: none;
-  stroke: #ffffff;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  width: 21px;
+  height: 17px;
+  display: block;
+  border: none;
+  outline: none;
+  object-fit: contain;
 }
 
 .btn-whatsapp {
@@ -374,23 +376,23 @@ h3 {
   position: relative;
   z-index: 2;
   width: 100%;
-  padding-top: clamp(28px, 4.2vw, 68px);
+  padding-top: clamp(14px, 2.2vw, 36px);
   pointer-events: none;
 }
 
 .hero-content {
   text-align: center;
-  max-width: 900px;
+  max-width: 960px;
   margin: 0 auto;
   pointer-events: auto;
 }
 
 .hero-title {
   color: #000000;
-  font-size: clamp(1.5rem, 2.35vw, 2.35rem);
+  font-size: clamp(1.75rem, 3.1vw, 2.9rem);
   font-weight: 700;
-  line-height: 1.25;
-  letter-spacing: -0.02em;
+  line-height: 1.22;
+  letter-spacing: -0.025em;
   margin: 0 auto;
   text-shadow: none;
 }
@@ -1110,7 +1112,7 @@ h3 {
   }
 
   .hero-stage .hero-container {
-    padding-top: 24px;
+    padding-top: 14px;
   }
 
   .products-subgrid.grid-3-cols,
