@@ -1,16 +1,20 @@
-import { getCartSummary, quoteShipping } from "@/app/cart/actions";
-import { CART_URL } from "@/data/produtos";
+import { quoteShipping } from "@/app/cart/actions";
 import { calculateTotal, formatCurrency } from "@/lib/cart-calculation";
-import { maskPostalCode } from "@/lib/cart-input";
 import type { ICartItem, ICartSummary, IShippingQuote } from "@/types/cart";
 import { ArrowRight, Lock } from "lucide-react";
 import { useState, type FormEvent } from "react";
+import { CHECKOUT_FORM_ID } from "./CheckoutForm";
 
 interface IOrderSummaryProps {
   summary: ICartSummary | null;
   items: ICartItem[];
   shipping: IShippingQuote | null;
   onShippingChange: (quote: IShippingQuote | null) => void;
+  postalCode: string;
+  onPostalCodeChange: (value: string) => void;
+  postalCodeError?: string;
+  checkoutMessage: string;
+  isPlacingOrder: boolean;
   disabled: boolean;
 }
 
@@ -22,16 +26,18 @@ export default function OrderSummary({
   items,
   shipping,
   onShippingChange,
+  postalCode,
+  onPostalCodeChange,
+  postalCodeError,
+  checkoutMessage,
+  isPlacingOrder,
   disabled,
 }: IOrderSummaryProps) {
-  const [postalCode, setPostalCode] = useState("");
   const [postalMessage, setPostalMessage] = useState<{
     error: boolean;
     text: string;
   } | null>(null);
   const [calculating, setCalculating] = useState(false);
-  const [checkingOut, setCheckingOut] = useState(false);
-  const [checkoutMessage, setCheckoutMessage] = useState("");
 
   const subtotal = summary?.subtotal ?? 0;
   const shippingPrice = shipping?.status === "quoted" ? shipping.price : null;
@@ -63,36 +69,6 @@ export default function OrderSummary({
     }
   }
 
-  async function handleCheckout() {
-    setCheckingOut(true);
-    setCheckoutMessage("");
-
-    try {
-      // Reconfere estoque e preços no servidor antes de seguir.
-      const latest = await getCartSummary(items);
-      const unchanged =
-        latest !== null &&
-        latest.lines.length > 0 &&
-        latest.subtotal === summary?.subtotal &&
-        latest.notices.length === 0;
-
-      if (!unchanged) {
-        setCheckoutMessage(
-          "Alguns itens mudaram. Revise o carrinho e tente novamente.",
-        );
-        return;
-      }
-
-      // TODO: o checkout da InfinitePay entra aqui. Por enquanto segue para a
-      // URL de checkout já configurada em NEXT_PUBLIC_CART_URL.
-      window.location.assign(CART_URL);
-    } catch {
-      setCheckoutMessage("Não foi possível continuar. Tente novamente.");
-    } finally {
-      setCheckingOut(false);
-    }
-  }
-
   return (
     <aside
       className="rounded-card border border-border-hairline bg-surface-card p-6 min-[992px]:sticky min-[992px]:top-24"
@@ -114,15 +90,15 @@ export default function OrderSummary({
             id="postal-code"
             name="postalCode"
             value={postalCode}
-            onChange={(event) =>
-              setPostalCode(maskPostalCode(event.target.value))
-            }
+            onChange={(event) => onPostalCodeChange(event.target.value)}
             inputMode="numeric"
             autoComplete="postal-code"
             placeholder="00000-000"
             maxLength={9}
             disabled={disabled || calculating}
-            aria-invalid={postalMessage?.error ?? false}
+            aria-invalid={
+              Boolean(postalCodeError) || (postalMessage?.error ?? false)
+            }
             aria-describedby="postal-code-message"
             className="min-h-11 w-full min-w-0 rounded-input border border-border-hairline bg-white px-3 text-[0.9375rem] text-ink-primary placeholder:text-ink-muted disabled:opacity-60"
           />
@@ -137,9 +113,9 @@ export default function OrderSummary({
         <p
           id="postal-code-message"
           role="status"
-          className={`mt-2 text-xs empty:hidden ${postalMessage?.error ? "text-[#9b1c1c]" : "text-ink-secondary"}`}
+          className={`mt-2 text-xs empty:hidden ${postalCodeError || postalMessage?.error ? "text-[#9b1c1c]" : "text-ink-secondary"}`}
         >
-          {postalMessage?.text}
+          {postalCodeError ?? postalMessage?.text}
         </p>
       </form>
 
@@ -167,17 +143,17 @@ export default function OrderSummary({
       </dl>
 
       <button
-        type="button"
-        onClick={handleCheckout}
-        disabled={disabled || checkingOut}
+        type="submit"
+        form={CHECKOUT_FORM_ID}
+        disabled={disabled || isPlacingOrder}
         className="inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-pill bg-brand-blue px-6 py-3 text-[0.9375rem] font-semibold text-ink-inverse transition-all duration-200 ease-nix hover:-translate-y-px hover:bg-brand-blue-hover disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {checkingOut ? "Conferindo…" : "Ir para o checkout"}
+        {isPlacingOrder ? "Criando pedido…" : "Ir para o checkout"}
         <ArrowRight size={16} aria-hidden />
       </button>
 
       <p
-        role="status"
+        role="alert"
         className="mt-3 text-center text-xs text-[#9b1c1c] empty:hidden"
       >
         {checkoutMessage}

@@ -173,10 +173,14 @@ O carrinho fica em **`/cart`**. O navegador guarda apenas `productId` e `quantit
 | `src/lib/cart-calculation.ts` | Regras puras: limite por estoque, subtotal e total em centavos |
 | `src/lib/cart-input.ts` | Validação da entrada vinda do navegador e do CEP |
 | `src/lib/shipping.ts` | **Ponto de integração do frete** (`calculateShipping`) |
+| `src/lib/orders.ts` | `createOrder`: cria o pedido e baixa o estoque numa transação |
+| `src/lib/order-input.ts` | Validação do formulário de entrega (nome, e-mail, telefone, endereço) |
+| `src/types/order.ts` | Tipos do pedido (`IOrderInput`, `IOrderCreated`, `ICheckoutFormState`) |
 
 - **Estoque:** a quantidade nunca passa do estoque cadastrado nem de 99 por produto. A conferência acontece ao adicionar, ao abrir o carrinho, ao alterar a quantidade e antes de seguir para o checkout.
 - **Frete (Jadlog):** `calculateShipping` em `src/lib/shipping.ts` devolve uma cotação pendente. A integração com a Jadlog deve ser feita nessa função; o restante já usa o contrato `IShippingQuote`.
-- **Checkout (InfinitePay):** o botão _"Ir para o checkout"_ reconfere o carrinho no servidor e segue para `NEXT_PUBLIC_CART_URL` (veja `.env.example`; padrão em `src/data/produtos.ts`). A integração real entra no `handleCheckout` de `src/views/CartView/components/OrderSummary.tsx`.
+- **Pedidos:** o botão _"Ir para o checkout"_ envia os dados de entrega e chama a server action `placeOrder`, que confere o carrinho no servidor e grava `Order` e `OrderItem` (status `AWAITING_PAYMENT`, origem `SITE`) numa única transação. Cada item guarda o preço unitário do momento do pedido. O estoque é baixado na mesma transação com `UPDATE ... WHERE stock >= quantidade`, então nunca fica negativo, nem com compras simultâneas; se faltar estoque, nada é gravado e a mensagem diz qual produto. Pedidos feitos pelo WhatsApp ou Instagram usam `OrderSource` (`WHATSAPP`, `INSTAGRAM`). O frete fica vazio (`null`) até a cotação existir.
+- **Checkout (InfinitePay):** depois que o pedido é criado, o carrinho é esvaziado e o navegador segue para `NEXT_PUBLIC_CART_URL` (veja `.env.example`; padrão em `src/data/produtos.ts`). A integração real entra no `useEffect` de `src/views/CartView/CartContent.tsx` que trata o pedido criado.
 
 ### Testes
 
@@ -184,7 +188,7 @@ O carrinho fica em **`/cart`**. O navegador guarda apenas `productId` e `quantit
 npm test
 ```
 
-Executa os testes de `tests/` (Node test runner) sobre as regras do carrinho, CEP, dimensões e leitura do formulário de produto.
+Executa os testes de `tests/` (Node test runner) sobre as regras do carrinho, CEP, dimensões, leitura dos formulários e criação de pedidos. Os testes de pedido usam o banco de `DATABASE_URL` (lido do `.env`): criam produtos próprios e removem tudo no final. Sem `DATABASE_URL` eles são ignorados.
 
 ---
 

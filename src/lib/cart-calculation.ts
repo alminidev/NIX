@@ -111,11 +111,7 @@ export function summarizeCart(
     );
   }
 
-  const subtotalCents = lines.reduce(
-    (total, line) => total + toCents(line.unitPrice) * line.quantity,
-    0,
-  );
-  const subtotal = subtotalCents / 100;
+  const subtotal = calculateSubtotal(lines);
 
   return {
     lines,
@@ -124,6 +120,18 @@ export function summarizeCart(
     subtotal,
     formattedSubtotal: formatCurrency(subtotal),
   };
+}
+
+/** Soma de preço unitário x quantidade, em reais. */
+export function calculateSubtotal(
+  entries: { unitPrice: number; quantity: number }[],
+): number {
+  return (
+    entries.reduce(
+      (total, entry) => total + toCents(entry.unitPrice) * entry.quantity,
+      0,
+    ) / 100
+  );
 }
 
 /** Total do pedido: subtotal mais o frete, quando já houver cotação. */

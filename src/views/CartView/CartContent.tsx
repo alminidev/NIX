@@ -1,12 +1,16 @@
 "use client";
 
-import { getCartSummary } from "@/app/cart/actions";
+import { getCartSummary, placeOrder } from "@/app/cart/actions";
+import { CART_URL } from "@/data/produtos";
 import { useCartContext } from "@/contexts/CartContext";
+import { maskPostalCode } from "@/lib/cart-input";
 import type { ICartSummary, IShippingQuote } from "@/types/cart";
+import { checkoutFormInitialState } from "@/types/order";
 import { ArrowLeft, ShoppingCart } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import CartLineItem from "./components/CartLineItem";
+import CheckoutForm from "./components/CheckoutForm";
 import OrderSummary from "./components/OrderSummary";
 
 /**
@@ -20,9 +24,25 @@ export default function CartContent() {
   const [notices, setNotices] = useState<string[]>([]);
   const [failed, setFailed] = useState(false);
   const [shipping, setShipping] = useState<IShippingQuote | null>(null);
+  const [postalCode, setPostalCode] = useState("");
+  const [checkoutState, checkoutAction, isPlacingOrder] = useActionState(
+    placeOrder,
+    checkoutFormInitialState,
+  );
+  const orderPlaced = checkoutState.status === "success";
+
+  // Pedido criado: esvazia o carrinho e segue para o checkout.
+  useEffect(() => {
+    if (!orderPlaced) return;
+
+    replaceItems([]);
+    // TODO: o checkout da InfinitePay entra aqui. Por enquanto segue para a
+    // URL de checkout já configurada em NEXT_PUBLIC_CART_URL.
+    window.location.assign(CART_URL);
+  }, [orderPlaced, replaceItems]);
 
   useEffect(() => {
-    if (!isReady) return;
+    if (!isReady || orderPlaced) return;
 
     let cancelled = false;
 
@@ -52,7 +72,7 @@ export default function CartContent() {
     return () => {
       cancelled = true;
     };
-  }, [items, isReady, replaceItems]);
+  }, [items, isReady, orderPlaced, replaceItems]);
 
   // A cotação depende dos itens: qualquer mudança exige calcular de novo.
   useEffect(() => {
@@ -61,7 +81,7 @@ export default function CartContent() {
 
   const isLoading = !isReady || (items.length > 0 && summary === null);
   const lines = summary?.lines ?? [];
-  const isEmpty = isReady && items.length === 0;
+  const isEmpty = isReady && items.length === 0 && !orderPlaced;
 
   function changeQuantity(productId: number, quantity: number) {
     setNotices([]);
@@ -113,7 +133,19 @@ export default function CartContent() {
           </div>
         ) : null}
 
-        {isEmpty ? (
+        {orderPlaced ? (
+          <div
+            className="rounded-card border border-border-hairline bg-surface-card px-6 py-16 text-center"
+            role="status"
+          >
+            <p className="mb-2 text-[1.0625rem] font-semibold text-ink-primary">
+              Pedido nº {checkoutState.orderId} criado.
+            </p>
+            <p className="text-[0.9375rem] text-ink-secondary">
+              Levando você para o checkout…
+            </p>
+          </div>
+        ) : isEmpty ? (
           <div className="rounded-card border border-border-hairline bg-surface-card px-6 py-16 text-center">
             <ShoppingCart
               size={32}
@@ -152,6 +184,16 @@ export default function CartContent() {
                   ))}
                 </ul>
               )}
+
+              {!isLoading && lines.length > 0 ? (
+                <CheckoutForm
+                  items={items}
+                  postalCode={postalCode}
+                  action={checkoutAction}
+                  errors={checkoutState.fieldErrors}
+                  disabled={isPlacingOrder}
+                />
+              ) : null}
             </section>
 
             <OrderSummary
@@ -159,6 +201,15 @@ export default function CartContent() {
               items={items}
               shipping={shipping}
               onShippingChange={setShipping}
+              postalCode={postalCode}
+              onPostalCodeChange={(value) =>
+                setPostalCode(maskPostalCode(value))
+              }
+              postalCodeError={checkoutState.fieldErrors.postalCode}
+              checkoutMessage={
+                checkoutState.status === "error" ? checkoutState.message : ""
+              }
+              isPlacingOrder={isPlacingOrder}
               disabled={isLoading || failed || lines.length === 0}
             />
           </div>

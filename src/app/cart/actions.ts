@@ -1,9 +1,14 @@
 "use server";
 
+import { AppError } from "@/app/_errors/app.error";
 import { resolveCart } from "@/lib/cart";
 import { parseCartItems, parsePostalCode } from "@/lib/cart-input";
+import { readCheckoutForm } from "@/lib/order-input";
+import { createOrder } from "@/lib/orders";
 import { calculateShipping } from "@/lib/shipping";
 import type { ICartSummary, IShippingResult } from "@/types/cart";
+import type { ICheckoutFormState } from "@/types/order";
+import { updateTag } from "next/cache";
 
 /**
  * Valida os itens do carrinho no servidor e devolve preços, estoque e
@@ -67,4 +72,61 @@ export async function quoteShipping(
   }
 
   return { status: "success", message: "", quote };
+}
+
+/**
+ * Cria o pedido a partir do carrinho e dos dados de entrega. O estoque é
+ * baixado na mesma transação que grava o pedido (lib/orders.ts).
+ */
+export async function placeOrder(
+  _previous: ICheckoutFormState,
+  formData: FormData,
+): Promise<ICheckoutFormState> {
+  const parsed = readCheckoutForm(formData);
+
+  if (!parsed.input) {
+    return {
+      status: "error",
+      message: parsed.fieldErrors.items ?? "Revise os campos destacados.",
+      fieldErrors: parsed.fieldErrors,
+      orderId: null,
+    };
+  }
+
+  const { items, customer, address } = parsed.input;
+
+  const summary = await resolveCart(items);
+  const quote = await calculateShipping({
+    postalCode: address.postalCode,
+    lines: summary.lines,
+  });
+
+  try {
+    const order = await createOrder({
+      items,
+      customer,
+      address,
+      shipping: quote.status === "quoted" ? quote.price : null,
+    });
+
+    updateTag("products");
+
+    return {
+      status: "success",
+      message: "",
+      fieldErrors: {},
+      orderId: order.id,
+    };
+  } catch (error) {
+    if (error instanceof AppError && error.status === 409) {
+      return {
+        status: "error",
+        message: error.message,
+        fieldErrors: {},
+        orderId: null,
+      };
+    }
+
+    throw error;
+  }
 }

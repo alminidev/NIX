@@ -166,6 +166,13 @@ export async function deleteProduct(
     if (prismaCode(error) === "P2025") {
       return { status: "error", message: "Este produto não existe mais." };
     }
+    if (prismaCode(error) === "P2003") {
+      return {
+        status: "error",
+        message:
+          "Este produto tem pedidos e não pode ser excluído. Desative-o para tirá-lo da vitrine.",
+      };
+    }
     throw error;
   }
 
