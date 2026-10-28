@@ -1,7 +1,10 @@
+import { orderStatusLabels } from "@/lib/order-status";
 import { IDashboardMetrics } from "@/types/dashboard";
+import { statusBadgeClasses } from "@/views/AdminOrdersView/components/order-display";
 import {
   BookOpen,
   ChartLine,
+  Clock,
   DollarSign,
   LayoutGrid,
   Package,
@@ -28,6 +31,7 @@ interface IMetricCard {
   hint: string;
   icon:
     | "sales"
+    | "awaiting"
     | "revenue"
     | "ticket"
     | "products"
@@ -51,6 +55,7 @@ interface IMetricIconProps {
 
 const icons: Record<IMetricCard["icon"], LucideIcon> = {
   sales: ShoppingBag,
+  awaiting: Clock,
   revenue: DollarSign,
   ticket: Ticket,
   products: Package,
@@ -70,19 +75,25 @@ export default function Dashboard({ metrics }: IDashboardProps) {
     {
       label: "Vendas",
       value: String(metrics.orders),
-      hint: "Pedidos registrados",
+      hint: "Pedidos registrados, de qualquer status",
       icon: "sales",
+    },
+    {
+      label: "Aguardando pagamento",
+      value: String(metrics.awaitingPayment),
+      hint: "Seguram o estoque até pagar ou expirar",
+      icon: "awaiting",
     },
     {
       label: "Receita",
       value: formatarMoeda(metrics.revenue),
-      hint: "Soma dos pedidos",
+      hint: "Pedidos pagos, em produção, prontos e enviados",
       icon: "revenue",
     },
     {
       label: "Ticket médio",
       value: formatarMoeda(metrics.averageTicket),
-      hint: "Receita dividida pelas vendas",
+      hint: "Receita dividida pelos pedidos pagos",
       icon: "ticket",
     },
   ];
@@ -181,22 +192,50 @@ export default function Dashboard({ metrics }: IDashboardProps) {
         className="flex flex-col gap-4"
         aria-labelledby="metricas-comerciais"
       >
-        <div>
-          <h2
-            id="metricas-comerciais"
-            className="text-lg leading-[1.15] font-semibold tracking-[-0.02em] text-ink-primary"
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <h2
+              id="metricas-comerciais"
+              className="text-lg leading-[1.15] font-semibold tracking-[-0.02em] text-ink-primary"
+            >
+              Comercial
+            </h2>
+            <p className="mt-2 max-w-140 text-[0.9375rem] text-ink-secondary">
+              Pedidos feitos no site. Cancelados, expirados e ainda não pagos
+              ficam fora da receita.
+            </p>
+          </div>
+          <Link
+            href="/admin/orders"
+            className="text-sm font-semibold text-brand-blue-hover"
           >
-            Comercial
-          </h2>
-          <p className="mt-2 max-w-140 text-[0.9375rem] text-ink-secondary">
-            Pedidos ainda não entram neste painel. Os valores ficam zerados até
-            a integração de checkout.
-          </p>
+            Ver pedidos
+          </Link>
         </div>
-        <div className="grid grid-cols-1 gap-4 min-[861px]:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 min-[861px]:grid-cols-2 min-[1081px]:grid-cols-4">
           {comercial.map((card) => (
             <Metric key={card.label} card={card} />
           ))}
+        </div>
+        <div className="rounded-card border border-border-hairline bg-surface-card p-6">
+          <h3 className="text-[0.9375rem] font-semibold text-ink-primary">
+            Pedidos por status
+          </h3>
+          <ul className="mt-3 flex list-none flex-col">
+            {metrics.ordersByStatus.map((item) => (
+              <li
+                key={item.status}
+                className="flex items-center justify-between gap-4 border-t border-border-hairline py-3 first:border-t-0 first:pt-1"
+              >
+                <span className={statusBadgeClasses[item.status]}>
+                  {orderStatusLabels[item.status]}
+                </span>
+                <b className="text-[0.9375rem] font-bold tracking-[-0.02em] text-ink-primary tabular-nums">
+                  {item.count}
+                </b>
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
 
