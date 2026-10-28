@@ -1,16 +1,18 @@
+import { orderStatusLabels } from "@/lib/order-status";
 import type { IAdminOrder } from "@/types/admin-order";
 import {
   currencyFormat,
   formatOrderDate,
   statusBadgeClasses,
-  statusLabels,
 } from "@/views/AdminOrdersView/components/order-display";
 
 interface IOrderListProps {
   orders: IAdminOrder[];
+  /** Há busca ou filtro aplicado (muda a mensagem da lista vazia) */
+  filtered: boolean;
 }
 
-export default function OrderList({ orders }: IOrderListProps) {
+export default function OrderList({ orders, filtered }: IOrderListProps) {
   return (
     <section className="flex flex-col gap-4" aria-labelledby="lista-pedidos">
       <h2 id="lista-pedidos" className="sr-only">
@@ -20,7 +22,9 @@ export default function OrderList({ orders }: IOrderListProps) {
       <div className="overflow-hidden rounded-card border border-border-hairline bg-surface-card">
         {orders.length === 0 ? (
           <p className="px-6 py-12 text-center text-[0.9375rem] text-ink-muted">
-            Nenhum pedido ainda.
+            {filtered
+              ? "Nenhum pedido encontrado com esses filtros."
+              : "Nenhum pedido ainda."}
           </p>
         ) : (
           <ul className="flex list-none flex-col">
@@ -35,7 +39,7 @@ export default function OrderList({ orders }: IOrderListProps) {
                       Pedido nº {order.id}
                     </strong>
                     <span className={statusBadgeClasses[order.status]}>
-                      {statusLabels[order.status]}
+                      {orderStatusLabels[order.status]}
                     </span>
                   </div>
                   <p className="mt-1 truncate text-[0.8125rem] text-ink-muted">

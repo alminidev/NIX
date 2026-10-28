@@ -13,7 +13,7 @@
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
     "db:generate": "prisma generate",
-    "test": "node --conditions=react-server --import tsx --test tests/*.test.ts"
+    "test": "node --conditions=react-server --import tsx --test --test-concurrency=1 tests/*.test.ts"
   },
   "dependencies": {
     "@better-auth/prisma-adapter": "^1.7.11",

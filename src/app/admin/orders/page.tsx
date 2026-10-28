@@ -1,3 +1,4 @@
+import { parseOrderFilters } from "@/lib/admin-order-filters";
 import { getAdminOrders } from "@/lib/admin-orders";
 import { getSession } from "@/lib/session";
 import { AdminOrdersView } from "@/views/AdminOrdersView";
@@ -11,25 +12,31 @@ export const metadata: Metadata = {
 
 export const instant = false;
 
-async function Orders() {
+interface IOrdersPageProps {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}
+
+async function Orders({ searchParams }: IOrdersPageProps) {
   const session = await getSession();
 
   if (session?.user.role !== "admin") {
     return null;
   }
 
-  const orders = await getAdminOrders();
-  return <AdminOrdersView orders={orders} />;
+  const filters = parseOrderFilters(await searchParams);
+  const result = await getAdminOrders(filters);
+
+  return <AdminOrdersView result={result} filters={filters} />;
 }
 
-export default function OrdersPage() {
+export default function OrdersPage({ searchParams }: IOrdersPageProps) {
   return (
     <Suspense
       fallback={
         <p className="text-[0.9375rem] text-ink-muted">Carregando pedidos…</p>
       }
     >
-      <Orders />
+      <Orders searchParams={searchParams} />
     </Suspense>
   );
 }

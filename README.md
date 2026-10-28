@@ -178,7 +178,9 @@ O carrinho fica em **`/cart`**. O navegador guarda apenas `productId` e `quantit
 | `src/lib/order-input.ts` | Validação do formulário de entrega (nome, e-mail, telefone, endereço) |
 | `src/lib/order-expiration.ts` | Prazo do pedido: `ORDER_EXPIRATION_MINUTES` (padrão 60) |
 | `src/app/api/orders/expire/route.ts` | Rota de cron que expira pedidos vencidos (protegida por `CRON_SECRET`) |
-| `src/lib/admin-orders.ts` | `getAdminOrders`: pedidos mais recentes para o painel |
+| `src/lib/admin-orders.ts` | `getAdminOrders`: pedidos do painel, com filtros e paginação |
+| `src/lib/admin-order-filters.ts` | Leitura dos `searchParams` da lista de pedidos e links de paginação |
+| `src/lib/order-status.ts` | Status do pedido: rótulos e quais contam como receita |
 | `src/types/postal-code.ts` | Tipos da ViaCEP (`IViaCepResponse`, `IPostalCodeAddress`, `IPostalCodeLookup`) |
 | `src/types/order.ts` | Tipos do pedido (`IOrderInput`, `IOrderCreated`, `ICheckoutFormState`) |
 
@@ -189,7 +191,7 @@ O carrinho fica em **`/cart`**. O navegador guarda apenas `productId` e `quantit
 - **Expiração:** todo pedido nasce com `expiresAt` (agora + `ORDER_EXPIRATION_MINUTES`, padrão 60). Passado o prazo sem pagamento, ele vira `EXPIRED` e o estoque volta. `cancelOrder` (pedido aguardando pagamento ou pago, ainda sem produção) também devolve o estoque e deixa o pedido `CANCELLED`. Expirar e cancelar são idempotentes: a troca de status é um `updateMany` condicional na mesma transação da devolução, e só quem de fato mudou o pedido devolve o estoque (chamadas repetidas ou simultâneas não devolvem duas vezes). Variáveis, agendamento e funcionamento estão em [Expiração de pedidos](#expiração-de-pedidos).
 - **Checkout (InfinitePay):** depois que o pedido é criado, o carrinho é esvaziado e o navegador segue para `NEXT_PUBLIC_CART_URL` (veja `.env.example`; padrão em `src/data/produtos.ts`). A integração real entra no `useEffect` de `src/views/CartView/CartContent.tsx` que trata o pedido criado.
 
-- **Painel de pedidos:** `/admin/orders` (somente admin, link _"Pedidos"_ no menu) lista os 100 pedidos mais recentes, do mais novo ao mais antigo, com número, status, cliente, data, total e quantidade de itens. Os dados vêm de `getAdminOrders` em `src/lib/admin-orders.ts`.
+- **Painel de pedidos:** `/admin/orders` (somente admin, link _"Pedidos"_ no menu) lista os pedidos do mais novo ao mais antigo, 20 por página, com número, status, cliente, data, total e quantidade de itens. Busca e filtros vão nos `searchParams` da página (formulário GET, então os links são compartilháveis): `q` (nome, e-mail ou número do pedido, com ou sem `#`), `status` (um dos status do pedido), `from` e `to` (datas `AAAA-MM-DD`, inclusive, no horário de Brasília) e `page`. Valores inválidos são ignorados e uma página acima do fim volta para a última. A leitura dos parâmetros está em `src/lib/admin-order-filters.ts` e a consulta em `getAdminOrders` (`src/lib/admin-orders.ts`).
 
 ### Expiração de pedidos
 
@@ -242,7 +244,7 @@ Use um intervalo menor ou igual a `ORDER_EXPIRATION_MINUTES` para que o estoque 
 npm test
 ```
 
-Executa os testes de `tests/` (Node test runner) sobre as regras do carrinho, CEP, dimensões, leitura dos formulários e criação de pedidos. Os testes de pedido usam o banco de `DATABASE_URL` (lido do `.env`): criam produtos próprios e removem tudo no final. Sem `DATABASE_URL` eles são ignorados.
+Executa os testes de `tests/` (Node test runner) sobre as regras do carrinho, CEP e ViaCEP, dimensões, leitura dos formulários, criação de pedidos, lista de pedidos do painel e métricas do dashboard. Os arquivos rodam um de cada vez (`--test-concurrency=1`) porque compartilham o banco. Os testes de pedido usam o banco de `DATABASE_URL` (lido do `.env`): criam produtos próprios e removem tudo no final. Sem `DATABASE_URL` eles são ignorados.
 
 ---
 

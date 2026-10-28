@@ -15,16 +15,6 @@ export function formatOrderDate(date: Date) {
   return dateFormat.format(date);
 }
 
-export const statusLabels: Record<OrderStatus, string> = {
-  AWAITING_PAYMENT: "Aguardando pagamento",
-  PAID: "Pago",
-  IN_PRODUCTION: "Em produção",
-  READY: "Pronto",
-  SHIPPED: "Enviado",
-  CANCELLED: "Cancelado",
-  EXPIRED: "Expirado",
-};
-
 const neutralBadge =
   "rounded-pill bg-surface-canvas-fog px-2 py-0.5 text-[0.6875rem] font-bold tracking-[0.04em] text-ink-muted uppercase";
 const activeBadge =
