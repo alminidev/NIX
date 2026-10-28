@@ -178,9 +178,11 @@ O carrinho fica em **`/cart`**. O navegador guarda apenas `productId` e `quantit
 | `src/lib/order-input.ts` | Validação do formulário de entrega (nome, e-mail, telefone, endereço) |
 | `src/lib/order-expiration.ts` | Prazo do pedido: `ORDER_EXPIRATION_MINUTES` (padrão 60) |
 | `src/app/api/orders/expire/route.ts` | Rota de cron que expira pedidos vencidos (protegida por `CRON_SECRET`) |
-| `src/lib/admin-orders.ts` | `getAdminOrders`: pedidos do painel, com filtros e paginação |
+| `src/lib/admin-orders.ts` | `getAdminOrders` (lista com filtros e paginação) e `getAdminOrder` (um pedido completo) |
 | `src/lib/admin-order-filters.ts` | Leitura dos `searchParams` da lista de pedidos e links de paginação |
-| `src/lib/order-status.ts` | Status do pedido: rótulos e quais contam como receita |
+| `src/lib/order-status.ts` | Status do pedido: rótulos, quais contam como receita e as mudanças manuais permitidas |
+| `src/lib/admin-order-input.ts` | Leitura e validação do formulário de mudança de status (status e código de rastreio) |
+| `src/app/admin/orders/actions.ts` | Server action `updateOrderStatus` (muda o status do pedido, somente admin) |
 | `src/types/postal-code.ts` | Tipos da ViaCEP (`IViaCepResponse`, `IPostalCodeAddress`, `IPostalCodeLookup`) |
 | `src/types/order.ts` | Tipos do pedido (`IOrderInput`, `IOrderCreated`, `ICheckoutFormState`) |
 
@@ -192,6 +194,8 @@ O carrinho fica em **`/cart`**. O navegador guarda apenas `productId` e `quantit
 - **Checkout (InfinitePay):** depois que o pedido é criado, o carrinho é esvaziado e o navegador segue para `NEXT_PUBLIC_CART_URL` (veja `.env.example`; padrão em `src/data/produtos.ts`). A integração real entra no `useEffect` de `src/views/CartView/CartContent.tsx` que trata o pedido criado.
 
 - **Painel de pedidos:** `/admin/orders` (somente admin, link _"Pedidos"_ no menu) lista os pedidos do mais novo ao mais antigo, 20 por página, com número, status, cliente, data, total e quantidade de itens. Busca e filtros vão nos `searchParams` da página (formulário GET, então os links são compartilháveis): `q` (nome, e-mail ou número do pedido, com ou sem `#`), `status` (um dos status do pedido), `from` e `to` (datas `AAAA-MM-DD`, inclusive, no horário de Brasília) e `page`. Valores inválidos são ignorados e uma página acima do fim volta para a última. A leitura dos parâmetros está em `src/lib/admin-order-filters.ts` e a consulta em `getAdminOrders` (`src/lib/admin-orders.ts`).
+- **Pedido (`/admin/orders/[id]`):** cada linha da lista abre a página do pedido (somente admin; id inexistente ou inválido cai na página 404). Ela mostra os itens (foto, nome, SKU, quantidade, preço unitário do momento do pedido e total da linha), subtotal, frete (_"Não cotado"_ quando não houve cotação) e total, o cliente (e-mail e telefone clicáveis), o endereço de entrega, a origem (`SITE`, `WHATSAPP` ou `INSTAGRAM`) e as datas de criação, última atualização e prazo de pagamento. A leitura está em `getAdminOrder` (`src/lib/admin-orders.ts`).
+- **Mudança manual de status:** o cartão _Status_ da página do pedido oferece só as mudanças permitidas para o status atual (`getNextOrderStatuses` em `src/lib/order-status.ts`): aguardando pagamento → pago → em produção → pronto → enviado, cada passo com volta para corrigir um clique errado. Cancelar só vale em aguardando pagamento ou pago, passa por `cancelOrder` e devolve o estoque. Cancelado e expirado são finais (expirar só acontece pelo prazo) e nenhum status volta para aguardando pagamento. Ao marcar como enviado dá para informar o código de rastreio (`trackingCode`, opcional, até 40 caracteres). A mudança é um `updateMany` condicional em `changeOrderStatus` (`src/lib/orders.ts`): se o pedido mudou em outra aba, nada é alterado e o painel avisa.
 - **Dashboard (`/admin`):** a seção _Comercial_ lê os pedidos do banco (`getDashboardMetrics` em `src/lib/dashboard.ts`): total de pedidos, pedidos por status, pedidos aguardando pagamento, receita e ticket médio. **Receita** é a soma do `total` (já com frete) dos pedidos de status `PAID`, `IN_PRODUCTION`, `READY` e `SHIPPED`, ou seja, do pagamento em diante (`paidOrderStatuses` em `src/lib/order-status.ts`). Ficam de fora `AWAITING_PAYMENT` (ainda não pagou) e `CANCELLED` e `EXPIRED` (o dinheiro não entrou ou foi devolvido). O **ticket médio** é a receita dividida pelo número desses pedidos pagos.
 
 ### Expiração de pedidos
@@ -245,7 +249,7 @@ Use um intervalo menor ou igual a `ORDER_EXPIRATION_MINUTES` para que o estoque 
 npm test
 ```
 
-Executa os testes de `tests/` (Node test runner) sobre as regras do carrinho, CEP e ViaCEP, dimensões, leitura dos formulários, criação de pedidos, lista de pedidos do painel e métricas do dashboard. Os arquivos rodam um de cada vez (`--test-concurrency=1`) porque compartilham o banco. Os testes de pedido usam o banco de `DATABASE_URL` (lido do `.env`): criam produtos próprios e removem tudo no final. Sem `DATABASE_URL` eles são ignorados.
+Executa os testes de `tests/` (Node test runner) sobre as regras do carrinho, CEP e ViaCEP, dimensões, leitura dos formulários, criação de pedidos, lista e página de pedidos do painel (incluindo a mudança de status) e métricas do dashboard. Os arquivos rodam um de cada vez (`--test-concurrency=1`) porque compartilham o banco. Os testes de pedido usam o banco de `DATABASE_URL` (lido do `.env`): criam produtos próprios e removem tudo no final. Sem `DATABASE_URL` eles são ignorados.
 
 ---
 
