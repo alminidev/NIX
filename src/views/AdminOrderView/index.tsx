@@ -48,17 +48,18 @@ export function AdminOrderView({ order }: IAdminOrderViewProps) {
         </p>
       </header>
 
+      <OrderStatusForm
+        orderId={order.id}
+        status={order.status}
+        trackingCode={order.trackingCode}
+      />
+
       <div className="grid grid-cols-1 items-start gap-6 min-[1081px]:grid-cols-[minmax(0,1fr)_340px]">
         <div className="flex min-w-0 flex-col gap-6">
           <OrderItems order={order} />
         </div>
 
         <div className="flex min-w-0 flex-col gap-6">
-          <OrderStatusForm
-            orderId={order.id}
-            status={order.status}
-            trackingCode={order.trackingCode}
-          />
           <OrderCustomer customer={order.customer} />
           <OrderAddress address={order.address} />
           <OrderDates order={order} />
