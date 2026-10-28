@@ -5,6 +5,8 @@ import {
   formatOrderDate,
   statusBadgeClasses,
 } from "@/views/AdminOrdersView/components/order-display";
+import { ChevronRight } from "lucide-react";
+import Link from "next/link";
 
 interface IOrderListProps {
   orders: IAdminOrder[];
@@ -31,36 +33,48 @@ export default function OrderList({ orders, filtered }: IOrderListProps) {
             {orders.map((order) => (
               <li
                 key={order.id}
-                className="flex flex-col gap-3 border-t border-border-hairline px-4 py-4 first:border-t-0 min-[1081px]:flex-row min-[1081px]:items-center min-[1081px]:gap-4 min-[1081px]:px-5"
+                className="border-t border-border-hairline first:border-t-0"
               >
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <strong className="text-[0.9375rem] leading-snug font-semibold text-ink-primary">
-                      Pedido nº {order.id}
-                    </strong>
-                    <span className={statusBadgeClasses[order.status]}>
-                      {orderStatusLabels[order.status]}
-                    </span>
+                <Link
+                  href={`/admin/orders/${order.id}`}
+                  className="group flex flex-col gap-3 px-4 py-4 transition-colors hover:bg-brand-blue-subtle focus-visible:bg-brand-blue-subtle focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-border-focus min-[1081px]:flex-row min-[1081px]:items-center min-[1081px]:gap-4 min-[1081px]:px-5"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <strong className="text-[0.9375rem] leading-snug font-semibold text-ink-primary">
+                        Pedido nº {order.id}
+                      </strong>
+                      <span className={statusBadgeClasses[order.status]}>
+                        {orderStatusLabels[order.status]}
+                      </span>
+                    </div>
+                    <p className="mt-1 truncate text-[0.8125rem] text-ink-muted">
+                      {order.customerName} · {order.customerEmail}
+                    </p>
                   </div>
-                  <p className="mt-1 truncate text-[0.8125rem] text-ink-muted">
-                    {order.customerName} · {order.customerEmail}
+
+                  <p className="text-[0.8125rem] text-ink-muted min-[1081px]:w-36 min-[1081px]:text-right">
+                    <time dateTime={order.createdAt.toISOString()}>
+                      {formatOrderDate(order.createdAt)}
+                    </time>
                   </p>
-                </div>
 
-                <p className="text-[0.8125rem] text-ink-muted min-[1081px]:w-36 min-[1081px]:text-right">
-                  <time dateTime={order.createdAt.toISOString()}>
-                    {formatOrderDate(order.createdAt)}
-                  </time>
-                </p>
+                  <p className="min-[1081px]:w-28 min-[1081px]:text-right">
+                    <span className="block text-lg leading-none font-bold tracking-[-0.02em] text-ink-primary tabular-nums">
+                      {currencyFormat.format(order.total)}
+                    </span>
+                    <span className="mt-1 block text-[0.6875rem] font-semibold tracking-[0.04em] text-ink-muted uppercase">
+                      {order.itemCount}{" "}
+                      {order.itemCount === 1 ? "item" : "itens"}
+                    </span>
+                  </p>
 
-                <p className="min-[1081px]:w-28 min-[1081px]:text-right">
-                  <span className="block text-lg leading-none font-bold tracking-[-0.02em] text-ink-primary tabular-nums">
-                    {currencyFormat.format(order.total)}
-                  </span>
-                  <span className="mt-1 block text-[0.6875rem] font-semibold tracking-[0.04em] text-ink-muted uppercase">
-                    {order.itemCount} {order.itemCount === 1 ? "item" : "itens"}
-                  </span>
-                </p>
+                  <ChevronRight
+                    size={18}
+                    aria-hidden
+                    className="hidden shrink-0 text-ink-muted transition-colors group-hover:text-brand-blue min-[1081px]:block"
+                  />
+                </Link>
               </li>
             ))}
           </ul>
