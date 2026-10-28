@@ -3,7 +3,6 @@
 import { getCartSummary, placeOrder } from "@/app/cart/actions";
 import { CART_URL } from "@/data/produtos";
 import { useCartContext } from "@/contexts/CartContext";
-import { maskPostalCode } from "@/lib/cart-input";
 import type { ICartSummary, IShippingQuote } from "@/types/cart";
 import { checkoutFormInitialState } from "@/types/order";
 import { ArrowLeft, ShoppingCart } from "lucide-react";
@@ -24,7 +23,7 @@ export default function CartContent() {
   const [notices, setNotices] = useState<string[]>([]);
   const [failed, setFailed] = useState(false);
   const [shipping, setShipping] = useState<IShippingQuote | null>(null);
-  const [postalCode, setPostalCode] = useState("");
+  const [addressReady, setAddressReady] = useState(false);
   const [checkoutState, checkoutAction, isPlacingOrder] = useActionState(
     placeOrder,
     checkoutFormInitialState,
@@ -164,7 +163,7 @@ export default function CartContent() {
           </div>
         ) : (
           <div
-            className="grid items-start gap-8 min-[992px]:grid-cols-[1fr_380px]"
+            className="grid grid-cols-1 items-start gap-8 min-[992px]:grid-cols-[minmax(0,1fr)_380px]"
             aria-busy={isLoading}
           >
             <section aria-label="Itens do carrinho">
@@ -188,24 +187,19 @@ export default function CartContent() {
               {!isLoading && lines.length > 0 ? (
                 <CheckoutForm
                   items={items}
-                  postalCode={postalCode}
                   action={checkoutAction}
                   errors={checkoutState.fieldErrors}
                   disabled={isPlacingOrder}
+                  onShippingChange={setShipping}
+                  onAddressReadyChange={setAddressReady}
                 />
               ) : null}
             </section>
 
             <OrderSummary
               summary={summary}
-              items={items}
               shipping={shipping}
-              onShippingChange={setShipping}
-              postalCode={postalCode}
-              onPostalCodeChange={(value) =>
-                setPostalCode(maskPostalCode(value))
-              }
-              postalCodeError={checkoutState.fieldErrors.postalCode}
+              addressReady={addressReady}
               checkoutMessage={
                 checkoutState.status === "error" ? checkoutState.message : ""
               }

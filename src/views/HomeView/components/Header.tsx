@@ -105,16 +105,16 @@ export default function Header({ homePath = '' }: { homePath?: string }) {
           </ul>
         </nav>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 min-[640px]:gap-4">
           <a
             href={whatsappUrl}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-pill border border-border-hairline bg-transparent px-4 py-2.5 text-sm font-medium text-ink-secondary transition-all duration-200 ease-nix hover:-translate-y-px hover:border-brand-blue hover:text-brand-blue"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-pill border border-border-hairline bg-transparent px-3 py-2.5 text-sm font-medium text-ink-secondary transition-all duration-200 ease-nix hover:-translate-y-px hover:border-brand-blue hover:text-brand-blue min-[640px]:px-4"
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Fale com a Nix pelo WhatsApp"
           >
             <MessageCircle size={16} aria-hidden />
-            <span>Fale com a Nix</span>
+            <span className="hidden min-[640px]:inline">Fale com a Nix</span>
           </a>
 
           <Link

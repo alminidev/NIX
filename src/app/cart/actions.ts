@@ -6,8 +6,10 @@ import { parseCartItems, parsePostalCode } from "@/lib/cart-input";
 import { readCheckoutForm } from "@/lib/order-input";
 import { createOrder, expireOverdueOrders } from "@/lib/orders";
 import { calculateShipping } from "@/lib/shipping";
+import { checkAddressPostalCode, lookupPostalCode } from "@/lib/viacep";
 import type { ICartSummary, IShippingResult } from "@/types/cart";
 import type { ICheckoutFormState } from "@/types/order";
+import type { IPostalCodeLookup } from "@/types/postal-code";
 import { updateTag } from "next/cache";
 
 /**
@@ -50,9 +52,6 @@ export async function quoteShipping(
     };
   }
 
-  // Libera o estoque de pedidos vencidos antes de conferir o carrinho.
-  if ((await expireOverdueOrders()) > 0) updateTag("products");
-
   const summary = await resolveCart(items);
 
   if (summary.lines.length === 0) {
@@ -78,6 +77,15 @@ export async function quoteShipping(
 }
 
 /**
+ * Endereço do CEP informado, consultado na ViaCEP (lib/viacep.ts).
+ */
+export async function lookupAddress(
+  rawPostalCode: unknown,
+): Promise<IPostalCodeLookup> {
+  return lookupPostalCode(rawPostalCode);
+}
+
+/**
  * Cria o pedido a partir do carrinho e dos dados de entrega. O estoque é
  * baixado na mesma transação que grava o pedido (lib/orders.ts).
  */
@@ -97,6 +105,21 @@ export async function placeOrder(
   }
 
   const { items, customer, address } = parsed.input;
+
+  // Confere cidade e UF com o CEP. Se a ViaCEP estiver fora do ar, segue.
+  const postalCheck = await checkAddressPostalCode(address);
+
+  if (postalCheck.status === "not-found" || postalCheck.status === "mismatch") {
+    return {
+      status: "error",
+      message: postalCheck.message,
+      fieldErrors: postalCheck.fieldErrors,
+      orderId: null,
+    };
+  }
+
+  // Libera o estoque de pedidos vencidos antes de conferir o carrinho.
+  if ((await expireOverdueOrders()) > 0) updateTag("products");
 
   const summary = await resolveCart(items);
   const quote = await calculateShipping({

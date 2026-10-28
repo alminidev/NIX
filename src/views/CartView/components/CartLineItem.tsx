@@ -52,7 +52,7 @@ export default function CartLineItem({
         ) : null}
       </div>
 
-      <div className="flex items-center justify-between gap-4 min-[640px]:flex-col min-[640px]:items-end">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 min-[640px]:flex-col min-[640px]:items-end">
         <div
           className="inline-flex items-center overflow-hidden rounded-pill border border-border-hairline bg-white"
           role="group"

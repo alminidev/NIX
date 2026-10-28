@@ -3,6 +3,7 @@
 import { useAuthContext } from "@/contexts/AuthContext";
 import {
   Boxes,
+  ClipboardList,
   LayoutDashboard,
   LogOut,
   Package,
@@ -29,6 +30,12 @@ const navItems: {
   exact: boolean;
 }[] = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
+  {
+    href: "/admin/orders",
+    label: "Pedidos",
+    icon: ClipboardList,
+    exact: false,
+  },
   { href: "/admin/products", label: "Produtos", icon: Package, exact: false },
   { href: "/admin/stock", label: "Estoque", icon: Boxes, exact: true },
 ];
@@ -61,11 +68,11 @@ export default function AdminShell({ user, children }: IAdminShellProps) {
 
   return (
     <div className="flex min-h-screen w-full flex-1 flex-col items-stretch bg-surface-canvas-fog min-[861px]:flex-row">
-      <aside className="static flex h-auto w-full shrink-0 flex-col justify-between gap-6 border-b border-border-hairline bg-surface-card px-4 pt-5 pb-4 min-[861px]:sticky min-[861px]:top-0 min-[861px]:h-screen min-[861px]:w-66 min-[861px]:border-r min-[861px]:border-b-0">
-        <div>
+      <aside className="static flex h-auto w-full shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-b border-border-hairline bg-surface-card px-4 py-3 min-[861px]:sticky min-[861px]:flex-col min-[861px]:flex-nowrap min-[861px]:items-stretch min-[861px]:justify-between min-[861px]:gap-6 min-[861px]:pt-5 min-[861px]:pb-4 min-[861px]:top-0 min-[861px]:h-screen min-[861px]:w-66 min-[861px]:border-r min-[861px]:border-b-0">
+        <div className="contents min-[861px]:block">
           <Link
             href="/admin"
-            className="flex min-h-12 items-center px-2"
+            className="order-1 flex min-h-12 items-center px-2 min-[861px]:order-none"
             aria-label="NIX — Dashboard"
           >
             <img
@@ -78,10 +85,10 @@ export default function AdminShell({ user, children }: IAdminShellProps) {
           </Link>
 
           <nav
-            className="mt-3 flex flex-col gap-1"
+            className="order-3 grid w-full grid-cols-4 gap-1 min-[861px]:order-none min-[861px]:mt-3 min-[861px]:flex min-[861px]:flex-col"
             aria-label="Painel administrativo"
           >
-            <p className="mx-2 mb-2 text-[0.6875rem] font-semibold tracking-wider text-ink-muted uppercase">
+            <p className="mx-2 mb-2 hidden text-[0.6875rem] font-semibold tracking-wider text-ink-muted uppercase min-[861px]:block">
               Navegação
             </p>
             {navItems.map((item) => {
@@ -93,8 +100,8 @@ export default function AdminShell({ user, children }: IAdminShellProps) {
                   href={item.href}
                   className={
                     current
-                      ? "flex min-h-11 items-center gap-2.5 rounded-pill border border-[rgba(23,107,255,0.2)] bg-brand-blue-subtle px-3 text-sm font-semibold text-brand-blue-hover transition-[background-color,color,border-color] duration-200 ease-nix"
-                      : "flex min-h-11 items-center gap-2.5 rounded-pill border border-transparent px-3 text-sm font-semibold text-ink-secondary transition-[background-color,color,border-color] duration-200 ease-nix hover:bg-brand-blue-subtle hover:text-brand-blue-hover"
+                      ? "flex min-h-14 flex-col items-center justify-center gap-1 rounded-pill border border-[rgba(23,107,255,0.2)] bg-brand-blue-subtle px-1 text-xs font-semibold text-brand-blue-hover transition-[background-color,color,border-color] duration-200 ease-nix min-[861px]:min-h-11 min-[861px]:flex-row min-[861px]:justify-start min-[861px]:gap-2.5 min-[861px]:px-3 min-[861px]:text-sm"
+                      : "flex min-h-14 flex-col items-center justify-center gap-1 rounded-pill border border-transparent px-1 text-xs font-semibold text-ink-secondary transition-[background-color,color,border-color] duration-200 ease-nix hover:bg-brand-blue-subtle hover:text-brand-blue-hover min-[861px]:min-h-11 min-[861px]:flex-row min-[861px]:justify-start min-[861px]:gap-2.5 min-[861px]:px-3 min-[861px]:text-sm"
                   }
                   aria-current={current ? "page" : undefined}
                 >
@@ -106,15 +113,15 @@ export default function AdminShell({ user, children }: IAdminShellProps) {
           </nav>
         </div>
 
-        <div className="mt-auto flex items-center gap-2.5 border-t border-border-hairline px-1 pt-4 pb-1">
-          <div className="flex min-w-0 items-center gap-3">
+        <div className="order-2 ml-auto flex items-center gap-2.5 min-[861px]:order-none min-[861px]:mt-auto min-[861px]:ml-0 min-[861px]:border-t min-[861px]:border-border-hairline min-[861px]:px-1 min-[861px]:pt-4 min-[861px]:pb-1">
+          <div className="flex min-w-0 items-center gap-3" title={user.name}>
             <span
               className="grid size-9 shrink-0 place-items-center rounded-pill border border-[rgba(23,107,255,0.2)] bg-brand-blue-subtle text-sm font-bold text-brand-blue-hover"
               aria-hidden="true"
             >
               {inicial}
             </span>
-            <div className="flex min-w-0 flex-col">
+            <div className="flex min-w-0 flex-col max-[860px]:sr-only">
               <strong className="text-sm leading-[1.3] font-semibold text-ink-primary">
                 {user.name}
               </strong>
