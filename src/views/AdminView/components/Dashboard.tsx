@@ -1,13 +1,15 @@
-import { orderStatusLabels } from "@/lib/order-status";
 import { IDashboardMetrics } from "@/types/dashboard";
-import { statusBadgeClasses } from "@/views/AdminOrdersView/components/order-display";
+import Attention from "@/views/AdminView/components/Attention";
+import OrdersByStatus from "@/views/AdminView/components/OrdersByStatus";
 import {
   BookOpen,
   ChartLine,
-  Clock,
+  ChevronRight,
+  CircleCheck,
   DollarSign,
   LayoutGrid,
   Package,
+  Plus,
   ShoppingBag,
   Star,
   Ticket,
@@ -29,9 +31,11 @@ interface IMetricCard {
   label: string;
   value: string;
   hint: string;
+  /** Destaca o cartão (a receita) */
+  featured?: boolean;
   icon:
     | "sales"
-    | "awaiting"
+    | "paid"
     | "revenue"
     | "ticket"
     | "products"
@@ -55,7 +59,7 @@ interface IMetricIconProps {
 
 const icons: Record<IMetricCard["icon"], LucideIcon> = {
   sales: ShoppingBag,
-  awaiting: Clock,
+  paid: CircleCheck,
   revenue: DollarSign,
   ticket: Ticket,
   products: Package,
@@ -73,28 +77,29 @@ function Icon({ name }: IMetricIconProps) {
 export default function Dashboard({ metrics }: IDashboardProps) {
   const comercial: IMetricCard[] = [
     {
-      label: "Vendas",
-      value: String(metrics.orders),
-      hint: "Pedidos registrados, de qualquer status",
-      icon: "sales",
-    },
-    {
-      label: "Aguardando pagamento",
-      value: String(metrics.awaitingPayment),
-      hint: "Seguram o estoque até pagar ou expirar",
-      icon: "awaiting",
-    },
-    {
       label: "Receita",
       value: formatarMoeda(metrics.revenue),
       hint: "Pedidos pagos, em produção, prontos e enviados",
       icon: "revenue",
+      featured: true,
     },
     {
       label: "Ticket médio",
       value: formatarMoeda(metrics.averageTicket),
       hint: "Receita dividida pelos pedidos pagos",
       icon: "ticket",
+    },
+    {
+      label: "Pedidos pagos",
+      value: String(metrics.paidOrders),
+      hint: "Do pagamento ao envio",
+      icon: "paid",
+    },
+    {
+      label: "Vendas",
+      value: String(metrics.orders),
+      hint: "Pedidos registrados, de qualquer status",
+      icon: "sales",
     },
   ];
 
@@ -127,66 +132,39 @@ export default function Dashboard({ metrics }: IDashboardProps) {
 
   return (
     <div className="flex w-full flex-1 flex-col gap-9">
-      <header>
-        <p className="mb-2 inline-block text-xs leading-[1.4] font-bold tracking-[0.08em] text-brand-blue-hover uppercase">
-          Visão geral
-        </p>
-        <h1 className="text-[1.75rem] leading-[1.15] font-semibold tracking-[-0.02em] text-ink-primary">
-          Dashboard
-        </h1>
-        <p className="mt-2 max-w-140 text-[0.9375rem] text-ink-secondary">
-          Movimento comercial e posição atual do catálogo NIX.
-        </p>
+      <header className="flex flex-col gap-4 min-[1081px]:flex-row min-[1081px]:items-end min-[1081px]:justify-between">
+        <div>
+          <p className="mb-2 inline-block text-xs leading-[1.4] font-bold tracking-[0.08em] text-brand-blue-hover uppercase">
+            Visão geral
+          </p>
+          <h1 className="text-[1.75rem] leading-[1.15] font-semibold tracking-[-0.02em] text-ink-primary">
+            Dashboard
+          </h1>
+          <p className="mt-2 max-w-140 text-[0.9375rem] text-ink-secondary">
+            Movimento comercial e posição atual do catálogo NIX.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <Link
+            href="/admin/orders"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-pill border border-border-hairline bg-surface-card px-5 text-sm font-semibold text-ink-primary transition-[border-color,background-color,color] duration-200 ease-nix hover:border-[rgba(23,107,255,0.35)] hover:bg-brand-blue-subtle hover:text-brand-blue-hover"
+          >
+            Ver pedidos
+          </Link>
+          <Link
+            href="/admin/products/new"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-pill bg-brand-blue px-5 text-sm font-semibold text-ink-inverse transition-[background-color] duration-200 ease-nix hover:bg-brand-blue-hover"
+          >
+            <Plus size={16} aria-hidden />
+            Novo produto
+          </Link>
+        </div>
       </header>
 
-      {metrics.outOfStock.length > 0 ? (
-        <section
-          className="flex flex-col gap-4 rounded-card border border-[#f0c7c7] bg-[#fff1f1] p-6"
-          aria-labelledby="sem-estoque"
-        >
-          <div className="flex flex-col gap-3 min-[720px]:flex-row min-[720px]:items-end min-[720px]:justify-between">
-            <div>
-              <h2
-                id="sem-estoque"
-                className="text-lg leading-[1.15] font-semibold tracking-[-0.02em] text-[#9b1c1c]"
-              >
-                Sem estoque
-              </h2>
-              <p className="mt-2 text-[0.9375rem] text-[#9b1c1c]">
-                {metrics.outOfStock.length === 1
-                  ? "1 produto está zerado."
-                  : `${metrics.outOfStock.length} produtos estão zerados.`}
-              </p>
-            </div>
-            <Link
-              href="/admin/stock"
-              className="text-sm font-semibold text-[#9b1c1c]"
-            >
-              Ver estoque
-            </Link>
-          </div>
-          <ul className="flex list-none flex-col">
-            {metrics.outOfStock.map((product) => (
-              <li
-                key={product.id}
-                className="flex items-center justify-between gap-4 border-t border-[#f0c7c7] py-3.5 first:border-t-0 first:pt-1"
-              >
-                <div>
-                  <strong className="block text-[0.9375rem] font-semibold text-ink-primary">
-                    {product.name}
-                  </strong>
-                  <span className="mt-0.5 block text-[0.8125rem] text-[#9b1c1c]">
-                    {product.sku} · {product.category}
-                  </span>
-                </div>
-                <b className="text-[0.9375rem] font-bold tracking-[-0.02em] whitespace-nowrap text-[#9b1c1c]">
-                  0
-                </b>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
+      <Attention
+        awaitingPayment={metrics.awaitingPayment}
+        outOfStock={metrics.outOfStock}
+      />
 
       <section
         className="flex flex-col gap-4"
@@ -207,36 +185,20 @@ export default function Dashboard({ metrics }: IDashboardProps) {
           </div>
           <Link
             href="/admin/orders"
-            className="shrink-0 text-sm font-semibold text-brand-blue-hover"
+            className="inline-flex min-h-10 shrink-0 items-center text-sm font-semibold text-brand-blue-hover transition-colors hover:text-brand-blue"
           >
-            Ver pedidos
+            Ver todos os pedidos
           </Link>
         </div>
-        <div className="grid grid-cols-1 gap-4 min-[861px]:grid-cols-2 min-[1081px]:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 min-[640px]:grid-cols-2 min-[1081px]:grid-cols-4">
           {comercial.map((card) => (
             <Metric key={card.label} card={card} />
           ))}
         </div>
-        <div className="rounded-card border border-border-hairline bg-surface-card p-6">
-          <h3 className="text-[0.9375rem] font-semibold text-ink-primary">
-            Pedidos por status
-          </h3>
-          <ul className="mt-3 flex list-none flex-col">
-            {metrics.ordersByStatus.map((item) => (
-              <li
-                key={item.status}
-                className="flex items-center justify-between gap-4 border-t border-border-hairline py-3 first:border-t-0 first:pt-1"
-              >
-                <span className={statusBadgeClasses[item.status]}>
-                  {orderStatusLabels[item.status]}
-                </span>
-                <b className="text-[0.9375rem] font-bold tracking-[-0.02em] text-ink-primary tabular-nums">
-                  {item.count}
-                </b>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <OrdersByStatus
+          orders={metrics.orders}
+          ordersByStatus={metrics.ordersByStatus}
+        />
       </section>
 
       <section
@@ -252,12 +214,12 @@ export default function Dashboard({ metrics }: IDashboardProps) {
           </h2>
           <Link
             href="/admin/products"
-            className="text-sm font-semibold text-brand-blue-hover"
+            className="inline-flex min-h-10 items-center text-sm font-semibold text-brand-blue-hover transition-colors hover:text-brand-blue"
           >
             Gerenciar produtos
           </Link>
         </div>
-        <div className="grid grid-cols-1 gap-4 min-[861px]:grid-cols-2 min-[1081px]:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 min-[640px]:grid-cols-2 min-[1081px]:grid-cols-4">
           {catalog.map((card) => (
             <Metric key={card.label} card={card} />
           ))}
@@ -265,7 +227,7 @@ export default function Dashboard({ metrics }: IDashboardProps) {
       </section>
 
       <section
-        className="flex flex-col gap-4 rounded-card border border-border-hairline bg-surface-card p-6"
+        className="flex flex-col gap-4 rounded-card border border-border-hairline bg-surface-card p-5 min-[640px]:p-6"
         aria-labelledby="destaques-catalogo"
       >
         <div>
@@ -284,20 +246,32 @@ export default function Dashboard({ metrics }: IDashboardProps) {
           <ul className="flex list-none flex-col">
             {metrics.featuredProducts.map((product) => (
               <li
-                key={product.name}
-                className="flex items-center justify-between gap-4 border-t border-border-hairline py-3.5 first:border-t-0 first:pt-1"
+                key={product.id}
+                className="border-t border-border-hairline first:border-t-0"
               >
-                <div>
-                  <strong className="block text-[0.9375rem] font-semibold text-ink-primary">
-                    {product.name}
-                  </strong>
-                  <span className="mt-0.5 block text-[0.8125rem] text-ink-muted">
-                    {product.category}
+                <Link
+                  href={`/admin/products/${product.id}`}
+                  className="group flex items-center justify-between gap-4 py-3.5 first:pt-1"
+                >
+                  <div className="min-w-0">
+                    <strong className="block text-[0.9375rem] font-semibold text-ink-primary transition-colors group-hover:text-brand-blue">
+                      {product.name}
+                    </strong>
+                    <span className="mt-0.5 block text-[0.8125rem] text-ink-muted">
+                      {product.category}
+                    </span>
+                  </div>
+                  <span className="flex shrink-0 items-center gap-2">
+                    <b className="text-[0.9375rem] font-bold tracking-[-0.02em] whitespace-nowrap text-ink-primary">
+                      {formatarMoeda(product.price)}
+                    </b>
+                    <ChevronRight
+                      size={16}
+                      aria-hidden
+                      className="text-ink-muted transition-colors group-hover:text-brand-blue"
+                    />
                   </span>
-                </div>
-                <b className="text-[0.9375rem] font-bold tracking-[-0.02em] whitespace-nowrap text-ink-primary">
-                  {formatarMoeda(product.price)}
-                </b>
+                </Link>
               </li>
             ))}
           </ul>
@@ -309,17 +283,25 @@ export default function Dashboard({ metrics }: IDashboardProps) {
 
 function Metric({ card }: IMetricProps) {
   return (
-    <article className="rounded-card border border-border-hairline bg-surface-card p-5 transition-[border-color,box-shadow,translate] duration-200 ease-nix hover:-translate-y-0.5 hover:border-[rgba(23,107,255,0.35)] hover:shadow-feature-hover">
-      <span className="mb-4 grid size-10 place-items-center rounded-pill border border-[rgba(23,107,255,0.15)] bg-brand-blue-subtle text-brand-blue">
-        <Icon name={card.icon} />
-      </span>
-      <p className="text-xs font-semibold tracking-[0.04em] text-ink-muted uppercase">
-        {card.label}
-      </p>
-      <p className="mt-1.5 text-2xl leading-[1.2] font-bold tracking-[-0.03em] text-ink-primary">
+    <article
+      className={`flex flex-col rounded-card border p-5 transition-[border-color,box-shadow,translate] duration-200 ease-nix hover:-translate-y-0.5 hover:border-[rgba(23,107,255,0.35)] hover:shadow-feature-hover ${
+        card.featured
+          ? "border-[rgba(23,107,255,0.25)] bg-brand-blue-subtle"
+          : "border-border-hairline bg-surface-card"
+      }`}
+    >
+      <div className="flex items-center gap-3">
+        <span className="grid size-9 shrink-0 place-items-center rounded-pill border border-[rgba(23,107,255,0.15)] bg-white text-brand-blue">
+          <Icon name={card.icon} />
+        </span>
+        <p className="text-xs font-semibold tracking-[0.04em] text-ink-muted uppercase">
+          {card.label}
+        </p>
+      </div>
+      <p className="mt-3 text-2xl leading-[1.2] font-bold tracking-[-0.03em] break-words text-ink-primary">
         {card.value}
       </p>
-      <p className="mt-2 text-[0.8125rem] text-ink-muted">{card.hint}</p>
+      <p className="mt-1.5 text-[0.8125rem] text-ink-muted">{card.hint}</p>
     </article>
   );
 }
