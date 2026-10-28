@@ -1,4 +1,9 @@
-import { maxDimension, parseDimension } from "@/lib/product-dimensions";
+import {
+  maxDimension,
+  maxWeight,
+  parseDimension,
+  parseWeight,
+} from "@/lib/product-dimensions";
 import type { IProductFieldErrors } from "@/types/admin-product";
 import type { IProductDimensions } from "@/types/product";
 
@@ -13,6 +18,8 @@ export interface IProductInput {
   categoryId: number;
   capacity: string;
   dimensions: IProductDimensions;
+  /** Peso unitário em kg */
+  weight: number;
   price: string;
   installments: string;
   description: string;
@@ -106,6 +113,7 @@ export function readProductForm(formData: FormData): IParsedProductForm {
   const length = parseDimension(readString(formData, "dimensionLength"));
   const width = parseDimension(readString(formData, "dimensionWidth"));
   const height = parseDimension(readString(formData, "dimensionHeight"));
+  const weight = parseWeight(readString(formData, "weight"));
   const installments = readString(formData, "installments");
   const description = readString(formData, "description");
   const sortRaw = readString(formData, "sortOrder");
@@ -135,6 +143,10 @@ export function readProductForm(formData: FormData): IParsedProductForm {
 
   if (length === null || width === null || height === null) {
     fieldErrors.dimensions = `Informe comprimento, largura e altura em cm, de 0,1 a ${maxDimension.toLocaleString("pt-BR")}, com no máximo uma casa decimal.`;
+  }
+
+  if (weight === null) {
+    fieldErrors.weight = `Informe o peso em kg, de 0,001 a ${maxWeight.toLocaleString("pt-BR")}, com no máximo 3 casas decimais.`;
   }
 
   if (!installments) {
@@ -189,7 +201,8 @@ export function readProductForm(formData: FormData): IParsedProductForm {
     !("value" in priceResult) ||
     length === null ||
     width === null ||
-    height === null
+    height === null ||
+    weight === null
   ) {
     return { id, input: null, fieldErrors };
   }
@@ -211,6 +224,7 @@ export function readProductForm(formData: FormData): IParsedProductForm {
       categoryId: Number(categoryRaw),
       capacity,
       dimensions: { length, width, height },
+      weight,
       price: priceResult.value,
       installments,
       description,

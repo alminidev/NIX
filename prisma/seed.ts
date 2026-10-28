@@ -105,6 +105,7 @@ async function main() {
       width: product.dimensions.width,
       height: product.dimensions.height,
       length: product.dimensions.length,
+      weight: product.weight,
       price: product.price,
       installments: product.installments,
       description: product.description,

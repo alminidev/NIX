@@ -97,6 +97,7 @@ describe(
           width: 35,
           height: 60,
           length: 46,
+          weight: 18,
           price: 100,
           installments: "12x",
           description: "Produto criado pelos testes da lista de pedidos.",

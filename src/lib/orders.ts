@@ -83,6 +83,12 @@ export async function createOrder(input: IOrderInput): Promise<IOrderCreated> {
         source: input.source ?? "SITE",
         subtotal,
         shipping: input.shipping,
+        shippingService:
+          input.shipping === null || !input.shippingService
+            ? null
+            : input.shippingService,
+        deliveryDays:
+          input.shipping === null ? null : (input.deliveryDays ?? null),
         total,
         customerName: input.customer.name,
         customerEmail: input.customer.email,

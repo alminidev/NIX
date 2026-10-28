@@ -4,6 +4,7 @@ import { saveProduct } from "@/app/admin/products/actions";
 import {
   formatDimensionInput,
   formatDimensions,
+  formatWeightInput,
   parseDimension,
 } from "@/lib/product-dimensions";
 import { productFieldLimits } from "@/lib/product-input";
@@ -87,6 +88,9 @@ export default function ProductForm({
   );
   const [height, setHeight] = useState(
     product ? formatDimensionInput(product.dimensions.height) : "",
+  );
+  const [weight, setWeight] = useState(
+    product ? formatWeightInput(product.weight) : "",
   );
   const [description, setDescription] = useState(product?.description ?? "");
   const [active, setActive] = useState(product?.active ?? true);
@@ -474,6 +478,23 @@ export default function ProductForm({
                     />
                   ))}
                 </div>
+              </Field>
+
+              <Field label="Peso (kg)" error={errors.weight} errorId="weight-error">
+                <input
+                  name="weight"
+                  value={weight}
+                  onChange={(event) => setWeight(event.target.value)}
+                  placeholder="18"
+                  aria-label="Peso em kg"
+                  inputMode="decimal"
+                  required
+                  maxLength={10}
+                  disabled={pending}
+                  aria-invalid={Boolean(errors.weight)}
+                  aria-describedby={errors.weight ? "weight-error" : undefined}
+                  className={controlClass(Boolean(errors.weight))}
+                />
               </Field>
 
               <Field

@@ -6,6 +6,7 @@ import { parseCartItems, parsePostalCode } from "@/lib/cart-input";
 import { readCheckoutForm } from "@/lib/order-input";
 import { createOrder, expireOverdueOrders } from "@/lib/orders";
 import { calculateShipping } from "@/lib/shipping";
+import { formatShippingService } from "@/lib/shipping-display";
 import { checkAddressPostalCode, lookupPostalCode } from "@/lib/viacep";
 import type { ICartSummary, IShippingResult } from "@/types/cart";
 import type { ICheckoutFormState } from "@/types/order";
@@ -64,6 +65,16 @@ export async function quoteShipping(
 
   const quote = await calculateShipping({ postalCode, lines: summary.lines });
 
+  if (quote.status === "error") {
+    return {
+      status: "error",
+      message:
+        quote.message ??
+        "Não foi possível cotar o frete agora. Tente novamente em instantes.",
+      quote,
+    };
+  }
+
   if (quote.status === "pending") {
     return {
       status: "success",
@@ -74,6 +85,13 @@ export async function quoteShipping(
   }
 
   return { status: "success", message: "", quote };
+}
+
+function readShippingServiceId(formData: FormData) {
+  const raw = formData.get("shippingServiceId");
+  if (typeof raw !== "string" || !/^\d+$/.test(raw)) return null;
+  const id = Number(raw);
+  return id > 0 ? id : null;
 }
 
 /**
@@ -125,14 +143,30 @@ export async function placeOrder(
   const quote = await calculateShipping({
     postalCode: address.postalCode,
     lines: summary.lines,
+    serviceId: readShippingServiceId(formData),
   });
+
+  if (quote.status !== "quoted" || quote.price === null) {
+    const message =
+      quote.message ??
+      "Não foi possível cotar o frete. Tente novamente.";
+
+    return {
+      status: "error",
+      message,
+      fieldErrors: { postalCode: message },
+      orderId: null,
+    };
+  }
 
   try {
     const order = await createOrder({
       items,
       customer,
       address,
-      shipping: quote.status === "quoted" ? quote.price : null,
+      shipping: quote.price,
+      shippingService: formatShippingService(quote.company, quote.serviceName),
+      deliveryDays: quote.deliveryDays,
     });
 
     updateTag("products");

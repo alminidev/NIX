@@ -19,9 +19,11 @@ const emailDomain = `${runId.toLowerCase()}.example.com`;
 function orderInput(
   items: IOrderInput["items"],
   shipping: number | null = null,
+  quote?: Pick<IOrderInput, "shippingService" | "deliveryDays">,
 ): IOrderInput {
   return {
     items,
+    ...quote,
     customer: {
       name: "Maria da Silva",
       email: `maria@${emailDomain}`,
@@ -61,6 +63,7 @@ describe(
           width: 35,
           height: 60,
           length: 46,
+          weight: 18,
           price,
           installments: "12x",
           description: "Produto criado pelos testes do pedido.",
@@ -137,6 +140,10 @@ describe(
               { productId: second.id, quantity: 1 },
             ],
             25.5,
+            {
+              shippingService: "Correios · PAC",
+              deliveryDays: 7,
+            },
           ),
         );
 
@@ -171,6 +178,8 @@ describe(
         assert.equal(order.items[1].image, "");
         assert.equal(order.subtotal, 249.7);
         assert.equal(order.shipping, 25.5);
+        assert.equal(order.shippingService, "Correios · PAC");
+        assert.equal(order.deliveryDays, 7);
         assert.equal(order.total, 275.2);
         assert.equal(order.trackingCode, null);
         assert.ok(order.createdAt instanceof Date);
@@ -187,6 +196,8 @@ describe(
         const order = await getAdminOrder(created.id);
 
         assert.equal(order?.shipping, null);
+        assert.equal(order?.shippingService, null);
+        assert.equal(order?.deliveryDays, null);
         assert.equal(order?.address.complement, "");
       });
 

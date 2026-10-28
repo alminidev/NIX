@@ -5,6 +5,8 @@ export interface IProductSeed {
   capacity: string;
   /** Medidas em cm */
   dimensions: { length: number; width: number; height: number };
+  /** Peso unitário em kg */
+  weight: number;
   price: string;
   installments: string;
   description: string;
@@ -26,6 +28,7 @@ export const PRODUCTS: IProductSeed[] = [
     categorySlug: 'armarios',
     capacity: '12 filamentos',
     dimensions: { length: 46, width: 35, height: 60 },
+    weight: 18,
     price: '1190.00',
     installments: 'Até 3x sem juros',
     description: 'Compacta e eficiente para o seu dia a dia.',
@@ -45,6 +48,7 @@ export const PRODUCTS: IProductSeed[] = [
     categorySlug: 'armarios',
     capacity: '24 filamentos',
     dimensions: { length: 46, width: 50, height: 60 },
+    weight: 26,
     price: '1590.00',
     installments: 'Até 3x sem juros',
     description: 'Mais espaço para seus projetos.',
@@ -67,6 +71,7 @@ export const PRODUCTS: IProductSeed[] = [
     categorySlug: 'armarios',
     capacity: '48 filamentos',
     dimensions: { length: 46, width: 50, height: 100 },
+    weight: 38,
     price: '2150.00',
     installments: 'Até 3x sem juros',
     description: 'Alta capacidade para grandes demandas.',
@@ -86,6 +91,7 @@ export const PRODUCTS: IProductSeed[] = [
     categorySlug: 'stations',
     capacity: '18 filamentos + 4 AMS',
     dimensions: { length: 46, width: 50, height: 100 },
+    weight: 42,
     price: '2200.00',
     installments: 'Até 3x sem juros',
     description: 'Solução completa para a sua Bambu Lab A1.',
@@ -108,6 +114,7 @@ export const PRODUCTS: IProductSeed[] = [
     categorySlug: 'stations',
     capacity: '24 filamentos + 4 AMS',
     dimensions: { length: 56, width: 60, height: 100 },
+    weight: 50,
     price: '2600.00',
     installments: 'Até 3x sem juros',
     description: 'Mais capacidade para o seu setup.',

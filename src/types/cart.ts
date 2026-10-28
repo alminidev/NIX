@@ -17,6 +17,8 @@ export interface ICartLine {
   capacity: string;
   image: string;
   dimensions: IProductDimensions;
+  /** Peso unitário em kg */
+  weight: number;
   /** Preço unitário em reais */
   unitPrice: number;
   formattedUnitPrice: string;
@@ -37,7 +39,20 @@ export interface ICartSummary {
   formattedSubtotal: string;
 }
 
-export type TShippingStatus = "pending" | "quoted";
+export type TShippingStatus = "pending" | "quoted" | "error";
+
+export interface IShippingOption {
+  /** Id do serviço no Melhor Envio */
+  serviceId: number;
+  /** Nome da transportadora; vazio quando a API não informa */
+  company: string;
+  /** Nome do serviço (ex.: "PAC") */
+  name: string;
+  /** Valor em reais */
+  price: number;
+  /** Prazo em dias úteis */
+  deliveryDays: number;
+}
 
 export interface IShippingQuote {
   status: TShippingStatus;
@@ -45,6 +60,14 @@ export interface IShippingQuote {
   price: number | null;
   /** Prazo em dias úteis; null enquanto não houver cotação */
   deliveryDays: number | null;
+  /** Mensagem amigável quando status é "error" */
+  message: string | null;
+  /** Serviço escolhido (o mais barato, ou o que a pessoa selecionou) */
+  serviceId: number | null;
+  company: string | null;
+  serviceName: string | null;
+  /** Opções sem erro, da mais barata para a mais cara */
+  options: IShippingOption[];
 }
 
 export interface IShippingResult {

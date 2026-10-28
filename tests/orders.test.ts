@@ -31,8 +31,9 @@ const address = {
 function orderInput(
   items: IOrderInput["items"],
   shipping: number | null = null,
+  quote?: Pick<IOrderInput, "shippingService" | "deliveryDays">,
 ): IOrderInput {
-  return { items, customer, address, shipping };
+  return { items, customer, address, shipping, ...quote };
 }
 
 describe(
@@ -58,6 +59,7 @@ describe(
           width: 35,
           height: 60,
           length: 46,
+          weight: 18,
           price,
           installments: "12x",
           description: "Produto criado pelos testes de pedido.",
@@ -133,6 +135,7 @@ describe(
             { productId: second.id, quantity: 1 },
           ],
           45.1,
+          { shippingService: "Jadlog · .Package", deliveryDays: 4 },
         ),
       );
 
@@ -150,6 +153,8 @@ describe(
       assert.equal(order.trackingCode, null);
       assert.equal(Number(order.subtotal), 2480.9);
       assert.equal(Number(order.shipping), 45.1);
+      assert.equal(order.shippingService, "Jadlog · .Package");
+      assert.equal(order.deliveryDays, 4);
       assert.equal(Number(order.total), 2526);
       assert.equal(order.customerEmail, "maria@example.com");
       assert.equal(order.postalCode, "01310100");
@@ -186,6 +191,8 @@ describe(
       assert.equal(created.shipping, null);
       assert.equal(created.total, 100);
       assert.equal(order.shipping, null);
+      assert.equal(order.shippingService, null);
+      assert.equal(order.deliveryDays, null);
       assert.equal(Number(order.total), 100);
     });
 

@@ -96,6 +96,8 @@ model Product {
   width          Decimal        @db.Decimal(6, 1)
   height         Decimal        @db.Decimal(6, 1)
   length         Decimal        @db.Decimal(6, 1)
+  // peso unitário em kg, usado na cotação de frete
+  weight         Decimal        @db.Decimal(8, 3)
   price          Decimal        @db.Decimal(10, 2)
   installments   String
   description    String
@@ -166,6 +168,10 @@ model Order {
   subtotal      Decimal     @db.Decimal(10, 2)
   // null enquanto o frete não foi cotado
   shipping      Decimal?    @db.Decimal(10, 2)
+  // serviço escolhido na cotação (ex.: "Correios · PAC")
+  shippingService String?
+  // prazo em dias úteis informado na cotação
+  deliveryDays    Int?
   total         Decimal     @db.Decimal(10, 2)
   customerName  String
   customerEmail String

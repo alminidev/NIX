@@ -12,6 +12,7 @@ function form(overrides: Record<string, string> = {}) {
     dimensionLength: "46",
     dimensionWidth: "35,5",
     dimensionHeight: "60",
+    weight: "18,5",
     price: "1.190,00",
     installments: "Até 3x sem juros",
     description: "Compacta e eficiente.",
@@ -30,6 +31,16 @@ describe("readProductForm dimensions", () => {
 
     assert.deepEqual(fieldErrors, {});
     assert.deepEqual(input?.dimensions, { length: 46, width: 35.5, height: 60 });
+    assert.equal(input?.weight, 18.5);
+  });
+
+  it("rejects a missing or invalid weight", () => {
+    for (const bad of ["", "0", "abc", "-1", "1,2345"]) {
+      const { input, fieldErrors } = readProductForm(form({ weight: bad }));
+
+      assert.equal(input, null);
+      assert.ok(fieldErrors.weight);
+    }
   });
 
   it("rejects a missing or invalid side", () => {

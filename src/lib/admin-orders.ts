@@ -146,6 +146,8 @@ export async function getAdminOrder(
     itemCount: items.reduce((sum, item) => sum + item.quantity, 0),
     subtotal: Number(order.subtotal),
     shipping: order.shipping === null ? null : Number(order.shipping),
+    shippingService: order.shippingService,
+    deliveryDays: order.deliveryDays,
     total: Number(order.total),
     trackingCode: order.trackingCode,
     createdAt: order.createdAt,

@@ -23,6 +23,8 @@ export interface IAdminProduct {
   category: string;
   capacity: string;
   dimensions: IProductDimensions;
+  /** Peso unitário em kg */
+  weight: number;
   /** Valor editável em pt-BR, sem símbolo (ex: '1.190,00') */
   price: string;
   formattedPrice: string;
@@ -42,6 +44,7 @@ export interface IProductFieldErrors {
   categoryId?: string;
   capacity?: string;
   dimensions?: string;
+  weight?: string;
   price?: string;
   installments?: string;
   description?: string;

@@ -27,6 +27,7 @@ function product(
     capacity: "12 filamentos",
     image: "/images/x.jpg",
     dimensions: { length: 46, width: 35, height: 60 },
+    weight: 18,
     price: 1190,
     stock: 5,
     active: true,

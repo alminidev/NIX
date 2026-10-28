@@ -1,3 +1,4 @@
+import { formatDeliveryDays } from "@/lib/shipping-display";
 import type { IAdminOrderDetail } from "@/types/admin-order";
 import { currencyFormat } from "@/views/AdminOrdersView/components/order-display";
 import OrderCard from "@/views/AdminOrderView/components/OrderCard";
@@ -66,12 +67,26 @@ export default function OrderItems({ order }: IOrderItemsProps) {
             {currencyFormat.format(order.subtotal)}
           </dd>
         </div>
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex items-start justify-between gap-4">
           <dt className="text-ink-secondary">Frete</dt>
-          <dd className="font-semibold text-ink-primary tabular-nums">
-            {order.shipping === null
-              ? "Não cotado"
-              : currencyFormat.format(order.shipping)}
+          <dd className="text-right font-semibold text-ink-primary tabular-nums">
+            {order.shipping === null ? (
+              "Não cotado"
+            ) : (
+              <>
+                {currencyFormat.format(order.shipping)}
+                {order.shippingService ? (
+                  <span className="mt-0.5 block text-xs font-normal text-ink-secondary">
+                    {order.shippingService}
+                  </span>
+                ) : null}
+                {order.deliveryDays !== null ? (
+                  <span className="block text-xs font-normal text-ink-secondary">
+                    {formatDeliveryDays(order.deliveryDays)}
+                  </span>
+                ) : null}
+              </>
+            )}
           </dd>
         </div>
         <div className="flex items-center justify-between gap-4 border-t border-border-hairline pt-3">

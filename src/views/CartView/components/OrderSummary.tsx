@@ -1,4 +1,8 @@
 import { calculateTotal, formatCurrency } from "@/lib/cart-calculation";
+import {
+  formatDeliveryDays,
+  formatShippingService,
+} from "@/lib/shipping-display";
 import type { ICartSummary, IShippingQuote } from "@/types/cart";
 import { ArrowRight, Lock } from "lucide-react";
 import { CHECKOUT_FORM_ID } from "./CheckoutForm";
@@ -6,6 +10,7 @@ import { CHECKOUT_FORM_ID } from "./CheckoutForm";
 interface IOrderSummaryProps {
   summary: ICartSummary | null;
   shipping: IShippingQuote | null;
+  selectedServiceId: number | null;
   /** Endereço já preenchido pela consulta do CEP */
   addressReady: boolean;
   checkoutMessage: string;
@@ -19,14 +24,25 @@ interface IOrderSummaryProps {
 export default function OrderSummary({
   summary,
   shipping,
+  selectedServiceId,
   addressReady,
   checkoutMessage,
   isPlacingOrder,
   disabled,
 }: IOrderSummaryProps) {
   const subtotal = summary?.subtotal ?? 0;
-  const shippingPrice = shipping?.status === "quoted" ? shipping.price : null;
+  const selected =
+    shipping?.status === "quoted"
+      ? (shipping.options.find(
+          (option) => option.serviceId === selectedServiceId,
+        ) ?? shipping.options[0])
+      : undefined;
+  const shippingPrice = selected?.price ?? null;
   const total = calculateTotal(subtotal, shippingPrice);
+  const serviceLabel = selected
+    ? formatShippingService(selected.company, selected.name)
+    : null;
+  const quoted = shippingPrice !== null;
 
   return (
     <aside
@@ -45,11 +61,21 @@ export default function OrderSummary({
           </dd>
         </div>
         <div className="flex items-baseline justify-between gap-2">
-          <dt className="text-ink-secondary">Frete</dt>
-          <dd className="font-semibold text-ink-primary">
-            {shippingPrice !== null
-              ? formatCurrency(shippingPrice)
-              : "A calcular"}
+          <dt className="text-ink-secondary">
+            Frete
+            {serviceLabel ? (
+              <span className="mt-0.5 block text-xs font-normal text-ink-muted">
+                {serviceLabel}
+              </span>
+            ) : null}
+          </dt>
+          <dd className="text-right font-semibold text-ink-primary">
+            {shippingPrice !== null ? formatCurrency(shippingPrice) : "A calcular"}
+            {selected ? (
+              <span className="mt-0.5 block text-xs font-normal text-ink-secondary">
+                {formatDeliveryDays(selected.deliveryDays)}
+              </span>
+            ) : null}
           </dd>
         </div>
         <div className="flex items-baseline justify-between gap-2 border-t border-border-hairline pt-3">
@@ -63,7 +89,7 @@ export default function OrderSummary({
       <button
         type="submit"
         form={CHECKOUT_FORM_ID}
-        disabled={disabled || !addressReady || isPlacingOrder}
+        disabled={disabled || !addressReady || !quoted || isPlacingOrder}
         className="inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-pill bg-brand-blue px-6 py-3 text-[0.9375rem] font-semibold text-ink-inverse transition-all duration-200 ease-nix hover:-translate-y-px hover:bg-brand-blue-hover disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {isPlacingOrder ? "Criando pedido…" : "Ir para o checkout"}
@@ -71,9 +97,13 @@ export default function OrderSummary({
       </button>
 
       <p className="mt-3 text-center text-xs text-ink-secondary empty:hidden">
-        {disabled || addressReady
+        {disabled || isPlacingOrder
           ? ""
-          : "Informe o CEP e clique em Calcular para continuar."}
+          : !addressReady
+            ? "Informe o CEP e clique em Calcular para continuar."
+            : quoted
+              ? ""
+              : "Calcule o frete para continuar."}
       </p>
 
       <p

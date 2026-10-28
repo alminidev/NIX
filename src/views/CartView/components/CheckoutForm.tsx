@@ -1,9 +1,14 @@
 import { lookupAddress, quoteShipping } from "@/app/cart/actions";
 import { maskPostalCode } from "@/lib/cart-input";
+import { formatCurrency } from "@/lib/cart-calculation";
 import { brazilianStates, orderFieldLimits } from "@/lib/order-input";
+import {
+  formatDeliveryDays,
+  formatShippingService,
+} from "@/lib/shipping-display";
 import type { ICartItem, IShippingQuote } from "@/types/cart";
 import type { ICheckoutFieldErrors } from "@/types/order";
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 
 export const CHECKOUT_FORM_ID = "checkout-form";
 
@@ -15,6 +20,10 @@ interface ICheckoutFormProps {
   errors: ICheckoutFieldErrors;
   disabled: boolean;
   onShippingChange: (quote: IShippingQuote | null) => void;
+  /** Cotação atual, para listar as transportadoras */
+  shipping: IShippingQuote | null;
+  selectedServiceId: number | null;
+  onSelectService: (serviceId: number) => void;
   /** Avisa quando o endereço foi preenchido (ou perdido) pela consulta do CEP */
   onAddressReadyChange: (ready: boolean) => void;
 }
@@ -117,6 +126,9 @@ export default function CheckoutForm({
   errors,
   disabled,
   onShippingChange,
+  shipping,
+  selectedServiceId,
+  onSelectService,
   onAddressReadyChange,
 }: ICheckoutFormProps) {
   const [values, setValues] = useState<Record<TCheckoutField, string>>({
@@ -140,6 +152,14 @@ export default function CheckoutForm({
     error: boolean;
     text: string;
   } | null>(null);
+  const lookupId = useRef(0);
+
+  // Outro carrinho: a cotação anterior não vale mais.
+  useEffect(() => {
+    lookupId.current += 1;
+    setPostalMessage(null);
+    setLooking(false);
+  }, [items]);
 
   function changePostalCode(value: string) {
     setValues((current) => ({ ...current, postalCode: maskPostalCode(value) }));
@@ -170,6 +190,7 @@ export default function CheckoutForm({
   }
 
   async function handleLookup() {
+    const id = ++lookupId.current;
     setLooking(true);
     setPostalMessage(null);
 
@@ -178,6 +199,8 @@ export default function CheckoutForm({
         lookupAddress(values.postalCode),
         quoteShipping(values.postalCode, items),
       ]);
+
+      if (id !== lookupId.current) return;
 
       if (lookup.status === "error" || !lookup.address) {
         setPostalMessage({ error: true, text: lookup.message });
@@ -195,23 +218,41 @@ export default function CheckoutForm({
       setAddressFound(true);
       onAddressReadyChange(true);
       onShippingChange(shipping.quote);
-      setPostalMessage({
-        error: shipping.status === "error",
-        text:
-          shipping.message ||
-          (shipping.quote?.deliveryDays
-            ? `Entrega em até ${shipping.quote.deliveryDays} dias úteis.`
-            : ""),
-      });
+      setPostalMessage(
+        shipping.status === "error"
+          ? {
+              error: true,
+              text:
+                shipping.message ||
+                "Não foi possível cotar o frete agora. Tente novamente em instantes.",
+            }
+          : null,
+      );
     } catch {
       setPostalMessage({
         error: true,
         text: "Não foi possível consultar o CEP. Tente novamente.",
       });
     } finally {
-      setLooking(false);
+      if (id === lookupId.current) setLooking(false);
     }
   }
+
+  const selectedOption =
+    shipping?.status === "quoted"
+      ? (shipping.options.find(
+          (option) => option.serviceId === selectedServiceId,
+        ) ?? shipping.options[0])
+      : undefined;
+  const statusText =
+    errors.postalCode ??
+    (postalMessage?.error
+      ? postalMessage.text
+      : selectedOption
+        ? `Entrega em até ${formatDeliveryDays(selectedOption.deliveryDays)}.`
+        : postalMessage?.text);
+  const statusIsError =
+    Boolean(errors.postalCode) || (postalMessage?.error ?? false);
 
   function renderField(field: ITextField) {
     const error = errors[field.name];
@@ -315,10 +356,55 @@ export default function CheckoutForm({
           <p
             id="checkout-postalCode-message"
             role="status"
-            className={`mt-1.5 text-xs empty:hidden ${postalMessage?.error || errors.postalCode ? "text-[#9b1c1c]" : "text-ink-secondary"}`}
+            className={`mt-1.5 text-xs empty:hidden ${statusIsError ? "text-[#9b1c1c]" : "text-ink-secondary"}`}
           >
-            {errors.postalCode ?? postalMessage?.text}
+            {statusText}
           </p>
+          {shipping?.status === "quoted" && shipping.options.length > 0 ? (
+            <fieldset className="mt-3">
+              <legend className="mb-2 text-[0.8125rem] font-semibold text-ink-secondary">
+                Opções de frete
+              </legend>
+              <div className="flex flex-col gap-2">
+                {shipping.options.map((option) => {
+                  const id = `shipping-service-${option.serviceId}`;
+                  const checked = option.serviceId === selectedOption?.serviceId;
+                  const label = formatShippingService(option.company, option.name);
+
+                  return (
+                    <label
+                      key={option.serviceId}
+                      htmlFor={id}
+                      className={`flex min-h-11 cursor-pointer items-center justify-between gap-3 rounded-input border px-3 py-2 ${checked ? "border-brand-blue bg-brand-blue-subtle" : "border-border-hairline bg-white"}`}
+                    >
+                      <span className="flex min-w-0 items-center gap-2.5">
+                        <input
+                          id={id}
+                          type="radio"
+                          name="shippingServiceId"
+                          value={option.serviceId}
+                          checked={checked}
+                          onChange={() => onSelectService(option.serviceId)}
+                          className="size-4 shrink-0 accent-brand-blue"
+                        />
+                        <span className="min-w-0">
+                          <span className="block text-sm font-semibold text-ink-primary">
+                            {label}
+                          </span>
+                          <span className="block text-xs text-ink-secondary">
+                            {formatDeliveryDays(option.deliveryDays)}
+                          </span>
+                        </span>
+                      </span>
+                      <span className="shrink-0 text-sm font-semibold text-ink-primary tabular-nums">
+                        {formatCurrency(option.price)}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </fieldset>
+          ) : null}
         </div>
 
         {addressFields.map(renderField)}

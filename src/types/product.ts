@@ -30,6 +30,8 @@ export interface IProduct {
   capacity: string;
   /** Dimensões em centímetros */
   dimensions: IProductDimensions;
+  /** Peso unitário em kg */
+  weight: number;
   /** Preço numérico em reais (usado para cálculos futuros) */
   price: number;
   /** Preço formatado em PT-BR para exibição (ex: 'R$ 1.190,00') */

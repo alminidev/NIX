@@ -23,6 +23,9 @@ export default function CartContent() {
   const [notices, setNotices] = useState<string[]>([]);
   const [failed, setFailed] = useState(false);
   const [shipping, setShipping] = useState<IShippingQuote | null>(null);
+  const [selectedServiceId, setSelectedServiceId] = useState<number | null>(
+    null,
+  );
   const [addressReady, setAddressReady] = useState(false);
   const [checkoutState, checkoutAction, isPlacingOrder] = useActionState(
     placeOrder,
@@ -76,7 +79,13 @@ export default function CartContent() {
   // A cotação depende dos itens: qualquer mudança exige calcular de novo.
   useEffect(() => {
     setShipping(null);
+    setSelectedServiceId(null);
   }, [items]);
+
+  function applyShipping(quote: IShippingQuote | null) {
+    setShipping(quote);
+    setSelectedServiceId(quote?.status === "quoted" ? quote.serviceId : null);
+  }
 
   const isLoading = !isReady || (items.length > 0 && summary === null);
   const lines = summary?.lines ?? [];
@@ -190,7 +199,10 @@ export default function CartContent() {
                   action={checkoutAction}
                   errors={checkoutState.fieldErrors}
                   disabled={isPlacingOrder}
-                  onShippingChange={setShipping}
+                  onShippingChange={applyShipping}
+                  shipping={shipping}
+                  selectedServiceId={selectedServiceId}
+                  onSelectService={setSelectedServiceId}
                   onAddressReadyChange={setAddressReady}
                 />
               ) : null}
@@ -199,6 +211,7 @@ export default function CartContent() {
             <OrderSummary
               summary={summary}
               shipping={shipping}
+              selectedServiceId={selectedServiceId}
               addressReady={addressReady}
               checkoutMessage={
                 checkoutState.status === "error" ? checkoutState.message : ""

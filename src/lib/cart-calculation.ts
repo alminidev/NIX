@@ -28,6 +28,8 @@ export interface ICartProductData {
   capacity: string;
   image: string;
   dimensions: IProductDimensions;
+  /** Peso unitário em kg */
+  weight: number;
   price: number;
   stock: number;
 }
@@ -57,6 +59,7 @@ export function buildCartLine(
     capacity: product.capacity,
     image: product.image,
     dimensions: product.dimensions,
+    weight: product.weight,
     unitPrice: product.price,
     formattedUnitPrice: formatCurrency(product.price),
     quantity,

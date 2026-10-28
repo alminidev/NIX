@@ -33,6 +33,10 @@ export interface IOrderInput {
   address: IOrderAddress;
   /** Frete em reais; null enquanto não houver cotação */
   shipping: number | null;
+  /** Serviço cotado (ex.: "Correios · PAC"); null sem cotação */
+  shippingService?: string | null;
+  /** Prazo em dias úteis; null sem cotação */
+  deliveryDays?: number | null;
   /** Padrão: SITE */
   source?: OrderSource;
 }
