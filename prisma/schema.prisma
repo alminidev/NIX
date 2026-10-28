@@ -95,7 +95,7 @@ model Product {
   capacity       String
   width          Decimal        @db.Decimal(6, 1)
   height         Decimal        @db.Decimal(6, 1)
-  depth          Decimal        @db.Decimal(6, 1)
+  length         Decimal        @db.Decimal(6, 1)
   price          Decimal        @db.Decimal(10, 2)
   installments   String
   description    String

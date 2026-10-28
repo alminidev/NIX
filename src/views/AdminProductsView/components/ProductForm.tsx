@@ -79,8 +79,8 @@ export default function ProductForm({
     product?.installments ?? "Até 3x sem juros",
   );
   const [capacity, setCapacity] = useState(product?.capacity ?? "");
-  const [depth, setDepth] = useState(
-    product ? formatDimensionInput(product.dimensions.depth) : "",
+  const [length, setLength] = useState(
+    product ? formatDimensionInput(product.dimensions.length) : "",
   );
   const [width, setWidth] = useState(
     product ? formatDimensionInput(product.dimensions.width) : "",
@@ -106,13 +106,13 @@ export default function ProductForm({
     categories.find((category) => category.id === categoryId)?.name ?? "";
   const primaryImage = images.find((image) => image.isPrimary) ?? images[0];
   const visibleSpecs = specs.map((spec) => spec.value.trim()).filter(Boolean);
-  const parsedDepth = parseDimension(depth);
+  const parsedLength = parseDimension(length);
   const parsedWidth = parseDimension(width);
   const parsedHeight = parseDimension(height);
   const dimensions =
-    parsedDepth !== null && parsedWidth !== null && parsedHeight !== null
+    parsedLength !== null && parsedWidth !== null && parsedHeight !== null
       ? formatDimensions({
-          depth: parsedDepth,
+          length: parsedLength,
           width: parsedWidth,
           height: parsedHeight,
         })
@@ -434,11 +434,11 @@ export default function ProductForm({
                 <div className="grid grid-cols-3 gap-3">
                   {[
                     {
-                      name: "dimensionDepth",
+                      name: "dimensionLength",
                       label: "Comprimento",
                       placeholder: "46",
-                      value: depth,
-                      onChange: setDepth,
+                      value: length,
+                      onChange: setLength,
                     },
                     {
                       name: "dimensionWidth",

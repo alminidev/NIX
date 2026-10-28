@@ -19,7 +19,7 @@ export async function resolveCart(items: ICartItem[]): Promise<ICartSummary> {
       capacity: true,
       width: true,
       height: true,
-      depth: true,
+      length: true,
       price: true,
       stock: true,
       active: true,
@@ -45,7 +45,7 @@ export async function resolveCart(items: ICartItem[]): Promise<ICartSummary> {
       dimensions: {
         width: Number(record.width),
         height: Number(record.height),
-        depth: Number(record.depth),
+        length: Number(record.length),
       },
       price: Number(record.price),
       stock: record.stock,

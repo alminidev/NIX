@@ -87,7 +87,7 @@ export async function saveProduct(
         capacity: input.capacity,
         width: input.dimensions.width,
         height: input.dimensions.height,
-        depth: input.dimensions.depth,
+        length: input.dimensions.length,
         price: input.price,
         installments: input.installments,
         description: input.description,

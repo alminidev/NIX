@@ -104,7 +104,7 @@ async function main() {
       capacity: product.capacity,
       width: product.dimensions.width,
       height: product.dimensions.height,
-      depth: product.dimensions.depth,
+      length: product.dimensions.length,
       price: product.price,
       installments: product.installments,
       description: product.description,

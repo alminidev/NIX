@@ -26,7 +26,7 @@ function product(
     name: `Produto ${id}`,
     capacity: "12 filamentos",
     image: "/images/x.jpg",
-    dimensions: { depth: 46, width: 35, height: 60 },
+    dimensions: { length: 46, width: 35, height: 60 },
     price: 1190,
     stock: 5,
     active: true,
@@ -174,15 +174,15 @@ describe("postal code", () => {
 describe("dimensions", () => {
   it("formats the same text the product card always showed", () => {
     assert.equal(
-      formatDimensions({ depth: 46, width: 35, height: 60 }),
+      formatDimensions({ length: 46, width: 35, height: 60 }),
       "46 x 35 x 60 cm",
     );
     assert.equal(
-      formatDimensions({ depth: 56, width: 60, height: 100 }),
+      formatDimensions({ length: 56, width: 60, height: 100 }),
       "56 x 60 x 100 cm",
     );
     assert.equal(
-      formatDimensions({ depth: 46.5, width: 35, height: 60 }),
+      formatDimensions({ length: 46.5, width: 35, height: 60 }),
       "46,5 x 35 x 60 cm",
     );
   });

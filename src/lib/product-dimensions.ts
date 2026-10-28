@@ -8,15 +8,15 @@ const dimensionFormat = new Intl.NumberFormat("pt-BR", {
 export const maxDimension = 99_999.9;
 
 /**
- * Formats the dimensions as shown on the product card: depth x width x
+ * Formats the dimensions as shown on the product card: length x width x
  * height, in centimeters (e.g. '46 x 35 x 60 cm').
  */
 export function formatDimensions({
-  depth,
+  length,
   width,
   height,
 }: IProductDimensions): string {
-  return `${dimensionFormat.format(depth)} x ${dimensionFormat.format(width)} x ${dimensionFormat.format(height)} cm`;
+  return `${dimensionFormat.format(length)} x ${dimensionFormat.format(width)} x ${dimensionFormat.format(height)} cm`;
 }
 
 /** Value shown in the admin inputs (pt-BR, no unit). */

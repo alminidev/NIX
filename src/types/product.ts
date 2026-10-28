@@ -9,8 +9,8 @@ export interface IProductDimensions {
   width: number;
   /** Altura em cm */
   height: number;
-  /** Profundidade (comprimento) em cm */
-  depth: number;
+  /** Comprimento em cm */
+  length: number;
 }
 
 export interface IProduct {
