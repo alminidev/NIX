@@ -3,7 +3,7 @@ import { maskPostalCode } from "@/lib/cart-input";
 import { brazilianStates, orderFieldLimits } from "@/lib/order-input";
 import type { ICartItem, IShippingQuote } from "@/types/cart";
 import type { ICheckoutFieldErrors } from "@/types/order";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 
 export const CHECKOUT_FORM_ID = "checkout-form";
 
@@ -132,6 +132,8 @@ export default function CheckoutForm({
     state: "",
   });
 
+  const [, startTransition] = useTransition();
+
   const [addressFound, setAddressFound] = useState(false);
   const [looking, setLooking] = useState(false);
   const [postalMessage, setPostalMessage] = useState<{
@@ -156,6 +158,15 @@ export default function CheckoutForm({
         state: "",
       }));
     }
+  }
+
+  // Envio manual: com `action` o React limpa o formulário ao fim da action e o
+  // select de estado perderia o valor depois de um erro do servidor.
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+
+    startTransition(() => action(formData));
   }
 
   async function handleLookup() {
@@ -250,7 +261,7 @@ export default function CheckoutForm({
   return (
     <form
       id={CHECKOUT_FORM_ID}
-      action={action}
+      onSubmit={handleSubmit}
       noValidate
       className="mt-8 rounded-card border border-border-hairline bg-surface-card p-6"
     >
