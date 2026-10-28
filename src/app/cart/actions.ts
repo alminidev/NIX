@@ -50,9 +50,6 @@ export async function quoteShipping(
     };
   }
 
-  // Libera o estoque de pedidos vencidos antes de conferir o carrinho.
-  if ((await expireOverdueOrders()) > 0) updateTag("products");
-
   const summary = await resolveCart(items);
 
   if (summary.lines.length === 0) {
@@ -97,6 +94,9 @@ export async function placeOrder(
   }
 
   const { items, customer, address } = parsed.input;
+
+  // Libera o estoque de pedidos vencidos antes de conferir o carrinho.
+  if ((await expireOverdueOrders()) > 0) updateTag("products");
 
   const summary = await resolveCart(items);
   const quote = await calculateShipping({
