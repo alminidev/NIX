@@ -163,7 +163,7 @@ export default function CartContent() {
           </div>
         ) : (
           <div
-            className="grid items-start gap-8 min-[992px]:grid-cols-[1fr_380px]"
+            className="grid grid-cols-1 items-start gap-8 min-[992px]:grid-cols-[minmax(0,1fr)_380px]"
             aria-busy={isLoading}
           >
             <section aria-label="Itens do carrinho">
