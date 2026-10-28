@@ -306,7 +306,7 @@ export default function CheckoutForm({
             role="status"
             className={`mt-1.5 text-xs empty:hidden ${postalMessage?.error || errors.postalCode ? "text-[#9b1c1c]" : "text-ink-secondary"}`}
           >
-            {postalMessage?.text ?? errors.postalCode}
+            {errors.postalCode ?? postalMessage?.text}
           </p>
         </div>
 
