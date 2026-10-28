@@ -6,8 +6,10 @@ import { parseCartItems, parsePostalCode } from "@/lib/cart-input";
 import { readCheckoutForm } from "@/lib/order-input";
 import { createOrder, expireOverdueOrders } from "@/lib/orders";
 import { calculateShipping } from "@/lib/shipping";
+import { lookupPostalCode } from "@/lib/viacep";
 import type { ICartSummary, IShippingResult } from "@/types/cart";
 import type { ICheckoutFormState } from "@/types/order";
+import type { IPostalCodeLookup } from "@/types/postal-code";
 import { updateTag } from "next/cache";
 
 /**
@@ -72,6 +74,15 @@ export async function quoteShipping(
   }
 
   return { status: "success", message: "", quote };
+}
+
+/**
+ * Endereço do CEP informado, consultado na ViaCEP (lib/viacep.ts).
+ */
+export async function lookupAddress(
+  rawPostalCode: unknown,
+): Promise<IPostalCodeLookup> {
+  return lookupPostalCode(rawPostalCode);
 }
 
 /**
