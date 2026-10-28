@@ -44,6 +44,7 @@ describe(
     let cancelOrder: typeof import("../src/lib/orders").cancelOrder;
     let expireOrder: typeof import("../src/lib/orders").expireOrder;
     let expireOverdueOrders: typeof import("../src/lib/orders").expireOverdueOrders;
+    let getAdminOrders: typeof import("../src/lib/admin-orders").getAdminOrders;
     let InsufficientStockError: typeof import("../src/app/_errors/insufficient-stock.error").InsufficientStockError;
     let categoryId: number;
     let counter = 0;
@@ -96,6 +97,7 @@ describe(
       ({ prisma } = await import("../src/lib/prisma"));
       ({ createOrder, cancelOrder, expireOrder, expireOverdueOrders } =
         await import("../src/lib/orders"));
+      ({ getAdminOrders } = await import("../src/lib/admin-orders"));
       ({ InsufficientStockError } =
         await import("../src/app/_errors/insufficient-stock.error"));
 
@@ -495,6 +497,52 @@ describe(
     it("returns false for an order that does not exist", async () => {
       assert.equal(await cancelOrder(2_000_000_000), false);
       assert.equal(await expireOrder(2_000_000_000), false);
+    });
+
+    it("lists the newest orders first with customer, total and item count", async () => {
+      const product = await createProduct(10, 100);
+      const older = await createOrder(
+        orderInput([{ productId: product.id, quantity: 1 }], 20),
+      );
+      const newer = await createOrder(
+        orderInput([{ productId: product.id, quantity: 3 }]),
+      );
+      await prisma.order.update({
+        where: { id: older.id },
+        data: { createdAt: new Date(Date.now() - 60_000) },
+      });
+      await prisma.order.update({
+        where: { id: newer.id },
+        data: { status: "PAID" },
+      });
+
+      const orders = await getAdminOrders();
+      const olderIndex = orders.findIndex((order) => order.id === older.id);
+      const newerIndex = orders.findIndex((order) => order.id === newer.id);
+
+      assert.notEqual(olderIndex, -1);
+      assert.notEqual(newerIndex, -1);
+      assert.ok(newerIndex < olderIndex);
+
+      assert.deepEqual(
+        {
+          status: orders[newerIndex].status,
+          customerName: orders[newerIndex].customerName,
+          customerEmail: orders[newerIndex].customerEmail,
+          total: orders[newerIndex].total,
+          itemCount: orders[newerIndex].itemCount,
+        },
+        {
+          status: "PAID",
+          customerName: customer.name,
+          customerEmail: customer.email,
+          total: 300,
+          itemCount: 3,
+        },
+      );
+      assert.equal(orders[olderIndex].status, "AWAITING_PAYMENT");
+      assert.equal(orders[olderIndex].total, 120);
+      assert.ok(orders[newerIndex].createdAt instanceof Date);
     });
   },
 );

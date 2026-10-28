@@ -168,22 +168,28 @@ O carrinho fica em **`/cart`**. O navegador guarda apenas `productId` e `quantit
 | Arquivo | Papel |
 | --- | --- |
 | `src/contexts/CartContext/index.tsx` | Estado do carrinho no navegador (adicionar, alterar, remover) |
-| `src/app/cart/actions.ts` | Server actions: `getCartSummary` (valida itens e estoque) e `quoteShipping` (CEP) |
+| `src/app/cart/actions.ts` | Server actions: `getCartSummary` (valida itens e estoque) e `quoteShipping` (frete) e `lookupAddress` (endereço pelo CEP) |
 | `src/lib/cart.ts` | Lê produtos no banco e monta o resumo |
 | `src/lib/cart-calculation.ts` | Regras puras: limite por estoque, subtotal e total em centavos |
 | `src/lib/cart-input.ts` | Validação da entrada vinda do navegador e do CEP |
+| `src/lib/viacep.ts` | `lookupPostalCode`: consulta o CEP na ViaCEP (nunca lança; devolve `IPostalCodeLookup`) |
 | `src/lib/shipping.ts` | **Ponto de integração do frete** (`calculateShipping`) |
 | `src/lib/orders.ts` | `createOrder`: cria o pedido e baixa o estoque numa transação |
 | `src/lib/order-input.ts` | Validação do formulário de entrega (nome, e-mail, telefone, endereço) |
 | `src/lib/order-expiration.ts` | Prazo do pedido: `ORDER_EXPIRATION_MINUTES` (padrão 60) |
 | `src/app/api/orders/expire/route.ts` | Rota de cron que expira pedidos vencidos (protegida por `CRON_SECRET`) |
+| `src/lib/admin-orders.ts` | `getAdminOrders`: pedidos mais recentes para o painel |
+| `src/types/postal-code.ts` | Tipos da ViaCEP (`IViaCepResponse`, `IPostalCodeAddress`, `IPostalCodeLookup`) |
 | `src/types/order.ts` | Tipos do pedido (`IOrderInput`, `IOrderCreated`, `ICheckoutFormState`) |
 
 - **Estoque:** a quantidade nunca passa do estoque cadastrado nem de 99 por produto. A conferência acontece ao adicionar, ao abrir o carrinho, ao alterar a quantidade e antes de seguir para o checkout.
+- **CEP e endereço:** o CEP é pedido no formulário de entrega (`CheckoutForm`). O botão _"Calcular"_ (ou Enter no campo) chama `lookupAddress` e `quoteShipping`: a primeira consulta `https://viacep.com.br/ws/{cep}/json/` no servidor (timeout de 5 s) e preenche rua, bairro, cidade e UF; a segunda atualiza o frete. Enquanto o CEP não for consultado com sucesso, os campos de endereço e o botão _"Ir para o checkout"_ ficam desabilitados; mudar o CEP desfaz o preenchimento. Os campos continuam editáveis depois da consulta (ex.: CEP geral de cidade pequena, que vem sem rua). Erros tratados: CEP inválido (`invalid`), CEP inexistente (`erro` da ViaCEP, `not-found`) e ViaCEP fora do ar, lenta ou com resposta inesperada (`unavailable`). A validação de `placeOrder` continua no servidor e não depende da ViaCEP: ela confere o formato do CEP e os campos obrigatórios, para que uma queda da ViaCEP não impeça pedidos.
 - **Frete (Jadlog):** `calculateShipping` em `src/lib/shipping.ts` devolve uma cotação pendente. A integração com a Jadlog deve ser feita nessa função; o restante já usa o contrato `IShippingQuote`.
 - **Pedidos:** o botão _"Ir para o checkout"_ envia os dados de entrega e chama a server action `placeOrder`, que confere o carrinho no servidor e grava `Order` e `OrderItem` (status `AWAITING_PAYMENT`, origem `SITE`) numa única transação. Cada item guarda o preço unitário do momento do pedido. O estoque é baixado na mesma transação com `UPDATE ... WHERE stock >= quantidade`, então nunca fica negativo, nem com compras simultâneas; se faltar estoque, nada é gravado e a mensagem diz qual produto. Pedidos feitos pelo WhatsApp ou Instagram usam `OrderSource` (`WHATSAPP`, `INSTAGRAM`). O frete fica vazio (`null`) até a cotação existir.
 - **Expiração:** todo pedido nasce com `expiresAt` (agora + `ORDER_EXPIRATION_MINUTES`, padrão 60). Passado o prazo sem pagamento, ele vira `EXPIRED` e o estoque volta. `cancelOrder` (pedido aguardando pagamento ou pago, ainda sem produção) também devolve o estoque e deixa o pedido `CANCELLED`. Expirar e cancelar são idempotentes: a troca de status é um `updateMany` condicional na mesma transação da devolução, e só quem de fato mudou o pedido devolve o estoque (chamadas repetidas ou simultâneas não devolvem duas vezes). Variáveis, agendamento e funcionamento estão em [Expiração de pedidos](#expiração-de-pedidos).
 - **Checkout (InfinitePay):** depois que o pedido é criado, o carrinho é esvaziado e o navegador segue para `NEXT_PUBLIC_CART_URL` (veja `.env.example`; padrão em `src/data/produtos.ts`). A integração real entra no `useEffect` de `src/views/CartView/CartContent.tsx` que trata o pedido criado.
+
+- **Painel de pedidos:** `/admin/orders` (somente admin, link _"Pedidos"_ no menu) lista os 100 pedidos mais recentes, do mais novo ao mais antigo, com número, status, cliente, data, total e quantidade de itens. Os dados vêm de `getAdminOrders` em `src/lib/admin-orders.ts`.
 
 ### Expiração de pedidos
 

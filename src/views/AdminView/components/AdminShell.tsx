@@ -3,6 +3,7 @@
 import { useAuthContext } from "@/contexts/AuthContext";
 import {
   Boxes,
+  ClipboardList,
   LayoutDashboard,
   LogOut,
   Package,
@@ -29,6 +30,12 @@ const navItems: {
   exact: boolean;
 }[] = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
+  {
+    href: "/admin/orders",
+    label: "Pedidos",
+    icon: ClipboardList,
+    exact: false,
+  },
   { href: "/admin/products", label: "Produtos", icon: Package, exact: false },
   { href: "/admin/stock", label: "Estoque", icon: Boxes, exact: true },
 ];
