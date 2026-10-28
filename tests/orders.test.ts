@@ -57,7 +57,7 @@ describe(
           capacity: "12 filamentos",
           width: 35,
           height: 60,
-          depth: 46,
+          length: 46,
           price,
           installments: "12x",
           description: "Produto criado pelos testes de pedido.",

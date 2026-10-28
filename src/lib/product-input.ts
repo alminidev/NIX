@@ -103,7 +103,7 @@ export function readProductForm(formData: FormData): IParsedProductForm {
   const name = readString(formData, "name");
   const categoryRaw = readString(formData, "categoryId");
   const capacity = readString(formData, "capacity");
-  const depth = parseDimension(readString(formData, "dimensionDepth"));
+  const length = parseDimension(readString(formData, "dimensionLength"));
   const width = parseDimension(readString(formData, "dimensionWidth"));
   const height = parseDimension(readString(formData, "dimensionHeight"));
   const installments = readString(formData, "installments");
@@ -133,7 +133,7 @@ export function readProductForm(formData: FormData): IParsedProductForm {
     fieldErrors.capacity = `A capacidade pode ter no máximo ${productFieldLimits.capacity} caracteres.`;
   }
 
-  if (depth === null || width === null || height === null) {
+  if (length === null || width === null || height === null) {
     fieldErrors.dimensions = `Informe comprimento, largura e altura em cm, de 0,1 a ${maxDimension.toLocaleString("pt-BR")}, com no máximo uma casa decimal.`;
   }
 
@@ -187,7 +187,7 @@ export function readProductForm(formData: FormData): IParsedProductForm {
   if (
     Object.keys(fieldErrors).length > 0 ||
     !("value" in priceResult) ||
-    depth === null ||
+    length === null ||
     width === null ||
     height === null
   ) {
@@ -210,7 +210,7 @@ export function readProductForm(formData: FormData): IParsedProductForm {
       name,
       categoryId: Number(categoryRaw),
       capacity,
-      dimensions: { depth, width, height },
+      dimensions: { length, width, height },
       price: priceResult.value,
       installments,
       description,

@@ -9,7 +9,7 @@ function form(overrides: Record<string, string> = {}) {
     name: "DRY BOX 12",
     categoryId: "1",
     capacity: "12 filamentos",
-    dimensionDepth: "46",
+    dimensionLength: "46",
     dimensionWidth: "35,5",
     dimensionHeight: "60",
     price: "1.190,00",
@@ -25,15 +25,15 @@ function form(overrides: Record<string, string> = {}) {
 }
 
 describe("readProductForm dimensions", () => {
-  it("reads depth, width and height as numbers", () => {
+  it("reads length, width and height as numbers", () => {
     const { input, fieldErrors } = readProductForm(form());
 
     assert.deepEqual(fieldErrors, {});
-    assert.deepEqual(input?.dimensions, { depth: 46, width: 35.5, height: 60 });
+    assert.deepEqual(input?.dimensions, { length: 46, width: 35.5, height: 60 });
   });
 
   it("rejects a missing or invalid side", () => {
-    for (const key of ["dimensionDepth", "dimensionWidth", "dimensionHeight"]) {
+    for (const key of ["dimensionLength", "dimensionWidth", "dimensionHeight"]) {
       for (const bad of ["", "0", "abc", "-1", "1,25"]) {
         const { input, fieldErrors } = readProductForm(form({ [key]: bad }));
 

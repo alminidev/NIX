@@ -38,7 +38,7 @@ export async function getProducts(): Promise<IProduct[]> {
       dimensions: {
         width: Number(product.width),
         height: Number(product.height),
-        depth: Number(product.depth),
+        length: Number(product.length),
       },
       price: Number(product.price),
       formattedPrice: currency.format(Number(product.price)),
