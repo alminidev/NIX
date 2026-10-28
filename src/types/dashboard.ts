@@ -6,6 +6,7 @@
 import type { OrderStatus } from "@/generated/prisma/enums";
 
 export interface IFeaturedProduct {
+  id: number;
   name: string;
   category: string;
   price: number;

@@ -25,6 +25,7 @@ export async function getDashboardMetrics(): Promise<IDashboardMetrics> {
       where: { active: true, featured: true },
       orderBy: { sortOrder: "asc" },
       select: {
+        id: true,
         name: true,
         price: true,
         category: { select: { name: true } },
@@ -84,6 +85,7 @@ export async function getDashboardMetrics(): Promise<IDashboardMetrics> {
     categories,
     featuredCount,
     featuredProducts: featuredProducts.map((product) => ({
+      id: product.id,
       name: product.name,
       category: product.category.name,
       price: Number(product.price),
