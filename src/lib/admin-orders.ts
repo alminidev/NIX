@@ -1,5 +1,6 @@
 import {
   adminOrdersPageSize,
+  escapeLikePattern,
   getOrderDateRange,
   parseOrderIdSearch,
 } from "@/lib/admin-order-filters";
@@ -12,11 +13,12 @@ function buildWhere(filters: IAdminOrderFilters): Prisma.OrderWhereInput {
   const { gte, lt } = getOrderDateRange(filters);
   const query = filters.q.trim();
   const orderId = parseOrderIdSearch(query);
+  const pattern = escapeLikePattern(query);
 
   const search: Prisma.OrderWhereInput[] = query
     ? [
-        { customerName: { contains: query, mode: "insensitive" } },
-        { customerEmail: { contains: query, mode: "insensitive" } },
+        { customerName: { contains: pattern, mode: "insensitive" } },
+        { customerEmail: { contains: pattern, mode: "insensitive" } },
         ...(orderId === null ? [] : [{ id: orderId }]),
       ]
     : [];

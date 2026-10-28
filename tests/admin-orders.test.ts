@@ -214,9 +214,36 @@ describe(
         "\\",
       ]) {
         const page = await getAdminOrders(filters({ q }));
-        assert.equal(page.total, 0, q);
-        assert.equal(page.pageCount, 1);
+        // Sem o escape, "a_b" casaria com "Alb" e "%" com qualquer nome.
+        assert.ok(
+          !page.orders.some((order) =>
+            order.customerEmail.endsWith(emailDomain),
+          ),
+          q,
+        );
+        assert.ok(page.pageCount >= 1);
       }
+    });
+
+    it("treats % and _ in the search as literal characters", async () => {
+      const percent = await createOrder({ name: `Desconto 50% ${runId}` });
+      const plain = await createOrder({ name: `Desconto 50x ${runId}` });
+      const underscore = await createOrder({ name: `Cliente a_b ${runId}` });
+      const letter = await createOrder({ name: `Cliente aXb ${runId}` });
+
+      const byPercent = await getAdminOrders(filters({ q: `50% ${runId}` }));
+      assert.deepEqual(
+        byPercent.orders.map((order) => order.id),
+        [percent.id],
+      );
+      assert.ok(!byPercent.orders.some((order) => order.id === plain.id));
+
+      const byUnderscore = await getAdminOrders(filters({ q: `a_b ${runId}` }));
+      assert.deepEqual(
+        byUnderscore.orders.map((order) => order.id),
+        [underscore.id],
+      );
+      assert.ok(!byUnderscore.orders.some((order) => order.id === letter.id));
     });
 
     it("filters by date range, including the whole last day in Brasília time", async () => {

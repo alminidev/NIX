@@ -68,6 +68,11 @@ export function parseOrderIdSearch(query: string) {
   return id >= 1 && id <= maxOrderId ? id : null;
 }
 
+/** Escapa %, _ e \ para a busca tratar o texto digitado como literal (LIKE). */
+export function escapeLikePattern(value: string) {
+  return value.replace(/[\\%_]/g, "\\$&");
+}
+
 /** Link da lista com os filtros atuais, trocando a página. */
 export function buildOrdersHref(filters: IAdminOrderFilters, page: number) {
   const params = new URLSearchParams();

@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 import {
   adminOrdersPageSize,
   buildOrdersHref,
+  escapeLikePattern,
   getOrderDateRange,
   hasOrderFilters,
   parseOrderFilters,
@@ -159,5 +160,17 @@ describe("order status groups", () => {
 
   it("uses a sensible page size", () => {
     assert.ok(adminOrdersPageSize >= 10 && adminOrdersPageSize <= 100);
+  });
+});
+
+describe("escapeLikePattern", () => {
+  it("escapes the characters that act as wildcards", () => {
+    assert.equal(escapeLikePattern("100%"), "100\\%");
+    assert.equal(escapeLikePattern("a_b"), "a\\_b");
+    assert.equal(escapeLikePattern("a\\b"), "a\\\\b");
+  });
+
+  it("keeps ordinary text as it is", () => {
+    assert.equal(escapeLikePattern("maria@example.com"), "maria@example.com");
   });
 });
