@@ -192,7 +192,7 @@ export default function Dashboard({ metrics }: IDashboardProps) {
         className="flex flex-col gap-4"
         aria-labelledby="metricas-comerciais"
       >
-        <div className="flex items-end justify-between gap-4">
+        <div className="flex flex-col gap-2 min-[640px]:flex-row min-[640px]:items-end min-[640px]:justify-between min-[640px]:gap-4">
           <div>
             <h2
               id="metricas-comerciais"
@@ -207,7 +207,7 @@ export default function Dashboard({ metrics }: IDashboardProps) {
           </div>
           <Link
             href="/admin/orders"
-            className="text-sm font-semibold text-brand-blue-hover"
+            className="shrink-0 text-sm font-semibold text-brand-blue-hover"
           >
             Ver pedidos
           </Link>

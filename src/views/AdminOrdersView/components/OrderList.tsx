@@ -31,7 +31,7 @@ export default function OrderList({ orders, filtered }: IOrderListProps) {
             {orders.map((order) => (
               <li
                 key={order.id}
-                className="flex flex-col gap-3 border-t border-border-hairline px-4 py-4 first:border-t-0 min-[980px]:flex-row min-[980px]:items-center min-[980px]:gap-6 min-[980px]:px-5"
+                className="flex flex-col gap-3 border-t border-border-hairline px-4 py-4 first:border-t-0 min-[1081px]:flex-row min-[1081px]:items-center min-[1081px]:gap-4 min-[1081px]:px-5"
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
@@ -47,13 +47,13 @@ export default function OrderList({ orders, filtered }: IOrderListProps) {
                   </p>
                 </div>
 
-                <p className="text-[0.8125rem] text-ink-muted min-[980px]:w-40 min-[980px]:text-right">
+                <p className="text-[0.8125rem] text-ink-muted min-[1081px]:w-36 min-[1081px]:text-right">
                   <time dateTime={order.createdAt.toISOString()}>
                     {formatOrderDate(order.createdAt)}
                   </time>
                 </p>
 
-                <p className="min-[980px]:w-36 min-[980px]:text-right">
+                <p className="min-[1081px]:w-28 min-[1081px]:text-right">
                   <span className="block text-lg leading-none font-bold tracking-[-0.02em] text-ink-primary tabular-nums">
                     {currencyFormat.format(order.total)}
                   </span>
