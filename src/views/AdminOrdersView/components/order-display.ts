@@ -1,4 +1,4 @@
-import type { OrderStatus } from "@/generated/prisma/enums";
+import type { OrderSource, OrderStatus } from "@/generated/prisma/enums";
 
 export const currencyFormat = new Intl.NumberFormat("pt-BR", {
   style: "currency",
@@ -13,6 +13,18 @@ const dateFormat = new Intl.DateTimeFormat("pt-BR", {
 
 export function formatOrderDate(date: Date) {
   return dateFormat.format(date);
+}
+
+export const orderSourceLabels: Record<OrderSource, string> = {
+  SITE: "Site",
+  WHATSAPP: "WhatsApp",
+  INSTAGRAM: "Instagram",
+};
+
+/** Telefone só com dígitos (com DDD) no formato (11) 91234-5678. */
+export function formatPhone(digits: string) {
+  const match = /^(\d{2})(\d{4,5})(\d{4})$/.exec(digits);
+  return match ? `(${match[1]}) ${match[2]}-${match[3]}` : digits;
 }
 
 const neutralBadge =

@@ -10,12 +10,13 @@ export interface IShippingRequest {
 /**
  * PONTO DE INTEGRAÇÃO DO FRETE.
  *
- * Hoje devolve uma cotação pendente. A cotação real de valor e prazo pela
- * Jadlog entra aqui, e só aqui: a ação quoteShipping (app/cart/actions.ts) e
- * o resumo do pedido já usam este contrato.
+ * Hoje devolve uma cotação pendente. A cotação real de valor e prazo pelo
+ * Melhor Envio entra aqui, e só aqui: a ação quoteShipping
+ * (app/cart/actions.ts) e o resumo do pedido já usam este contrato.
  *
- * TODO: chamar a API da Jadlog com o CEP de destino e as dimensões de cada
- * linha, usando credenciais lidas de variáveis de ambiente do servidor.
+ * TODO: chamar a API de cotação do Melhor Envio com o CEP de destino e as
+ * dimensões de cada linha, usando o token lido de variável de ambiente do
+ * servidor.
  */
 export async function calculateShipping(
   request: IShippingRequest,

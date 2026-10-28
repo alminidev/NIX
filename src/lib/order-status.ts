@@ -36,3 +36,35 @@ export const paidOrderStatuses: OrderStatus[] = [
 export function isOrderStatus(value: unknown): value is OrderStatus {
   return orderStatuses.includes(value as OrderStatus);
 }
+
+/**
+ * Mudanças de status que o admin pode fazer à mão, um passo de cada vez (com
+ * volta, para corrigir um clique errado):
+ * aguardando pagamento → pago → em produção → pronto → enviado.
+ * Cancelar só vale antes da produção e devolve o estoque (cancelOrder).
+ * Cancelado e expirado são finais, porque o estoque já voltou; EXPIRED só
+ * acontece sozinho, pelo prazo de pagamento. Pago não volta para aguardando,
+ * já que o prazo antigo expiraria o pedido na hora.
+ */
+const nextStatuses: Record<OrderStatus, OrderStatus[]> = {
+  AWAITING_PAYMENT: ["PAID", "CANCELLED"],
+  PAID: ["IN_PRODUCTION", "CANCELLED"],
+  IN_PRODUCTION: ["PAID", "READY"],
+  READY: ["IN_PRODUCTION", "SHIPPED"],
+  SHIPPED: ["READY"],
+  CANCELLED: [],
+  EXPIRED: [],
+};
+
+export function getNextOrderStatuses(status: OrderStatus): OrderStatus[] {
+  return nextStatuses[status];
+}
+
+/** Status de origem a partir dos quais `to` é uma mudança permitida. */
+export function getPreviousOrderStatuses(to: OrderStatus): OrderStatus[] {
+  return orderStatuses.filter((status) => nextStatuses[status].includes(to));
+}
+
+export function canChangeOrderStatus(from: OrderStatus, to: OrderStatus) {
+  return nextStatuses[from].includes(to);
+}

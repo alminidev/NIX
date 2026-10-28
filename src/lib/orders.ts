@@ -2,6 +2,7 @@ import { InsufficientStockError } from "@/app/_errors/insufficient-stock.error";
 import { AppError } from "@/app/_errors/app.error";
 import { calculateSubtotal, calculateTotal } from "@/lib/cart-calculation";
 import { calculateExpiresAt } from "@/lib/order-expiration";
+import { getPreviousOrderStatuses } from "@/lib/order-status";
 import { prisma } from "@/lib/prisma";
 import type { OrderStatus } from "@/generated/prisma/enums";
 import type { IOrderCreated, IOrderInput } from "@/types/order";
@@ -190,4 +191,43 @@ export async function expireOverdueOrders(
   }
 
   return expired;
+}
+
+export type TOrderStatusChange = "changed" | "not-allowed" | "not-found";
+
+/**
+ * Muda o status do pedido à mão (painel). Só vale uma mudança permitida em
+ * canChangeOrderStatus (lib/order-status.ts), conferida no próprio UPDATE
+ * condicional: quem perder uma corrida, ou clicar de novo, recebe
+ * "not-allowed" e nada muda. Cancelar passa por cancelOrder, que devolve o
+ * estoque. O código de rastreio só é gravado ao enviar.
+ */
+export async function changeOrderStatus(
+  orderId: number,
+  to: OrderStatus,
+  trackingCode: string | null = null,
+): Promise<TOrderStatusChange> {
+  let changed = false;
+
+  if (to === "CANCELLED") {
+    changed = await cancelOrder(orderId);
+  } else if (to !== "EXPIRED") {
+    const result = await prisma.order.updateMany({
+      where: { id: orderId, status: { in: getPreviousOrderStatuses(to) } },
+      data: {
+        status: to,
+        ...(to === "SHIPPED" ? { trackingCode } : {}),
+      },
+    });
+    changed = result.count === 1;
+  }
+
+  if (changed) return "changed";
+
+  const exists = await prisma.order.findUnique({
+    where: { id: orderId },
+    select: { id: true },
+  });
+
+  return exists ? "not-allowed" : "not-found";
 }
