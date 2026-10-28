@@ -1,6 +1,11 @@
 import assert from "node:assert/strict";
 import { afterEach, describe, it, mock } from "node:test";
-import { lookupPostalCode, viaCepBaseUrl } from "../src/lib/viacep";
+import {
+  checkAddressPostalCode,
+  lookupPostalCode,
+  normalizePlace,
+  viaCepBaseUrl,
+} from "../src/lib/viacep";
 
 function mockFetch(implementation: (url: string) => Promise<Response>) {
   return mock.method(globalThis, "fetch", (input: string | URL | Request) =>
@@ -151,5 +156,165 @@ describe("lookupPostalCode", () => {
 
     mockFetch(async () => jsonResponse({ localidade: "São Paulo", uf: "São" }));
     assert.equal((await lookupPostalCode("01310100")).reason, "unavailable");
+  });
+});
+
+describe("checkAddressPostalCode", () => {
+  afterEach(() => mock.restoreAll());
+
+  const address = { postalCode: "01310100", city: "São Paulo", state: "SP" };
+
+  it("accepts an address that matches the postal code", async () => {
+    mockFetch(async () => jsonResponse(paulista));
+
+    const result = await checkAddressPostalCode(address);
+
+    assert.equal(result.status, "valid");
+    assert.equal(result.message, "");
+    assert.deepEqual(result.fieldErrors, {});
+  });
+
+  it("ignores accents, case and extra spaces in the city and the case of the state", async () => {
+    mockFetch(async () => jsonResponse(paulista));
+
+    for (const city of [
+      "sao paulo",
+      "SÃO PAULO",
+      "  São   Paulo ",
+      "Sao-Paulo",
+    ]) {
+      const result = await checkAddressPostalCode({
+        ...address,
+        city,
+        state: "sp",
+      });
+      assert.equal(result.status, "valid", city);
+    }
+  });
+
+  it("accepts cities with apostrophes and accents on the ViaCEP side", async () => {
+    mockFetch(async () =>
+      jsonResponse({
+        ...paulista,
+        localidade: "Santa Bárbara d'Oeste",
+        uf: "SP",
+      }),
+    );
+
+    const result = await checkAddressPostalCode({
+      postalCode: "13450000",
+      city: "santa barbara d oeste",
+      state: "SP",
+    });
+
+    assert.equal(result.status, "valid");
+  });
+
+  it("refuses a city that does not match the postal code", async () => {
+    mockFetch(async () => jsonResponse(paulista));
+
+    const result = await checkAddressPostalCode({
+      ...address,
+      city: "Campinas",
+    });
+
+    assert.equal(result.status, "mismatch");
+    assert.deepEqual(Object.keys(result.fieldErrors), ["city"]);
+    assert.match(result.message, /cidade informada não confere/);
+    assert.match(result.message, /São Paulo\/SP/);
+  });
+
+  it("refuses a state that does not match the postal code", async () => {
+    mockFetch(async () => jsonResponse(paulista));
+
+    const result = await checkAddressPostalCode({ ...address, state: "RJ" });
+
+    assert.equal(result.status, "mismatch");
+    assert.deepEqual(Object.keys(result.fieldErrors), ["state"]);
+    assert.match(result.message, /estado informado não confere/);
+  });
+
+  it("refuses when both city and state do not match", async () => {
+    mockFetch(async () => jsonResponse(paulista));
+
+    const result = await checkAddressPostalCode({
+      ...address,
+      city: "Niterói",
+      state: "RJ",
+    });
+
+    assert.equal(result.status, "mismatch");
+    assert.deepEqual(Object.keys(result.fieldErrors).sort(), ["city", "state"]);
+    assert.match(result.message, /cidade e o estado informados não conferem/);
+  });
+
+  it("refuses a postal code that does not exist", async () => {
+    mockFetch(async () => jsonResponse({ erro: "true" }));
+
+    const result = await checkAddressPostalCode({
+      ...address,
+      postalCode: "99999999",
+    });
+
+    assert.equal(result.status, "not-found");
+    assert.match(result.message, /CEP não encontrado/);
+    assert.equal(result.fieldErrors.postalCode, result.message);
+  });
+
+  it("accepts the address as given when the network fails", async () => {
+    mockFetch(async () => {
+      throw new TypeError("fetch failed");
+    });
+
+    const result = await checkAddressPostalCode({
+      ...address,
+      city: "Campinas",
+    });
+
+    assert.equal(result.status, "skipped");
+    assert.equal(result.message, "");
+    assert.deepEqual(result.fieldErrors, {});
+  });
+
+  it("accepts the address as given when ViaCEP times out", async () => {
+    mockFetch(async () => {
+      throw new DOMException("The operation timed out.", "TimeoutError");
+    });
+
+    const result = await checkAddressPostalCode(address);
+
+    assert.equal(result.status, "skipped");
+  });
+
+  it("accepts the address as given when ViaCEP answers with an error status", async () => {
+    mockFetch(async () => jsonResponse({}, 503));
+
+    const result = await checkAddressPostalCode(address);
+
+    assert.equal(result.status, "skipped");
+  });
+
+  it("accepts the address as given when the response is not usable", async () => {
+    for (const body of [
+      new Response("<html>oops</html>", { status: 200 }),
+      jsonResponse(null),
+      jsonResponse({ ...paulista, uf: "São Paulo" }),
+      jsonResponse({ ...paulista, localidade: "" }),
+    ]) {
+      mockFetch(async () => body);
+      const result = await checkAddressPostalCode(address);
+      assert.equal(result.status, "skipped");
+      mock.restoreAll();
+    }
+  });
+});
+
+describe("normalizePlace", () => {
+  it("removes accents, case, punctuation and repeated spaces", () => {
+    assert.equal(
+      normalizePlace("  São  João d'Aliança "),
+      "sao joao d alianca",
+    );
+    assert.equal(normalizePlace("BRASÍLIA"), "brasilia");
   });
 });

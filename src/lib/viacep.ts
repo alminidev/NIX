@@ -1,5 +1,7 @@
 import { parsePostalCode } from "@/lib/cart-input";
+import type { IOrderAddress } from "@/types/order";
 import type {
+  IPostalCodeCheck,
   IPostalCodeLookup,
   TPostalCodeLookupError,
   IViaCepResponse,
@@ -67,5 +69,65 @@ export async function lookupPostalCode(
       city,
       state,
     },
+  };
+}
+
+/** Minúsculas, sem acento nem pontuação e com espaços únicos. */
+export function normalizePlace(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+/**
+ * Confere se cidade e UF do endereço são as do CEP, consultando a ViaCEP.
+ * Cidade e UF são comparadas sem acento e sem diferença de maiúsculas.
+ * Se a ViaCEP falhar (rede, timeout, resposta inválida) o endereço é aceito
+ * como veio (status "skipped"), para que uma queda dela não impeça pedidos.
+ */
+export async function checkAddressPostalCode(
+  address: Pick<IOrderAddress, "postalCode" | "city" | "state">,
+): Promise<IPostalCodeCheck> {
+  const lookup = await lookupPostalCode(address.postalCode);
+
+  if (lookup.status === "error" || !lookup.address) {
+    if (lookup.reason === "unavailable") {
+      return { status: "skipped", message: "", fieldErrors: {} };
+    }
+
+    return {
+      status: "not-found",
+      message: lookup.message,
+      fieldErrors: { postalCode: lookup.message },
+    };
+  }
+
+  const expected = lookup.address;
+  const cityMatches =
+    normalizePlace(address.city) === normalizePlace(expected.city);
+  const stateMatches = address.state.trim().toUpperCase() === expected.state;
+
+  if (cityMatches && stateMatches) {
+    return { status: "valid", message: "", fieldErrors: {} };
+  }
+
+  const fieldErrors: IPostalCodeCheck["fieldErrors"] = {};
+  if (!cityMatches) fieldErrors.city = "A cidade não confere com o CEP.";
+  if (!stateMatches) fieldErrors.state = "O estado não confere com o CEP.";
+
+  const subject =
+    !cityMatches && !stateMatches
+      ? "A cidade e o estado informados não conferem"
+      : !cityMatches
+        ? "A cidade informada não confere"
+        : "O estado informado não confere";
+
+  return {
+    status: "mismatch",
+    message: `${subject} com o CEP, que é de ${expected.city}/${expected.state}.`,
+    fieldErrors,
   };
 }
