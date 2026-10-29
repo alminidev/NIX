@@ -408,7 +408,7 @@ export default function ProductForm({
             title="Ficha"
             description="O texto curto e as medidas que aparecem no card."
           >
-            <div className="grid gap-4 min-[760px]:grid-cols-2">
+            <div className="space-y-2">
               <Field
                 label="Capacidade"
                 error={errors.capacity}
@@ -434,6 +434,7 @@ export default function ProductForm({
                 label="Dimensões (cm)"
                 error={errors.dimensions}
                 errorId="dimensions-error"
+                grouped
               >
                 <div className="grid grid-cols-3 gap-3">
                   {[
@@ -459,28 +460,36 @@ export default function ProductForm({
                       onChange: setHeight,
                     },
                   ].map((side) => (
-                    <input
-                      key={side.name}
-                      name={side.name}
-                      value={side.value}
-                      onChange={(event) => side.onChange(event.target.value)}
-                      placeholder={side.placeholder}
-                      aria-label={`${side.label} em cm`}
-                      inputMode="decimal"
-                      required
-                      maxLength={7}
-                      disabled={pending}
-                      aria-invalid={Boolean(errors.dimensions)}
-                      aria-describedby={
-                        errors.dimensions ? "dimensions-error" : undefined
-                      }
-                      className={controlClass(Boolean(errors.dimensions))}
-                    />
+                    <label key={side.name} className="flex flex-col gap-1.5">
+                      <span className="text-xs font-medium text-ink-muted">
+                        {side.label}
+                      </span>
+                      <input
+                        name={side.name}
+                        value={side.value}
+                        onChange={(event) => side.onChange(event.target.value)}
+                        placeholder={side.placeholder}
+                        aria-label={`${side.label} em cm`}
+                        inputMode="decimal"
+                        required
+                        maxLength={7}
+                        disabled={pending}
+                        aria-invalid={Boolean(errors.dimensions)}
+                        aria-describedby={
+                          errors.dimensions ? "dimensions-error" : undefined
+                        }
+                        className={controlClass(Boolean(errors.dimensions))}
+                      />
+                    </label>
                   ))}
                 </div>
               </Field>
 
-              <Field label="Peso (kg)" error={errors.weight} errorId="weight-error">
+              <Field
+                label="Peso (kg)"
+                error={errors.weight}
+                errorId="weight-error"
+              >
                 <input
                   name="weight"
                   value={weight}
@@ -746,6 +755,7 @@ function Field({
   hint,
   hintId,
   className,
+  grouped = false,
   children,
 }: {
   label: string;
@@ -754,10 +764,13 @@ function Field({
   hint?: string;
   hintId?: string;
   className?: string;
+  grouped?: boolean;
   children: ReactNode;
 }) {
+  const Tag = grouped ? "div" : "label";
+
   return (
-    <label className={`flex flex-col gap-2 ${className ?? ""}`}>
+    <Tag className={`flex flex-col gap-2 ${className ?? ""}`}>
       <span className="text-[0.8125rem] font-semibold text-ink-secondary">
         {label}
       </span>
@@ -775,7 +788,7 @@ function Field({
           {hint}
         </span>
       ) : null}
-    </label>
+    </Tag>
   );
 }
 
