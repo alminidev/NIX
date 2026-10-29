@@ -19,7 +19,13 @@ const labelClass =
  * searchParams da página e a lista é lida de novo no servidor.
  */
 export default function OrderFilters({ filters }: IOrderFiltersProps) {
-  const key = [filters.q, filters.status, filters.from, filters.to].join("|");
+  const key = [
+    filters.q,
+    filters.status,
+    filters.from,
+    filters.to,
+    filters.review,
+  ].join("|");
 
   return (
     <form
@@ -82,6 +88,16 @@ export default function OrderFilters({ filters }: IOrderFiltersProps) {
       </label>
 
       <div className="flex items-center gap-3 min-[720px]:col-span-2 min-[1081px]:col-span-1">
+        <label className="flex min-h-11 items-center gap-2 text-sm font-semibold text-ink-secondary">
+          <input
+            type="checkbox"
+            name="review"
+            value="1"
+            defaultChecked={filters.review}
+            className="size-4 accent-brand-blue"
+          />
+          Em revisão
+        </label>
         <button
           type="submit"
           className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-pill bg-brand-blue px-5 text-sm font-semibold text-ink-inverse transition-colors hover:bg-brand-blue-hover"

@@ -1,9 +1,10 @@
 import type { IDashboardMetrics } from "@/types/dashboard";
-import { CircleCheck, Clock, PackageX } from "lucide-react";
+import { CircleAlert, CircleCheck, Clock, PackageX } from "lucide-react";
 import Link from "next/link";
 
 interface IAttentionProps {
   awaitingPayment: IDashboardMetrics["awaitingPayment"];
+  paymentReviews: IDashboardMetrics["paymentReviews"];
   outOfStock: IDashboardMetrics["outOfStock"];
 }
 
@@ -15,9 +16,11 @@ const actionClass =
 
 export default function Attention({
   awaitingPayment,
+  paymentReviews,
   outOfStock,
 }: IAttentionProps) {
-  const nothingToDo = awaitingPayment === 0 && outOfStock.length === 0;
+  const nothingToDo =
+    awaitingPayment === 0 && paymentReviews === 0 && outOfStock.length === 0;
   const hidden = outOfStock.length - outOfStockPreview;
 
   return (
@@ -39,8 +42,8 @@ export default function Attention({
             aria-hidden
             className="shrink-0 text-brand-blue"
           />
-          Tudo em dia: nenhum pedido aguardando pagamento e nenhum produto
-          zerado.
+          Tudo em dia: nenhum pedido aguardando pagamento, nenhum pagamento em
+          revisão e nenhum produto zerado.
         </p>
       ) : (
         <div className="grid grid-cols-1 gap-4 min-[861px]:grid-cols-2">
@@ -64,6 +67,33 @@ export default function Attention({
               <Link
                 href="/admin/orders?status=AWAITING_PAYMENT"
                 className={`${actionClass} self-start text-brand-blue-hover hover:text-brand-blue`}
+              >
+                Ver pedidos
+              </Link>
+            </article>
+          ) : null}
+
+          {paymentReviews > 0 ? (
+            <article className="flex flex-col gap-3 rounded-card border border-[#f0ddb0] bg-[#fff8eb] p-5 min-[640px]:p-6">
+              <div className="flex items-center gap-3">
+                <span className="grid size-10 shrink-0 place-items-center rounded-pill border border-[#f0ddb0] bg-white text-[#7a5b12]">
+                  <CircleAlert size={20} aria-hidden />
+                </span>
+                <div>
+                  <p className="text-[0.9375rem] font-semibold text-[#7a5b12]">
+                    {paymentReviews === 1
+                      ? "1 pagamento para revisar"
+                      : `${paymentReviews} pagamentos para revisar`}
+                  </p>
+                  <p className="mt-0.5 text-[0.8125rem] text-[#7a5b12]">
+                    O dinheiro entrou, mas o pedido não foi confirmado
+                    automaticamente.
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/admin/orders?review=1"
+                className={`${actionClass} self-start text-[#7a5b12] hover:text-[#5c4510]`}
               >
                 Ver pedidos
               </Link>

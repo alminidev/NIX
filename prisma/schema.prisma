@@ -186,13 +186,32 @@ model Order {
   trackingCode  String?
   // prazo para pagar; passado esse prazo o pedido expira e devolve o estoque
   expiresAt     DateTime?
-  items         OrderItem[]
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  // link do Checkout Integrado da InfinitePay, gerado no servidor
+  checkoutUrl            String?
+  // credit_card ou pix, vindo do payment_check
+  paymentMethod          String?
+  // identificador da transação na InfinitePay; único para o webhook ser idempotente
+  paymentTransactionNsu  String?   @unique
+  paymentInvoiceSlug     String?
+  // amount do payment_check, em reais
+  paymentAmount          Decimal?  @db.Decimal(10, 2)
+  // paid_amount do payment_check, em reais (pode ser maior que o total por causa das taxas)
+  paidAmount             Decimal?  @db.Decimal(10, 2)
+  paymentInstallments    Int?
+  receiptUrl             String?
+  paidAt                 DateTime?
+  // pagamento conferido que não pôde virar PAID sozinho (valor divergente, sem estoque, cancelado)
+  paymentReview          Boolean   @default(false)
+  paymentReviewReason    String?
+  items                  OrderItem[]
+  paymentEvents          PaymentEvent[]
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
 
   @@index([status, createdAt])
   @@index([status, expiresAt])
   @@index([customerEmail])
+  @@index([paymentReview])
   @@map("order")
 }
 
@@ -209,4 +228,18 @@ model OrderItem {
   @@index([orderId])
   @@index([productId])
   @@map("order_item")
+}
+
+// O que chegou no webhook da InfinitePay, sem a API Key e sem cabeçalhos.
+model PaymentEvent {
+  id             Int      @id @default(autoincrement())
+  orderId        Int?
+  order          Order?   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  transactionNsu String?
+  type           String
+  payload        Json
+  createdAt      DateTime @default(now())
+
+  @@index([orderId])
+  @@map("payment_event")
 }

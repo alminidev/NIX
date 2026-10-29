@@ -41,6 +41,7 @@ export function parseOrderFilters(raw: TRawSearchParams): IAdminOrderFilters {
     from: parseDay(readParam(raw, "from")),
     to: parseDay(readParam(raw, "to")),
     page: Number.isInteger(page) && page >= 1 ? page : 1,
+    review: readParam(raw, "review") === "1",
   };
 }
 
@@ -81,6 +82,7 @@ export function buildOrdersHref(filters: IAdminOrderFilters, page: number) {
   if (filters.status) params.set("status", filters.status);
   if (filters.from) params.set("from", filters.from);
   if (filters.to) params.set("to", filters.to);
+  if (filters.review) params.set("review", "1");
   if (page > 1) params.set("page", String(page));
 
   const query = params.toString();
@@ -88,5 +90,7 @@ export function buildOrdersHref(filters: IAdminOrderFilters, page: number) {
 }
 
 export function hasOrderFilters(filters: IAdminOrderFilters) {
-  return Boolean(filters.q || filters.status || filters.from || filters.to);
+  return Boolean(
+    filters.q || filters.status || filters.from || filters.to || filters.review,
+  );
 }

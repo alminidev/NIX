@@ -12,6 +12,7 @@ export async function getDashboardMetrics(): Promise<IDashboardMetrics> {
     featuredProducts,
     outOfStock,
     orderGroups,
+    paymentReviews,
   ] = await Promise.all([
     prisma.product.count({ where: { active: true } }),
     prisma.category.count(),
@@ -46,6 +47,7 @@ export async function getDashboardMetrics(): Promise<IDashboardMetrics> {
       _count: { _all: true },
       _sum: { total: true },
     }),
+    prisma.order.count({ where: { paymentReview: true } }),
   ]);
 
   const ordersByStatus = orderStatuses.map((status) => ({
@@ -73,6 +75,7 @@ export async function getDashboardMetrics(): Promise<IDashboardMetrics> {
     awaitingPayment:
       ordersByStatus.find((item) => item.status === "AWAITING_PAYMENT")
         ?.count ?? 0,
+    paymentReviews,
     paidOrders,
     revenue: revenueCents / 100,
     averageTicket:

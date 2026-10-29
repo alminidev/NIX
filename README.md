@@ -115,8 +115,6 @@ nix-nextjs/
 │   │   ├── CtaFinal.tsx           # Banner de fechamento e conversão
 │   │   ├── Footer.tsx             # Rodapé institucional completo
 │   │   └── SkipLink.tsx           # Acessibilidade (pular navegação via teclado)
-│   ├── data/
-│   │   └── produtos.ts            # PONTO CENTRAL: catálogo de produtos e URL do carrinho
 │   └── types/
 │       └── produto.ts             # CONTRATO DE DADOS: interface TypeScript Produto
 ├── .env.example                   # Template documentado de variáveis de ambiente
@@ -175,10 +173,14 @@ O carrinho fica em **`/cart`**. O navegador guarda apenas `productId` e `quantit
 | `src/lib/cart-input.ts` | Validação da entrada vinda do navegador e do CEP |
 | `src/lib/viacep.ts` | `lookupPostalCode`: consulta o CEP na ViaCEP (nunca lança; devolve `IPostalCodeLookup`) |
 | `src/lib/shipping.ts` | **Ponto de integração do frete** (`calculateShipping`) |
-| `src/lib/orders.ts` | `createOrder`: cria o pedido e baixa o estoque numa transação |
+| `src/lib/orders.ts` | `createOrder` (baixa o estoque) e `markOrderPaid` (confirma o pagamento) |
+| `src/lib/infinitepay.ts` | Cliente do Checkout Integrado (`createCheckoutLink`, `checkPayment`) |
+| `src/lib/payments.ts` | Liga o pedido ao checkout, ao webhook e à página de obrigado |
 | `src/lib/order-input.ts` | Validação do formulário de entrega (nome, e-mail, telefone, endereço) |
 | `src/lib/order-expiration.ts` | Prazo do pedido: `ORDER_EXPIRATION_MINUTES` (padrão 60) |
 | `src/app/api/orders/expire/route.ts` | Rota de cron que expira pedidos vencidos (protegida por `CRON_SECRET`) |
+| `src/app/api/payments/infinitepay/webhook/route.ts` | Webhook da InfinitePay (token na URL; a confirmação é o `payment_check`) |
+| `src/app/pedido/obrigado/page.tsx` | Página de retorno depois do pagamento, sem dados pessoais |
 | `src/lib/admin-orders.ts` | `getAdminOrders` (lista com filtros e paginação) e `getAdminOrder` (um pedido completo) |
 | `src/lib/admin-order-filters.ts` | Leitura dos `searchParams` da lista de pedidos e links de paginação |
 | `src/lib/order-status.ts` | Status do pedido: rótulos, quais contam como receita e as mudanças manuais permitidas |
@@ -192,12 +194,12 @@ O carrinho fica em **`/cart`**. O navegador guarda apenas `productId` e `quantit
 - **Frete (Melhor Envio):** `calculateShipping` em `src/lib/shipping.ts` é o único ponto que fala com o Melhor Envio. Ela chama `POST /api/v2/me/shipment/calculate` com o CEP de origem (`MELHOR_ENVIO_FROM_POSTAL_CODE`), o CEP de destino e, por item, as dimensões (cm), o peso (kg) e o preço. O token fica só no servidor. Opções que voltam com `error` são ignoradas. A mais barata entra no total; a pessoa pode escolher outra transportadora na lista. O prazo usa `custom_delivery_time` (ou `delivery_time`) e o valor usa `custom_price` (ou `price`). Timeout, token inválido, CEP sem cobertura ou resposta inesperada viram uma mensagem amigável, sem derrubar a página. A etiqueta não é comprada. Variáveis em [Frete (Melhor Envio)](#frete-melhor-envio).
 - **Pedidos:** o botão _"Ir para o checkout"_ envia os dados de entrega e chama a server action `placeOrder`, que confere o carrinho no servidor e grava `Order` e `OrderItem` (status `AWAITING_PAYMENT`, origem `SITE`) numa única transação. Cada item guarda o preço unitário do momento do pedido. O estoque é baixado na mesma transação com `UPDATE ... WHERE stock >= quantidade`, então nunca fica negativo, nem com compras simultâneas; se faltar estoque, nada é gravado e a mensagem diz qual produto. Pedidos feitos pelo WhatsApp ou Instagram usam `OrderSource` (`WHATSAPP`, `INSTAGRAM`). Na hora de gravar, `placeOrder` **cota o frete de novo no servidor** e grava `Order.shipping`, o serviço (`shippingService`, ex.: `Correios · PAC`) e o prazo (`deliveryDays`). O valor enviado pelo navegador não é usado. Sem cotação válida o pedido não é criado e a pessoa vê a mensagem de erro.
 - **Expiração:** todo pedido nasce com `expiresAt` (agora + `ORDER_EXPIRATION_MINUTES`, padrão 60). Passado o prazo sem pagamento, ele vira `EXPIRED` e o estoque volta. `cancelOrder` (pedido aguardando pagamento ou pago, ainda sem produção) também devolve o estoque e deixa o pedido `CANCELLED`. Expirar e cancelar são idempotentes: a troca de status é um `updateMany` condicional na mesma transação da devolução, e só quem de fato mudou o pedido devolve o estoque (chamadas repetidas ou simultâneas não devolvem duas vezes). Variáveis, agendamento e funcionamento estão em [Expiração de pedidos](#expiração-de-pedidos).
-- **Checkout (InfinitePay):** depois que o pedido é criado, o carrinho é esvaziado e o navegador segue para `NEXT_PUBLIC_CART_URL` (veja `.env.example`; padrão em `src/data/produtos.ts`). A integração real entra no `useEffect` de `src/views/CartView/CartContent.tsx` que trata o pedido criado.
+- **Checkout (InfinitePay):** `placeOrder` gera, no servidor, um link do Checkout Integrado com os itens, o frete e o total do pedido, grava `checkoutUrl` e o navegador segue para esse link. Se o link não for gerado, o pedido é cancelado, o estoque volta e a pessoa vê uma mensagem para tentar de novo. O pagamento só vira `PAID` depois do `payment_check`. Detalhes, variáveis e o que a documentação ainda não confirma estão em [Checkout (InfinitePay)](#checkout-infinitepay).
 
-- **Painel de pedidos:** `/admin/orders` (somente admin, link _"Pedidos"_ no menu) lista os pedidos do mais novo ao mais antigo, 20 por página, com número, status, cliente, data, total e quantidade de itens. Busca e filtros vão nos `searchParams` da página (formulário GET, então os links são compartilháveis): `q` (nome, e-mail ou número do pedido, com ou sem `#`), `status` (um dos status do pedido), `from` e `to` (datas `AAAA-MM-DD`, inclusive, no horário de Brasília) e `page`. Valores inválidos são ignorados e uma página acima do fim volta para a última. A leitura dos parâmetros está em `src/lib/admin-order-filters.ts` e a consulta em `getAdminOrders` (`src/lib/admin-orders.ts`).
-- **Pedido (`/admin/orders/[id]`):** cada linha da lista abre a página do pedido (somente admin; id inexistente ou inválido cai na página 404). Ela mostra os itens (foto, nome, SKU, quantidade, preço unitário do momento do pedido e total da linha), subtotal, frete (_"Não cotado"_ quando não houve cotação; com cotação, o valor, o serviço e o prazo em dias úteis) e total, o cliente (e-mail e telefone clicáveis), o endereço de entrega, a origem (`SITE`, `WHATSAPP` ou `INSTAGRAM`) e as datas de criação, última atualização e prazo de pagamento. A leitura está em `getAdminOrder` (`src/lib/admin-orders.ts`).
+- **Painel de pedidos:** `/admin/orders` (somente admin, link _"Pedidos"_ no menu) lista os pedidos do mais novo ao mais antigo, 20 por página, com número, status, cliente, data, total e quantidade de itens. Pedidos com pagamento em revisão ganham o selo _Revisão_. Busca e filtros vão nos `searchParams` da página (formulário GET, então os links são compartilháveis): `q` (nome, e-mail ou número do pedido, com ou sem `#`), `status` (um dos status do pedido), `review=1` (só pagamentos em revisão), `from` e `to` (datas `AAAA-MM-DD`, inclusive, no horário de Brasília) e `page`. Valores inválidos são ignorados e uma página acima do fim volta para a última. A leitura dos parâmetros está em `src/lib/admin-order-filters.ts` e a consulta em `getAdminOrders` (`src/lib/admin-orders.ts`).
+- **Pedido (`/admin/orders/[id]`):** cada linha da lista abre a página do pedido (somente admin; id inexistente ou inválido cai na página 404). Ela mostra os itens (foto, nome, SKU, quantidade, preço unitário do momento do pedido e total da linha), subtotal, frete (_"Não cotado"_ quando não houve cotação; com cotação, o valor, o serviço e o prazo em dias úteis) e total, o cliente (e-mail e telefone clicáveis), o endereço de entrega, a origem (`SITE`, `WHATSAPP` ou `INSTAGRAM`), as datas e o cartão _Pagamento_ (método, valores, parcelas, transação, fatura, data, comprovante e link de checkout para reenviar). Se `paymentReview` estiver marcado, um aviso no topo explica o motivo. A leitura está em `getAdminOrder` (`src/lib/admin-orders.ts`).
 - **Mudança manual de status:** o cartão _Status_ da página do pedido oferece só as mudanças permitidas para o status atual (`getNextOrderStatuses` em `src/lib/order-status.ts`): aguardando pagamento → pago → em produção → pronto → enviado, cada passo com volta para corrigir um clique errado. Cancelar só vale em aguardando pagamento ou pago, passa por `cancelOrder` e devolve o estoque. Cancelado e expirado são finais (expirar só acontece pelo prazo) e nenhum status volta para aguardando pagamento. Ao marcar como enviado dá para informar o código de rastreio (`trackingCode`, opcional, até 40 caracteres). A mudança é um `updateMany` condicional em `changeOrderStatus` (`src/lib/orders.ts`): se o pedido mudou em outra aba, nada é alterado e o painel avisa.
-- **Dashboard (`/admin`):** o topo traz os atalhos _Ver pedidos_ e _Novo produto_ e o bloco _Precisa de atenção_ (pedidos aguardando pagamento e produtos sem estoque, cada um com link para a lista ou o estoque; sem nada pendente aparece _"Tudo em dia"_). A seção _Comercial_ lê os pedidos do banco (`getDashboardMetrics` em `src/lib/dashboard.ts`): receita, ticket médio, pedidos pagos, total de pedidos e o bloco _Pedidos por status_ (barra proporcional e um cartão por status, com a quantidade e o percentual, que leva a `/admin/orders?status=...`; as cores ficam em `src/views/AdminView/components/status-colors.ts`). Os produtos em destaque do final abrem a página de edição do produto. **Receita** é a soma do `total` (já com frete) dos pedidos de status `PAID`, `IN_PRODUCTION`, `READY` e `SHIPPED`, ou seja, do pagamento em diante (`paidOrderStatuses` em `src/lib/order-status.ts`). Ficam de fora `AWAITING_PAYMENT` (ainda não pagou) e `CANCELLED` e `EXPIRED` (o dinheiro não entrou ou foi devolvido). O **ticket médio** é a receita dividida pelo número desses pedidos pagos.
+- **Dashboard (`/admin`):** o topo traz os atalhos _Ver pedidos_ e _Novo produto_ e o bloco _Precisa de atenção_ (pedidos aguardando pagamento, pagamentos em revisão e produtos sem estoque, cada um com link para a lista ou o estoque; sem nada pendente aparece _"Tudo em dia"_). A seção _Comercial_ lê os pedidos do banco (`getDashboardMetrics` em `src/lib/dashboard.ts`): receita, ticket médio, pedidos pagos, total de pedidos e o bloco _Pedidos por status_ (barra proporcional e um cartão por status, com a quantidade e o percentual, que leva a `/admin/orders?status=...`; as cores ficam em `src/views/AdminView/components/status-colors.ts`). Os produtos em destaque do final abrem a página de edição do produto. **Receita** é a soma do `total` (já com frete) dos pedidos de status `PAID`, `IN_PRODUCTION`, `READY` e `SHIPPED`, ou seja, do pagamento em diante (`paidOrderStatuses` em `src/lib/order-status.ts`). Ficam de fora `AWAITING_PAYMENT` (ainda não pagou) e `CANCELLED` e `EXPIRED` (o dinheiro não entrou ou foi devolvido). O **ticket médio** é a receita dividida pelo número desses pedidos pagos.
 
 ### Frete (Melhor Envio)
 
@@ -213,6 +215,39 @@ A cotação usa a API do Melhor Envio. A entrega continua fora da plataforma: aq
 | `MELHOR_ENVIO_USER_AGENT` | Nome do app e e-mail de contato, exigidos no cabeçalho `User-Agent`. Se ficar vazio, usa `NIX (contato@nix3d.com.br)`. |
 
 O peso de cada produto (kg) entra na cotação. Ele é cadastrado no admin, no formulário do produto, e o seed em `prisma/catalog.ts` já traz um peso por item. Depois de atualizar o banco (`npm run db:migrate`), rode `npm run db:seed` para gravar esses pesos nos produtos do catálogo.
+
+### Checkout (InfinitePay)
+
+A InfinitePay só cobra. O frete continua sendo a cotação do Melhor Envio, enviada como um item _"Frete"_ porque a documentação não descreve um campo próprio de frete. O preço sai do pedido gravado no servidor, em centavos (`Math.round(reais * 100)`).
+
+Depois do pagamento a pessoa cai em `/pedido/obrigado`. Essa página e o webhook (`POST /api/payments/infinitepay/webhook`) chamam `POST /payment_check` e só então `markOrderPaid`. Parâmetros da URL e o corpo do webhook não provam pagamento. A comparação usa `amount` (o valor do pedido); `paid_amount` pode ser maior quando a taxa de parcelamento fica com o cliente.
+
+O webhook leva um token nosso na query (`INFINITEPAY_WEBHOOK_SECRET`), comparado com `timingSafeEqual`. Ele só existe se `NEXT_PUBLIC_SITE_URL` for HTTPS. Em `http://localhost` o webhook não é enviado e a página de obrigado confirma o pagamento. A resposta é `200` quando processou, já estava processado ou o `order_nsu` não é de um pedido nosso, e `400` quando a verificação falhou de forma temporária (para a InfinitePay tentar de novo).
+
+`options.assured_installments` é `3`, no mesmo texto do FAQ (cartão em até 3x sem juros). `single_payment` e `valid_until` (igual a `expiresAt`) pedem um único pagamento dentro do prazo do pedido. Se o pagamento for confirmado depois que o pedido expirou, o estoque é baixado de novo e o pedido volta para `PAID` quando todos os itens têm estoque. Sem estoque, ou se o pedido foi cancelado, ele fica como está e `paymentReview` marca a revisão manual. O reembolso, nesse caso, é feito no app da InfinitePay.
+
+A mudança manual de status continua valendo (pedido pelo WhatsApp, por exemplo). Marcar `PAID` à mão não preenche os dados do pagamento.
+
+**Variáveis de ambiente** (modelo em `.env.example`; em desenvolvimento ficam no `.env.local`, em produção no painel da hospedagem):
+
+| Variável | Para que serve |
+| --- | --- |
+| `INFINITEPAY_API_KEY` | API Key `inchk_...`, enviada no header `X-Api-Key`. Só no servidor. Nunca em log, resposta ou no banco. |
+| `INFINITEPAY_HANDLE` | InfiniteTag sem `$`. Vai no corpo junto com a chave. |
+| `INFINITEPAY_WEBHOOK_SECRET` | Segredo nosso na URL do webhook. Gere com `openssl rand -base64 32`. Sem ele o webhook responde 401. |
+| `INFINITEPAY_ORDER_PREFIX` | Prefixo do `order_nsu` (`nix-123`). Padrão `nix`. |
+| `NEXT_PUBLIC_SITE_URL` | Origem pública do site, usada em `redirect_url` e no webhook. |
+
+**Ainda não confirmado numa chamada real** (a documentação oficial e a Central de Ajuda divergem, e não há sandbox descrito):
+
+- O campo da URL na resposta de `POST /links`. O código aceita `checkout_url` e, se não vier, `url` ou `link`, e só em `https://checkout.infinitepay.io`.
+- Se `handle` no corpo é obrigatório, ignorado ou conflita com `X-Api-Key`. Enviamos os dois.
+- Se a API aceita `webhook: { url, events }` ou só `webhook_url`. Enviamos o formato novo e, num HTTP 400 cuja mensagem cita webhook, tentamos `webhook_url`.
+- O corpo dos eventos que não são `paid`. A primeira versão assina só `paid`.
+- Quantas vezes e com qual intervalo o webhook é reenviado, e o tempo limite da resposta.
+- Se existe ambiente de teste. Os testes automatizados simulam a API.
+- Se `valid_until` bloqueia o pagamento depois da data e se `single_payment` impede uma segunda tentativa.
+- Se `paid_amount` pode ser menor que `amount`. A confirmação compara só `amount` com o total do pedido.
 
 ### Expiração de pedidos
 
@@ -265,7 +300,7 @@ Use um intervalo menor ou igual a `ORDER_EXPIRATION_MINUTES` para que o estoque 
 npm test
 ```
 
-Executa os testes de `tests/` (Node test runner) sobre as regras do carrinho, CEP e ViaCEP, dimensões, leitura dos formulários, criação de pedidos, lista e página de pedidos do painel (incluindo a mudança de status) e métricas do dashboard. Os arquivos rodam um de cada vez (`--test-concurrency=1`) porque compartilham o banco. Os testes de pedido usam o banco de `DATABASE_URL` (lido do `.env`): criam produtos próprios e removem tudo no final. Sem `DATABASE_URL` eles são ignorados.
+Executa os testes de `tests/` (Node test runner) sobre as regras do carrinho, CEP e ViaCEP, dimensões, leitura dos formulários, criação de pedidos, checkout da InfinitePay (API simulada), lista e página de pedidos do painel (incluindo a mudança de status) e métricas do dashboard. Os arquivos rodam um de cada vez (`--test-concurrency=1`) porque compartilham o banco. Os testes de pedido usam o banco de `DATABASE_URL` (lido do `.env`): criam produtos próprios e removem tudo no final. Sem `DATABASE_URL` eles são ignorados.
 
 ---
 
@@ -349,7 +384,7 @@ O componente **`src/components/ProductLightbox.tsx`** é responsável pela exper
 
 1. Crie uma conta em [vercel.com](https://vercel.com) e importe o repositório.
 2. Defina o **Root Directory** como `nix-nextjs`.
-3. Adicione a variável de ambiente `NEXT_PUBLIC_CART_URL` nas configurações do projeto.
+3. Adicione as variáveis de ambiente do `.env.example` (banco, InfinitePay, Melhor Envio e `NEXT_PUBLIC_SITE_URL`) nas configurações do projeto.
 4. Clique em **Deploy**. A Vercel executará `npm run build` e configurará CDN global e SSL automaticamente.
 
 ### Opção B: Netlify
@@ -379,7 +414,7 @@ npm run start
 
 1. Crie uma conta em [vercel.com](https://vercel.com) e importe o repositório.
 2. Defina o **Root Directory** como `nix-nextjs`.
-3. Adicione a variável de ambiente `NEXT_PUBLIC_CART_URL` nas configurações do projeto.
+3. Adicione as variáveis de ambiente do `.env.example` (banco, InfinitePay, Melhor Envio e `NEXT_PUBLIC_SITE_URL`) nas configurações do projeto.
 4. Clique em **Deploy**. A Vercel executará `npm run build` e configurará CDN global e SSL automaticamente.
 
 ### Opção B: Netlify

@@ -31,6 +31,8 @@ export interface IDashboardMetrics {
   ordersByStatus: IOrdersByStatus[];
   /** Pedidos aguardando pagamento (seguram estoque até expirar) */
   awaitingPayment: number;
+  /** Pagamentos conferidos que precisam de revisão manual */
+  paymentReviews: number;
   /** Pedidos que contam como receita (paidOrderStatuses em lib/order-status.ts) */
   paidOrders: number;
   /** Soma do total dos pedidos pagos, em reais */

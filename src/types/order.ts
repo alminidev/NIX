@@ -73,6 +73,8 @@ export interface ICheckoutFormState {
   fieldErrors: ICheckoutFieldErrors;
   /** Número do pedido criado */
   orderId: number | null;
+  /** Link do checkout da InfinitePay; só existe quando o pedido foi criado */
+  checkoutUrl: string | null;
 }
 
 export const checkoutFormInitialState: ICheckoutFormState = {
@@ -80,4 +82,5 @@ export const checkoutFormInitialState: ICheckoutFormState = {
   message: "",
   fieldErrors: {},
   orderId: null,
+  checkoutUrl: null,
 };

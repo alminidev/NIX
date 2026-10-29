@@ -19,6 +19,7 @@ describe("parseOrderFilters", () => {
       from: null,
       to: null,
       page: 1,
+      review: false,
     });
   });
 
@@ -37,6 +38,7 @@ describe("parseOrderFilters", () => {
         from: "2026-10-01",
         to: "2026-10-27",
         page: 3,
+        review: false,
       },
     );
   });
@@ -67,6 +69,16 @@ describe("parseOrderFilters", () => {
     }
   });
 
+  it("reads the payment review filter", () => {
+    assert.equal(parseOrderFilters({ review: "1" }).review, true);
+    assert.equal(parseOrderFilters({ review: "true" }).review, false);
+    assert.equal(
+      buildOrdersHref(parseOrderFilters({ review: "1" }), 1),
+      "/admin/orders?review=1",
+    );
+    assert.equal(hasOrderFilters(parseOrderFilters({ review: "1" })), true);
+  });
+
   it("limits the length of the search", () => {
     assert.equal(parseOrderFilters({ q: "a".repeat(500) }).q.length, 100);
   });
@@ -80,6 +92,7 @@ describe("getOrderDateRange", () => {
       from: "2026-10-01",
       to: "2026-10-27",
       page: 1,
+      review: false,
     });
 
     assert.equal(range.gte?.toISOString(), "2026-10-01T03:00:00.000Z");
@@ -93,6 +106,7 @@ describe("getOrderDateRange", () => {
       from: null,
       to: "2026-12-31",
       page: 1,
+      review: false,
     });
 
     assert.equal(range.gte, null);

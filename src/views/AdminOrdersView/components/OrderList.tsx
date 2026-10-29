@@ -47,6 +47,11 @@ export default function OrderList({ orders, filtered }: IOrderListProps) {
                       <span className={statusBadgeClasses[order.status]}>
                         {orderStatusLabels[order.status]}
                       </span>
+                      {order.paymentReview ? (
+                        <span className="inline-flex items-center rounded-pill border border-[#f0ddb0] bg-[#fff8eb] px-2 py-0.5 text-[0.6875rem] font-semibold tracking-[0.04em] text-[#7a5b12] uppercase">
+                          Revisão
+                        </span>
+                      ) : null}
                     </div>
                     <p className="mt-1 truncate text-[0.8125rem] text-ink-muted">
                       {order.customerName} · {order.customerEmail}

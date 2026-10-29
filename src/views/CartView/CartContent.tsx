@@ -1,7 +1,7 @@
 "use client";
 
 import { getCartSummary, placeOrder } from "@/app/cart/actions";
-import { CART_URL } from "@/data/produtos";
+import { isInfinitePayCheckoutUrl } from "@/lib/checkout-url";
 import { useCartContext } from "@/contexts/CartContext";
 import type { ICartSummary, IShippingQuote } from "@/types/cart";
 import { checkoutFormInitialState } from "@/types/order";
@@ -31,17 +31,21 @@ export default function CartContent() {
     placeOrder,
     checkoutFormInitialState,
   );
-  const orderPlaced = checkoutState.status === "success";
+  const checkoutUrl =
+    checkoutState.status === "success" &&
+    checkoutState.checkoutUrl &&
+    isInfinitePayCheckoutUrl(checkoutState.checkoutUrl)
+      ? checkoutState.checkoutUrl
+      : null;
+  const orderPlaced = checkoutUrl !== null;
 
-  // Pedido criado: esvazia o carrinho e segue para o checkout.
+  // Pedido criado: esvazia o carrinho e segue para o checkout deste pedido.
   useEffect(() => {
-    if (!orderPlaced) return;
+    if (!checkoutUrl) return;
 
     replaceItems([]);
-    // TODO: o checkout da InfinitePay entra aqui. Por enquanto segue para a
-    // URL de checkout já configurada em NEXT_PUBLIC_CART_URL.
-    window.location.assign(CART_URL);
-  }, [orderPlaced, replaceItems]);
+    window.location.assign(checkoutUrl);
+  }, [checkoutUrl, replaceItems]);
 
   useEffect(() => {
     if (!isReady || orderPlaced) return;

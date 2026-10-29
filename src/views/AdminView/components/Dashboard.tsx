@@ -163,6 +163,7 @@ export default function Dashboard({ metrics }: IDashboardProps) {
 
       <Attention
         awaitingPayment={metrics.awaitingPayment}
+        paymentReviews={metrics.paymentReviews}
         outOfStock={metrics.outOfStock}
       />
 

@@ -9,6 +9,7 @@ import OrderAddress from "@/views/AdminOrderView/components/OrderAddress";
 import OrderCustomer from "@/views/AdminOrderView/components/OrderCustomer";
 import OrderDates from "@/views/AdminOrderView/components/OrderDates";
 import OrderItems from "@/views/AdminOrderView/components/OrderItems";
+import OrderPayment from "@/views/AdminOrderView/components/OrderPayment";
 import OrderStatusForm from "@/views/AdminOrderView/components/OrderStatusForm";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -48,6 +49,18 @@ export function AdminOrderView({ order }: IAdminOrderViewProps) {
         </p>
       </header>
 
+      {order.payment.review ? (
+        <p
+          className="rounded-card border border-[#f0ddb0] bg-[#fff8eb] px-5 py-4 text-[0.9375rem] text-[#7a5b12]"
+          role="status"
+        >
+          Este pagamento precisa de revisão manual.
+          {order.payment.reviewReason ? (
+            <span className="mt-1 block">{order.payment.reviewReason}</span>
+          ) : null}
+        </p>
+      ) : null}
+
       <OrderStatusForm
         orderId={order.id}
         status={order.status}
@@ -61,6 +74,7 @@ export function AdminOrderView({ order }: IAdminOrderViewProps) {
 
         <div className="flex min-w-0 flex-col gap-6">
           <OrderCustomer customer={order.customer} />
+          <OrderPayment payment={order.payment} />
           <OrderAddress address={order.address} />
           <OrderDates order={order} />
         </div>

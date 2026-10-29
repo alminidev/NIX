@@ -17,6 +17,8 @@ export interface IAdminOrder {
   /** Soma das quantidades dos itens */
   itemCount: number;
   createdAt: Date;
+  /** Pagamento conferido que precisa de revisão manual */
+  paymentReview: boolean;
 }
 
 export interface IAdminOrderFilters {
@@ -29,6 +31,8 @@ export interface IAdminOrderFilters {
   to: string | null;
   /** Página pedida, a partir de 1 */
   page: number;
+  /** Só pedidos com pagamento em revisão */
+  review: boolean;
 }
 
 export interface IAdminOrderPage {
@@ -100,6 +104,22 @@ export interface IAdminOrderDetail {
   updatedAt: Date;
   /** Prazo para pagar; só vale enquanto o pedido aguarda pagamento */
   expiresAt: Date | null;
+  payment: {
+    review: boolean;
+    reviewReason: string | null;
+    /** `credit_card`, `pix` ou null quando o pagamento não foi pela InfinitePay */
+    method: string | null;
+    /** Valor do pedido conferido no payment_check, em reais */
+    amount: number | null;
+    /** Valor efetivamente pago, em reais */
+    paidAmount: number | null;
+    installments: number | null;
+    transactionNsu: string | null;
+    invoiceSlug: string | null;
+    paidAt: Date | null;
+    receiptUrl: string | null;
+    checkoutUrl: string | null;
+  };
 }
 
 export interface IOrderStatusState {

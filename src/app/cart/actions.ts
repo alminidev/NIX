@@ -4,6 +4,7 @@ import { AppError } from "@/app/_errors/app.error";
 import { resolveCart } from "@/lib/cart";
 import { parseCartItems, parsePostalCode } from "@/lib/cart-input";
 import { readCheckoutForm } from "@/lib/order-input";
+import { startCheckout } from "@/lib/payments";
 import { createOrder, expireOverdueOrders } from "@/lib/orders";
 import { calculateShipping } from "@/lib/shipping";
 import { checkAddressPostalCode, lookupPostalCode } from "@/lib/viacep";
@@ -104,7 +105,8 @@ export async function lookupAddress(
 
 /**
  * Cria o pedido a partir do carrinho e dos dados de entrega. O estoque é
- * baixado na mesma transação que grava o pedido (lib/orders.ts).
+ * baixado na mesma transação que grava o pedido (lib/orders.ts) e, em seguida,
+ * o servidor gera o link de pagamento da InfinitePay.
  */
 export async function placeOrder(
   _previous: ICheckoutFormState,
@@ -118,6 +120,7 @@ export async function placeOrder(
       message: parsed.fieldErrors.items ?? "Revise os campos destacados.",
       fieldErrors: parsed.fieldErrors,
       orderId: null,
+      checkoutUrl: null,
     };
   }
 
@@ -132,6 +135,7 @@ export async function placeOrder(
       message: postalCheck.message,
       fieldErrors: postalCheck.fieldErrors,
       orderId: null,
+      checkoutUrl: null,
     };
   }
 
@@ -155,6 +159,7 @@ export async function placeOrder(
       message,
       fieldErrors: { postalCode: message },
       orderId: null,
+      checkoutUrl: null,
     };
   }
 
@@ -170,11 +175,24 @@ export async function placeOrder(
 
     updateTag("products");
 
+    const checkout = await startCheckout(order.id);
+    if (!checkout.ok) {
+      updateTag("products");
+      return {
+        status: "error",
+        message: checkout.message,
+        fieldErrors: {},
+        orderId: null,
+        checkoutUrl: null,
+      };
+    }
+
     return {
       status: "success",
       message: "",
       fieldErrors: {},
       orderId: order.id,
+      checkoutUrl: checkout.checkoutUrl,
     };
   } catch (error) {
     if (error instanceof AppError && error.status === 409) {
@@ -183,6 +201,7 @@ export async function placeOrder(
         message: error.message,
         fieldErrors: {},
         orderId: null,
+        checkoutUrl: null,
       };
     }
 

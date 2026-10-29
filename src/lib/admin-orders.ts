@@ -29,6 +29,7 @@ function buildWhere(filters: IAdminOrderFilters): Prisma.OrderWhereInput {
 
   return {
     ...(filters.status ? { status: filters.status } : {}),
+    ...(filters.review ? { paymentReview: true } : {}),
     ...(gte || lt
       ? { createdAt: { ...(gte ? { gte } : {}), ...(lt ? { lt } : {}) } }
       : {}),
@@ -57,6 +58,7 @@ export async function getAdminOrders(
       customerEmail: true,
       total: true,
       createdAt: true,
+      paymentReview: true,
       items: { select: { quantity: true } },
     },
   });
@@ -70,6 +72,7 @@ export async function getAdminOrders(
       total: Number(order.total),
       itemCount: order.items.reduce((sum, item) => sum + item.quantity, 0),
       createdAt: order.createdAt,
+      paymentReview: order.paymentReview,
     })),
     total,
     page,
@@ -153,5 +156,18 @@ export async function getAdminOrder(
     createdAt: order.createdAt,
     updatedAt: order.updatedAt,
     expiresAt: order.expiresAt,
+    payment: {
+      review: order.paymentReview,
+      reviewReason: order.paymentReviewReason,
+      method: order.paymentMethod,
+      amount: order.paymentAmount === null ? null : Number(order.paymentAmount),
+      paidAmount: order.paidAmount === null ? null : Number(order.paidAmount),
+      installments: order.paymentInstallments,
+      transactionNsu: order.paymentTransactionNsu,
+      invoiceSlug: order.paymentInvoiceSlug,
+      paidAt: order.paidAt,
+      receiptUrl: order.receiptUrl,
+      checkoutUrl: order.checkoutUrl,
+    },
   };
 }
