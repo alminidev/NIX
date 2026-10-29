@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   description:
     'Móveis técnicos e estufas Dry Box com controle térmico ativo para filamentos de impressora 3D. Elimine umidade e organize seu setup com precisão industrial.',
   icons: {
-    icon: '/images/logo-nix.png',
+    icon: '/images/nix-RS-MONO-ICO.ico',
   },
   openGraph: {
     type: 'website',
