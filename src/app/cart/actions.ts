@@ -6,7 +6,6 @@ import { parseCartItems, parsePostalCode } from "@/lib/cart-input";
 import { readCheckoutForm } from "@/lib/order-input";
 import { createOrder, expireOverdueOrders } from "@/lib/orders";
 import { calculateShipping } from "@/lib/shipping";
-import { formatShippingService } from "@/lib/shipping-display";
 import { checkAddressPostalCode, lookupPostalCode } from "@/lib/viacep";
 import type { ICartSummary, IShippingResult } from "@/types/cart";
 import type { ICheckoutFormState } from "@/types/order";
@@ -165,7 +164,7 @@ export async function placeOrder(
       customer,
       address,
       shipping: quote.price,
-      shippingService: formatShippingService(quote.company, quote.serviceName),
+      shippingService: null,
       deliveryDays: quote.deliveryDays,
     });
 

@@ -62,11 +62,14 @@ export interface IShippingQuote {
   deliveryDays: number | null;
   /** Mensagem amigável quando status é "error" */
   message: string | null;
-  /** Serviço escolhido (o mais barato, ou o que a pessoa selecionou) */
+  /** Opção escolhida (a intermediária, ou a que a pessoa selecionou) */
   serviceId: number | null;
   company: string | null;
   serviceName: string | null;
-  /** Opções sem erro, da mais barata para a mais cara */
+  /**
+   * Até duas opções, sem nome de transportadora: a de preço intermediário
+   * (maior prazo) e, quando existir, a mais cara (menor prazo).
+   */
   options: IShippingOption[];
 }
 

@@ -1,3 +1,4 @@
+import { presentShippingChoices } from "@/lib/shipping-display";
 import type { ICartLine, IShippingOption, IShippingQuote } from "@/types/cart";
 import "server-only";
 
@@ -10,8 +11,9 @@ export interface IShippingRequest {
     "productId" | "sku" | "quantity" | "dimensions" | "weight" | "unitPrice"
   >[];
   /**
-   * Serviço escolhido no carrinho. Se ainda existir na cotação nova, ele é o
-   * usado; senão vale a opção mais barata. O preço nunca vem do navegador.
+   * Opção escolhida no carrinho (a intermediária ou a mais cara). Se ela
+   * ainda existir na cotação nova, ela é a usada; senão vale a intermediária.
+   * O preço nunca vem do navegador.
    */
   serviceId?: number | null;
 }
@@ -177,8 +179,10 @@ function isTimeout(error: unknown) {
 
 /**
  * Cota o frete no Melhor Envio (POST /api/v2/me/shipment/calculate).
- * Só calcula: a etiqueta não é comprada. Nunca lança e nunca devolve o token.
- * Opções com erro são ignoradas; a mais barata é a padrão, salvo serviceId.
+ * Só calcula: a etiqueta não é comprada e a entrega é feita por fora.
+ * Nunca lança e nunca devolve o token. Opções com erro são ignoradas.
+ * A pessoa vê a opção de preço intermediário (padrão, maior prazo) e a mais
+ * cara (menor prazo).
  */
 export async function calculateShipping(
   request: IShippingRequest,
@@ -250,10 +254,11 @@ export async function calculateShipping(
 
   if (!Array.isArray(body)) return errorQuote(shippingMessages.unavailable);
 
-  const options = body
+  const quoted = body
     .map(readOption)
-    .filter((option): option is IShippingOption => option !== null)
-    .sort((a, b) => a.price - b.price || a.deliveryDays - b.deliveryDays);
+    .filter((option): option is IShippingOption => option !== null);
+
+  const options = presentShippingChoices(quoted);
 
   if (options.length === 0) return errorQuote(shippingMessages.uncovered);
 
@@ -267,8 +272,8 @@ export async function calculateShipping(
     deliveryDays: picked.deliveryDays,
     message: null,
     serviceId: picked.serviceId,
-    company: picked.company || null,
-    serviceName: picked.name,
+    company: null,
+    serviceName: null,
     options,
   };
 }

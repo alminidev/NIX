@@ -2,10 +2,7 @@ import { lookupAddress, quoteShipping } from "@/app/cart/actions";
 import { maskPostalCode } from "@/lib/cart-input";
 import { formatCurrency } from "@/lib/cart-calculation";
 import { brazilianStates, orderFieldLimits } from "@/lib/order-input";
-import {
-  formatDeliveryDays,
-  formatShippingService,
-} from "@/lib/shipping-display";
+import { formatDeliveryDays } from "@/lib/shipping-display";
 import type { ICartItem, IShippingQuote } from "@/types/cart";
 import type { ICheckoutFieldErrors } from "@/types/order";
 import { useEffect, useRef, useState, useTransition } from "react";
@@ -20,7 +17,7 @@ interface ICheckoutFormProps {
   errors: ICheckoutFieldErrors;
   disabled: boolean;
   onShippingChange: (quote: IShippingQuote | null) => void;
-  /** Cotação atual, para listar as transportadoras */
+  /** Cotação atual, para listar as opções de prazo */
   shipping: IShippingQuote | null;
   selectedServiceId: number | null;
   onSelectService: (serviceId: number) => void;
@@ -369,7 +366,7 @@ export default function CheckoutForm({
                 {shipping.options.map((option) => {
                   const id = `shipping-service-${option.serviceId}`;
                   const checked = option.serviceId === selectedOption?.serviceId;
-                  const label = formatShippingService(option.company, option.name);
+                  const label = formatDeliveryDays(option.deliveryDays);
 
                   return (
                     <label
@@ -387,13 +384,8 @@ export default function CheckoutForm({
                           onChange={() => onSelectService(option.serviceId)}
                           className="size-4 shrink-0 accent-brand-blue"
                         />
-                        <span className="min-w-0">
-                          <span className="block text-sm font-semibold text-ink-primary">
-                            {label}
-                          </span>
-                          <span className="block text-xs text-ink-secondary">
-                            {formatDeliveryDays(option.deliveryDays)}
-                          </span>
+                        <span className="min-w-0 text-sm font-semibold text-ink-primary">
+                          {label}
                         </span>
                       </span>
                       <span className="shrink-0 text-sm font-semibold text-ink-primary tabular-nums">

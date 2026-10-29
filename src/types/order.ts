@@ -33,9 +33,12 @@ export interface IOrderInput {
   address: IOrderAddress;
   /** Frete em reais; null enquanto não houver cotação */
   shipping: number | null;
-  /** Serviço cotado (ex.: "Correios · PAC"); null sem cotação */
+  /**
+   * Rótulo opcional do frete. A cotação do site não grava a transportadora;
+   * o prazo escolhido fica em deliveryDays.
+   */
   shippingService?: string | null;
-  /** Prazo em dias úteis; null sem cotação */
+  /** Prazo em dias úteis da opção escolhida; null sem cotação */
   deliveryDays?: number | null;
   /** Padrão: SITE */
   source?: OrderSource;

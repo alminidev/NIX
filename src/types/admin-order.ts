@@ -87,9 +87,12 @@ export interface IAdminOrderDetail {
   subtotal: number;
   /** Frete em reais; null enquanto não houve cotação */
   shipping: number | null;
-  /** Serviço cotado (ex.: "Correios · PAC"); null sem cotação */
+  /**
+   * Rótulo opcional do frete. Pedidos cotados no site deixam vazio; o prazo
+   * escolhido fica em deliveryDays.
+   */
   shippingService: string | null;
-  /** Prazo em dias úteis; null sem cotação */
+  /** Prazo em dias úteis da opção escolhida; null sem cotação */
   deliveryDays: number | null;
   total: number;
   trackingCode: string | null;
