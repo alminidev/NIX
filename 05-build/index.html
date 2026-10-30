@@ -4,34 +4,328 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- ==========================================
+       METADADOS DE SEO & INDEXAÇÃO
+       ========================================== -->
   <title>NIX 3D — Mobiliário Técnico e Dry Box para Impressão 3D</title>
   <meta name="description"
-    content="Móveis técnicos e estufas Dry Box com controle térmico ativo para filamentos de impressora 3D. Elimine umidade e organize seu setup com precisão industrial.">
+    content="Móveis técnicos e estufas Dry Box com controle térmico ativo (&lt; 20% UR) para filamentos de impressora 3D e Bambu Lab AMS. Elimine umidade e organize seu setup com precisão industrial. Compre direto da fábrica em São Paulo.">
+  <meta name="keywords"
+    content="dry box impressão 3d, estufa para filamento, móvel técnico impressora 3d, dry box bambu lab, dry box station, bancada impressora 3d, desumidificador filamento 3d, armazenamento filamentos petg nylon pla, nix 3d, controle de umidade filamento">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+  <link rel="canonical" href="https://nix3d.com.br/">
+  <meta name="author" content="NIX 3D">
+  <meta name="creator" content="NIX 3D">
+  <meta name="publisher" content="NIX 3D">
 
-  <!-- Favicon Oficial -->
+  <!-- SEO Local & Coordenadas Geográficas (São Paulo - SP) -->
+  <meta name="geo.region" content="BR-SP">
+  <meta name="geo.placename" content="São Paulo">
+  <meta name="geo.position" content="-23.550520;-46.633308">
+  <meta name="ICBM" content="-23.550520, -46.633308">
+
+  <!-- Configurações de Aplicativo Mobile / PWA & Tema -->
+  <meta name="theme-color" content="#0b0e14">
+  <meta name="color-scheme" content="dark light">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="NIX 3D">
+  <link rel="manifest" href="site.webmanifest">
+
+  <!-- Favicon e Ícones Oficiais -->
   <link rel="icon" type="image/x-icon" href="images/nix-RS-MONO-ICO.ico">
+  <link rel="apple-touch-icon" href="images/nix-RS-MONO-ICO.ico">
 
-  <!-- Open Graph / Social Sharing (WhatsApp, Facebook, LinkedIn) -->
+  <!-- Open Graph / Redes Sociais (WhatsApp, Facebook, LinkedIn) -->
   <meta property="og:type" content="website">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="og:url" content="https://nix3d.com.br/">
+  <meta property="og:site_name" content="NIX 3D — Mobiliário Técnico para Impressão 3D">
   <meta property="og:title" content="NIX 3D — Mobiliário Técnico e Dry Box para Impressão 3D">
   <meta property="og:description"
-    content="Móveis técnicos e estufas Dry Box com controle térmico ativo para filamentos de impressora 3D. Elimine umidade e organize seu setup com precisão industrial.">
-  <meta property="og:image" content="images/hero-showroom.jpg">
+    content="Móveis técnicos e estufas Dry Box com controle térmico ativo (&lt; 20% UR) para filamentos de impressora 3D. Elimine umidade e organize seu setup com precisão industrial.">
+  <meta property="og:image" content="https://nix3d.com.br/images/hero-showroom-oficial.png">
+  <meta property="og:image:secure_url" content="https://nix3d.com.br/images/hero-showroom-oficial.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1920">
+  <meta property="og:image:height" content="1080">
+  <meta property="og:image:alt" content="Linha oficial de móveis técnicos e estufas Dry Box NIX 3D em estúdio showroom">
 
-  <!-- Twitter Card -->
+  <!-- Twitter / X Card -->
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@nix_impressoes3d">
+  <meta name="twitter:creator" content="@nix_impressoes3d">
   <meta name="twitter:title" content="NIX 3D — Mobiliário Técnico e Dry Box para Impressão 3D">
   <meta name="twitter:description"
-    content="Móveis técnicos e estufas Dry Box com controle térmico ativo para filamentos de impressora 3D.">
-  <meta name="twitter:image" content="images/hero-showroom.jpg">
+    content="Móveis técnicos e estufas Dry Box com controle térmico ativo (&lt; 20% UR) para filamentos de impressora 3D. Elimine umidade e organize seu setup com precisão industrial.">
+  <meta name="twitter:image" content="https://nix3d.com.br/images/hero-showroom-oficial.png">
+  <meta name="twitter:image:alt" content="Estúdio Showroom NIX 3D — Móveis técnicos e Dry Boxes">
 
-  <!-- Tipografia Inter (Google Fonts) -->
+  <!-- Tipografia Inter (Google Fonts com Preconnect de Baixa Latência) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <!-- Folha de Estilos Principal (Vanilla CSS) -->
   <link rel="stylesheet" href="css/style.css">
+
+  <!-- ==========================================
+       DADOS ESTRUTURADOS (JSON-LD) — SCHEMA.ORG
+       Rich Snippets oficiais para Google Search
+       ========================================== -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "https://nix3d.com.br/#website",
+        "url": "https://nix3d.com.br/",
+        "name": "NIX 3D",
+        "description": "Móveis técnicos e estufas Dry Box com controle térmico ativo para filamentos e impressão 3D.",
+        "inLanguage": "pt-BR",
+        "publisher": {
+          "@id": "https://nix3d.com.br/#organization"
+        }
+      },
+      {
+        "@type": ["Organization", "LocalBusiness", "Store"],
+        "@id": "https://nix3d.com.br/#organization",
+        "name": "NIX 3D",
+        "legalName": "NIX 3D — Soluções em Manufatura Aditiva",
+        "url": "https://nix3d.com.br/",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://nix3d.com.br/images/logo-nix.png",
+          "width": "110",
+          "height": "32"
+        },
+        "image": "https://nix3d.com.br/images/hero-showroom-oficial.png",
+        "description": "Fabricação de móveis técnicos e estufas Dry Box com controle térmico ativo para armazenamento seguro de filamentos de impressão 3D e setups Bambu Lab.",
+        "telephone": "+5511992922119",
+        "email": "contato@nix3d.com.br",
+        "priceRange": "R$ 1.190,00 - R$ 2.600,00",
+        "currenciesAccepted": "BRL",
+        "paymentAccepted": "Cartão de Crédito, Pix",
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "São Paulo",
+          "addressRegion": "SP",
+          "addressCountry": "BR"
+        },
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": -23.550520,
+          "longitude": -46.633308
+        },
+        "areaServed": {
+          "@type": "Country",
+          "name": "Brasil"
+        },
+        "sameAs": [
+          "https://instagram.com/nix_impressoes3d",
+          "https://checkout.infinitepay.io/nix3d"
+        ]
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": "https://nix3d.com.br/#breadcrumb",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Início",
+            "item": "https://nix3d.com.br/"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": "Catálogo Dry Box",
+            "item": "https://nix3d.com.br/#produtos"
+          }
+        ]
+      },
+      {
+        "@type": "ItemList",
+        "@id": "https://nix3d.com.br/#itemlist",
+        "name": "Catálogo Oficial de Dry Boxes e Estações NIX 3D",
+        "numberOfItems": 5,
+        "itemListElement": [
+          {
+            "@type": "Product",
+            "position": 1,
+            "sku": "NIX-DB12",
+            "mpn": "NIX-DB12",
+            "name": "DRY BOX 12 — Estufa Desumidificadora NIX 3D",
+            "description": "Estufa hermética compacta e eficiente com capacidade para 12 filamentos de impressão 3D, controle térmico ativo (< 20% UR) e display digital.",
+            "image": "https://nix3d.com.br/images/dry-box-12.jpg",
+            "brand": {
+              "@type": "Brand",
+              "name": "NIX 3D"
+            },
+            "category": "Armários Dry Box",
+            "offers": {
+              "@type": "Offer",
+              "url": "https://checkout.infinitepay.io/nix3d?sku=NIX-DB12&id=1",
+              "priceCurrency": "BRL",
+              "price": "1190.00",
+              "priceValidUntil": "2027-12-31",
+              "itemCondition": "https://schema.org/NewCondition",
+              "availability": "https://schema.org/InStock",
+              "seller": {
+                "@id": "https://nix3d.com.br/#organization"
+              }
+            }
+          },
+          {
+            "@type": "Product",
+            "position": 2,
+            "sku": "NIX-DB24",
+            "mpn": "NIX-DB24",
+            "name": "DRY BOX 24 — Estufa Desumidificadora NIX 3D (Mais Escolhido)",
+            "description": "Estufa hermética para 24 filamentos com controle térmico ativo (< 20% UR), display digital e passagens técnicas para alimentação direta via PTFE.",
+            "image": "https://nix3d.com.br/images/dry-box-24.jpg",
+            "brand": {
+              "@type": "Brand",
+              "name": "NIX 3D"
+            },
+            "category": "Armários Dry Box",
+            "offers": {
+              "@type": "Offer",
+              "url": "https://checkout.infinitepay.io/nix3d?sku=NIX-DB24&id=2",
+              "priceCurrency": "BRL",
+              "price": "1590.00",
+              "priceValidUntil": "2027-12-31",
+              "itemCondition": "https://schema.org/NewCondition",
+              "availability": "https://schema.org/InStock",
+              "seller": {
+                "@id": "https://nix3d.com.br/#organization"
+              }
+            }
+          },
+          {
+            "@type": "Product",
+            "position": 3,
+            "sku": "NIX-DB48",
+            "mpn": "NIX-DB48",
+            "name": "DRY BOX 48 — Estufa Industrial NIX 3D",
+            "description": "Estufa industrial de alta capacidade para 48 filamentos com sistema duplo de circulação de ar aquecido, isolamento acústico e térmico reforçado.",
+            "image": "https://nix3d.com.br/images/dry-box-48.png",
+            "brand": {
+              "@type": "Brand",
+              "name": "NIX 3D"
+            },
+            "category": "Armários Dry Box",
+            "offers": {
+              "@type": "Offer",
+              "url": "https://checkout.infinitepay.io/nix3d?sku=NIX-DB48&id=3",
+              "priceCurrency": "BRL",
+              "price": "2150.00",
+              "priceValidUntil": "2027-12-31",
+              "itemCondition": "https://schema.org/NewCondition",
+              "availability": "https://schema.org/InStock",
+              "seller": {
+                "@id": "https://nix3d.com.br/#organization"
+              }
+            }
+          },
+          {
+            "@type": "Product",
+            "position": 4,
+            "sku": "NIX-STATION-A1",
+            "mpn": "NIX-STATION-A1",
+            "name": "DRY BOX STATION BAMBU LAB A1 COMBO — NIX 3D",
+            "description": "Estação completa com bancada rígida antivibração e armazenamento climatizado para 18 filamentos no corpo + 4 filamentos no AMS Lite da Bambu Lab A1.",
+            "image": "https://nix3d.com.br/images/setup-lab-a1.png",
+            "brand": {
+              "@type": "Brand",
+              "name": "NIX 3D"
+            },
+            "category": "Dry Box Station",
+            "offers": {
+              "@type": "Offer",
+              "url": "https://checkout.infinitepay.io/nix3d?sku=NIX-STATION-A1&id=4",
+              "priceCurrency": "BRL",
+              "price": "2200.00",
+              "priceValidUntil": "2027-12-31",
+              "itemCondition": "https://schema.org/NewCondition",
+              "availability": "https://schema.org/InStock",
+              "seller": {
+                "@id": "https://nix3d.com.br/#organization"
+              }
+            }
+          },
+          {
+            "@type": "Product",
+            "position": 5,
+            "sku": "NIX-STATION-A2L",
+            "mpn": "NIX-STATION-A2L",
+            "name": "DRY BOX STATION BAMBU LAB A2L COMBO — NIX 3D",
+            "description": "Estação técnica ampliada para alta produção com bancada antivibração e capacidade para 24 filamentos climatizados + 4 filamentos no sistema AMS.",
+            "image": "https://nix3d.com.br/images/setup-lab-a2.png",
+            "brand": {
+              "@type": "Brand",
+              "name": "NIX 3D"
+            },
+            "category": "Dry Box Station",
+            "offers": {
+              "@type": "Offer",
+              "url": "https://checkout.infinitepay.io/nix3d?sku=NIX-STATION-A2L&id=5",
+              "priceCurrency": "BRL",
+              "price": "2600.00",
+              "priceValidUntil": "2027-12-31",
+              "itemCondition": "https://schema.org/NewCondition",
+              "availability": "https://schema.org/InStock",
+              "seller": {
+                "@id": "https://nix3d.com.br/#organization"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "@type": "FAQPage",
+        "@id": "https://nix3d.com.br/#faqpage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Como funciona a entrega por transportadora?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Nossos móveis e estufas são despachados em embalagens técnicas de alta proteção com transportadoras especializadas em cargas sensíveis. Ao clicar em 'Comprar', você será direcionado para o checkout onde o frete é calculado de acordo com seu CEP. Enviamos para todo o Brasil."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Quais tipos e marcas de filamentos cabem nas Dry Boxes?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Todos os modelos comportam bobinas padrão universais de 1kg (diâmetro de 200mm) para filamentos de qualquer marca (Bambu Lab, Polymaker, eSun, Creality, 3D Prime). Os modelos de alta capacidade (Dry Box 48) também acomodam bobinas industriais de 2,5kg e 3kg de filamentos."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Qual é o consumo elétrico do sistema de controle térmico?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "O consumo é ultraeficiente. Uma vez atingida a temperatura e umidade programadas (< 20% UR), o isolamento térmico do armário retém o calor e o sistema atua em regime de manutenção, com consumo médio comparável a uma lâmpada LED comum (bivolt automático 110V/220V)."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Como é feito o pagamento e a segurança da compra?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "A transação é processada diretamente pelo gateway seguro da InfinitePay, com criptografia de ponta a ponta e suporte a Pix e cartão de crédito em até 3x sem juros."
+            }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
 </head>
 
 <body>
@@ -45,7 +339,7 @@
   <header id="site-header" class="site-header">
     <div class="container header-container">
       <a href="#hero" class="brand-logo" aria-label="NIX 3D — Página Inicial">
-        <img src="images/logo-nix.png" alt="Logotipo NIX" width="110" height="32">
+        <img src="images/logo-nix.png" alt="Logotipo NIX 3D" width="110" height="32">
       </a>
 
       <nav class="nav-desktop" aria-label="Navegação Principal">
@@ -73,7 +367,7 @@
     <!-- 1. HERO STAGE (SHOWROOM NIX) -->
     <section id="hero" class="hero-stage">
       <div class="hero-media-wrapper">
-        <img src="images/hero-showroom-oficial.png" alt="Linha completa NIX em estúdio showroom" width="1920"
+        <img src="images/hero-showroom-oficial.png" alt="Linha completa NIX em estúdio showroom com estufas Dry Box e estações de impressão 3D" width="1920"
           height="1080" loading="eager">
       </div>
 
@@ -100,9 +394,38 @@
 
         <!-- Grade com os 5 produtos gerados dinamicamente via js/produtos.js -->
         <div id="products-grid" class="products-grid">
-          <!-- Fallback semântico caso o JS esteja desativado -->
+          <!-- Fallback semântico para SEO e crawlers com JavaScript desativado -->
           <noscript>
-            <p>Por favor, ative o JavaScript para visualizar o catálogo completo com preços atualizados.</p>
+            <div class="noscript-catalog" style="padding: 24px; background: #ffffff; border-radius: 8px; border: 1px solid #e5e7eb; margin-top: 24px; color: #111827;">
+              <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 16px;">Catálogo de Produtos NIX 3D</h3>
+              <ul style="list-style: none; padding: 0; display: grid; gap: 24px;">
+                <li style="border-bottom: 1px solid #f3f4f6; padding-bottom: 20px;">
+                  <h4 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 6px;">DRY BOX 12 — R$ 1.190,00</h4>
+                  <p style="margin-bottom: 8px; color: #4b5563;">Capacidade: 12 filamentos | Dimensões: 46 x 35 x 60 cm | Controle térmico ativo permanente &lt; 20% UR | Display digital. Até 3x sem juros.</p>
+                  <a href="https://checkout.infinitepay.io/nix3d?sku=NIX-DB12&amp;id=1" style="color: #176bff; font-weight: 600; text-decoration: underline;">Comprar DRY BOX 12</a>
+                </li>
+                <li style="border-bottom: 1px solid #f3f4f6; padding-bottom: 20px;">
+                  <h4 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 6px;">DRY BOX 24 — R$ 1.590,00 (Mais Escolhido)</h4>
+                  <p style="margin-bottom: 8px; color: #4b5563;">Capacidade: 24 filamentos | Dimensões: 46 x 50 x 60 cm | Desumidificação ativa de alta eficiência e passagens técnicas PTFE. Até 3x sem juros.</p>
+                  <a href="https://checkout.infinitepay.io/nix3d?sku=NIX-DB24&amp;id=2" style="color: #176bff; font-weight: 600; text-decoration: underline;">Comprar DRY BOX 24</a>
+                </li>
+                <li style="border-bottom: 1px solid #f3f4f6; padding-bottom: 20px;">
+                  <h4 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 6px;">DRY BOX 48 — R$ 2.150,00</h4>
+                  <p style="margin-bottom: 8px; color: #4b5563;">Capacidade: 48 filamentos | Dimensões: 46 x 50 x 100 cm | Sistema duplo de circulação de ar aquecido e isolamento acústico. Até 3x sem juros.</p>
+                  <a href="https://checkout.infinitepay.io/nix3d?sku=NIX-DB48&amp;id=3" style="color: #176bff; font-weight: 600; text-decoration: underline;">Comprar DRY BOX 48</a>
+                </li>
+                <li style="border-bottom: 1px solid #f3f4f6; padding-bottom: 20px;">
+                  <h4 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 6px;">DRY BOX STATION BAMBU LAB A1 COMBO — R$ 2.200,00</h4>
+                  <p style="margin-bottom: 8px; color: #4b5563;">Capacidade: 18 filamentos + 4 AMS Lite (22 bobinas) | Dimensões: 46 x 50 x 100 cm | Bancada rígida integrada antivibração. Até 3x sem juros.</p>
+                  <a href="https://checkout.infinitepay.io/nix3d?sku=NIX-STATION-A1&amp;id=4" style="color: #176bff; font-weight: 600; text-decoration: underline;">Comprar DRY BOX STATION A1</a>
+                </li>
+                <li>
+                  <h4 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 6px;">DRY BOX STATION BAMBU LAB A2L COMBO — R$ 2.600,00</h4>
+                  <p style="margin-bottom: 8px; color: #4b5563;">Capacidade: 24 filamentos + 4 AMS (28 bobinas) | Dimensões: 56 x 60 x 100 cm | Bancada ampliada para ecossistemas de alta produção. Até 3x sem juros.</p>
+                  <a href="https://checkout.infinitepay.io/nix3d?sku=NIX-STATION-A2L&amp;id=5" style="color: #176bff; font-weight: 600; text-decoration: underline;">Comprar DRY BOX STATION A2L</a>
+                </li>
+              </ul>
+            </div>
           </noscript>
         </div>
       </div>
@@ -170,8 +493,8 @@
               <h3>Instagram & Contato</h3>
               <p><a href="https://instagram.com/nix_impressoes3d" target="_blank" rel="noopener noreferrer"
                   class="link-social">@nix_impressoes3d</a> • <a
-                  href="https://wa.me/5511999999999?text=Ol%C3%A1!%20Gostaria%20de%20informa%C3%A7%C3%B5es%20sobre%20as%20Dry%20Boxes%20da%20NIX%203D"
-                  target="_blank" rel="noopener noreferrer" class="link-social">Fale com a Nix</a></p>
+                  href="https://wa.me/5511992922119?text=Ol%C3%A1!%20Gostaria%20de%20informa%C3%A7%C3%B5es%20sobre%20as%20Dry%20Boxes%20da%20NIX%203D"
+                  target="_blank" rel="noopener noreferrer" class="link-social" aria-label="Fale conosco via WhatsApp">Fale com a Nix</a></p>
             </div>
           </div>
 
@@ -205,9 +528,9 @@
                   <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"></path>
                 </svg>
               </div>
-              <h3>Controle Térmico Ativo (< 20% UR)</h3>
-                  <p>Display digital com leitura contínua de temperatura e umidade. Desumidificação uniforme sem risco
-                    de degradar filamentos.</p>
+              <h3>Controle Térmico Ativo (&lt; 20% UR)</h3>
+              <p>Display digital com leitura contínua de temperatura e umidade. Desumidificação uniforme sem risco
+                de degradar filamentos.</p>
             </div>
 
             <div class="feature-box">
@@ -351,7 +674,7 @@
     <div class="container">
       <div class="footer-top">
         <div class="footer-brand">
-          <img src="images/logo-nix.png" alt="Logotipo NIX" width="100" height="30">
+          <img src="images/logo-nix.png" alt="Logotipo NIX 3D" width="100" height="30">
           <p>
             Mobiliário técnico e soluções inteligentes com controle térmico para a comunidade de manufatura aditiva e
             impressão 3D.
@@ -377,7 +700,7 @@
             <h4>Atendimento & Social</h4>
             <ul>
               <li><a
-                  href="https://wa.me/5511999999999?text=Ol%C3%A1!%20Gostaria%20de%20informa%C3%A7%C3%B5es%20sobre%20as%20Dry%20Boxes%20da%20NIX%203D"
+                  href="https://wa.me/5511992922119?text=Ol%C3%A1!%20Gostaria%20de%20informa%C3%A7%C3%B5es%20sobre%20as%20Dry%20Boxes%20da%20NIX%203D"
                   target="_blank" rel="noopener noreferrer">Fale com a Nix (WhatsApp)</a></li>
               <li><a href="https://instagram.com/nix_impressoes3d" target="_blank" rel="noopener noreferrer">Instagram
                   @nix_impressoes3d</a></li>

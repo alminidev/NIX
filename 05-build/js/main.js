@@ -1,7 +1,7 @@
 /**
- * SCRIPT PRINCIPAL — NIX 3D (Versão Polida)
+ * SCRIPT PRINCIPAL — NIX 3D (Versão Otimizada com SEO Microdata)
  * Renderização dinâmica da vitrine com separação editorial de categorias,
- * reforço de segurança e controle de navegação
+ * reforço de segurança, dados estruturados Schema.org e controle de navegação
  * Stack: JavaScript Vanilla Puro (ES6+)
  */
 
@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /**
  * Renderiza os 5 cards da vitrine organizados por categorias editoriais
+ * com marcação semântica e Microdata Schema.org/Product para SEO
  */
 function renderizarProdutos() {
   const container = document.getElementById('products-grid');
@@ -42,7 +43,11 @@ function renderizarProdutos() {
       : '';
 
     return `
-      <article class="product-card" data-sku="${produto.sku}" data-id="${produto.id}">
+      <article class="product-card" data-sku="${produto.sku}" data-id="${produto.id}" itemscope itemtype="https://schema.org/Product">
+        <meta itemprop="sku" content="${produto.sku}">
+        <meta itemprop="mpn" content="${produto.sku}">
+        <meta itemprop="brand" content="NIX 3D">
+
         <div class="card-badge-top">
           <span class="tag-capacity">${produto.capacidade}</span>
           ${badgeDestaqueHtml}
@@ -55,12 +60,13 @@ function renderizarProdutos() {
             loading="lazy"
             width="320"
             height="320"
+            itemprop="image"
           >
         </div>
 
         <div class="card-content">
-          <h3 class="card-title">${produto.nome}</h3>
-          <p class="card-desc">${produto.descricao}</p>
+          <h3 class="card-title" itemprop="name">${produto.nome}</h3>
+          <p class="card-desc" itemprop="description">${produto.descricao}</p>
           
           <div class="card-dimensions-box">
             <span class="card-dimensions-label">Dimensões (C x L x A)</span>
@@ -70,7 +76,14 @@ function renderizarProdutos() {
           ${specsHtml}
 
           <div class="card-footer">
-            <div class="card-price-row">
+            <div class="card-price-row" itemprop="offers" itemscope itemtype="https://schema.org/Offer">
+              <meta itemprop="priceCurrency" content="BRL">
+              <meta itemprop="price" content="${produto.preco.toFixed(2)}">
+              <meta itemprop="priceValidUntil" content="2027-12-31">
+              <meta itemprop="availability" content="https://schema.org/InStock">
+              <meta itemprop="itemCondition" content="https://schema.org/NewCondition">
+              <link itemprop="url" href="${urlCompra}">
+              
               <div class="card-price-col">
                 <span class="card-price-label">Preço à vista</span>
                 <span class="card-price">${produto.precoFormatado}</span>

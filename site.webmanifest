@@ -1,0 +1,27 @@
+{
+  "name": "NIX 3D — Mobiliário Técnico e Dry Box",
+  "short_name": "NIX 3D",
+  "description": "Móveis técnicos e estufas Dry Box com controle térmico ativo (< 20% UR) para filamentos de impressora 3D.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0b0e14",
+  "theme_color": "#0b0e14",
+  "lang": "pt-BR",
+  "categories": ["shopping", "technology", "business"],
+  "icons": [
+    {
+      "src": "05-build/images/nix-RS-MONO-ICO.ico",
+      "sizes": "16x16 24x24 32x32 48x48 64x64",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "05-build/images/logo-nix.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
+

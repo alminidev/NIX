@@ -1,0 +1,24 @@
+# ==========================================
+# ROBOTS.TXT — NIX 3D
+# Domínio Oficial: https://nix3d.com.br
+# ==========================================
+
+User-agent: *
+Allow: /
+Disallow: /05-build/Backup/
+Disallow: /Backup/
+
+# Permitir indexação de ativos visuais
+User-agent: Googlebot-Image
+Allow: /05-build/images/
+Allow: /images/
+
+# Rastreamento do Bingbot
+User-agent: Bingbot
+Allow: /
+Disallow: /05-build/Backup/
+Disallow: /Backup/
+
+# Localização do Mapa do Site
+Sitemap: https://nix3d.com.br/sitemap.xml
+
