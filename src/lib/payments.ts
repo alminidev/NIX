@@ -10,6 +10,10 @@ import {
   type ICheckoutOrder,
 } from "@/lib/infinitepay";
 import {
+  pixCheckoutDiscount,
+  resolvePaymentAmount,
+} from "@/lib/payment-terms";
+import {
   cancelOrder,
   flagPaymentAmountMismatch,
   markOrderPaid,
@@ -158,6 +162,7 @@ function toPaymentRecord(
     installments: check.installments,
     receiptUrl: notice.receiptUrl,
     paidAt: new Date(),
+    discount: null,
   };
 }
 
@@ -176,6 +181,7 @@ export async function confirmPayment(
     select: {
       id: true,
       status: true,
+      subtotal: true,
       total: true,
       paymentTransactionNsu: true,
       paymentReview: true,
@@ -246,14 +252,28 @@ export async function confirmPayment(
     };
   }
 
+  const totalCents = toCents(Number(order.total));
+  const quote = pixCheckoutDiscount(
+    toCents(Number(order.subtotal)),
+    totalCents,
+  );
+  const decision = resolvePaymentAmount({
+    method: check.captureMethod,
+    amountCents: check.amountCents,
+    paidAmountCents: check.paidAmountCents,
+    totalCents,
+    discountCents: quote.discountCents,
+  });
+
   const payment = toPaymentRecord(notice, {
     amountCents: check.amountCents,
     paidAmountCents: check.paidAmountCents,
     installments: check.installments,
     captureMethod: check.captureMethod,
   });
+  payment.discount = decision.accepted ? decision.discountCents / 100 : null;
 
-  if (check.amountCents !== toCents(Number(order.total))) {
+  if (!decision.accepted) {
     const flagged = await flagPaymentAmountMismatch(orderId, payment);
     if (flagged.result === "missing") return ignoredPayment;
 

@@ -113,6 +113,8 @@ export interface IAdminOrderDetail {
     amount: number | null;
     /** Valor efetivamente pago, em reais */
     paidAmount: number | null;
+    /** Desconto de Pix aplicado neste pagamento, em reais */
+    discount: number | null;
     installments: number | null;
     transactionNsu: string | null;
     invoiceSlug: string | null;

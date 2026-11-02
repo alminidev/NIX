@@ -252,6 +252,8 @@ export interface IPaymentRecord {
   method: "credit_card" | "pix" | null;
   amount: number;
   paidAmount: number | null;
+  /** Desconto de Pix aplicado, em reais. 0 no cartão. null quando o pagamento não fecha. */
+  discount: number | null;
   installments: number | null;
   receiptUrl: string | null;
   paidAt: Date;
@@ -270,6 +272,7 @@ function paymentData(payment: IPaymentRecord) {
     paymentInvoiceSlug: payment.invoiceSlug,
     paymentAmount: payment.amount,
     paidAmount: payment.paidAmount,
+    discount: payment.discount,
     paymentInstallments: payment.installments,
     receiptUrl: payment.receiptUrl,
     paidAt: payment.paidAt,

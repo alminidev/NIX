@@ -1,4 +1,5 @@
 import { lookupAddress, quoteShipping } from "@/app/cart/actions";
+import PaymentTerms from "@/components/PaymentTerms";
 import { maskPostalCode } from "@/lib/cart-input";
 import { brazilianStates, orderFieldLimits } from "@/lib/order-input";
 import {
@@ -312,9 +313,10 @@ export default function CheckoutForm({
     >
       <input type="hidden" name="items" value={JSON.stringify(items)} />
 
-      <h2 className="mb-5 text-xl font-semibold tracking-[-0.01em] text-ink-primary">
+      <h2 className="text-xl font-semibold tracking-[-0.01em] text-ink-primary">
         Dados para entrega
       </h2>
+      <PaymentTerms className="mt-2 mb-5" />
 
       <div className="grid gap-4 sm:grid-cols-2">
         {personalFields.map(renderField)}

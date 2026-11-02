@@ -1,5 +1,11 @@
 import { isInfinitePayCheckoutUrl, readReceiptUrl } from "@/lib/checkout-url";
+import {
+  assuredInstallments,
+  pixCheckoutDiscount,
+} from "@/lib/payment-terms";
 import "server-only";
+
+export { assuredInstallments };
 
 /**
  * Cliente do Checkout Integrado da InfinitePay.
@@ -12,9 +18,6 @@ import "server-only";
  */
 
 export const infinitePayTimeoutMs = 8000;
-
-/** Parcelas sem juros absorvidas pela loja. O FAQ promete cartão em até 3x. */
-export const assuredInstallments = 3;
 
 const apiOrigin = "https://api.checkout.infinitepay.io";
 
@@ -229,6 +232,10 @@ function buildLinkPayload(order: ICheckoutOrder, config: IInfinitePayConfig) {
     price: toCents(item.unitPrice),
     description: item.name.replace(/[\r\n]+/g, " ").trim().slice(0, 120),
   }));
+  const productCents = items.reduce(
+    (total, item) => total + item.price * item.quantity,
+    0,
+  );
 
   const shippingCents = toCents(order.shipping ?? 0);
   if (shippingCents > 0) {
@@ -239,6 +246,10 @@ function buildLinkPayload(order: ICheckoutOrder, config: IInfinitePayConfig) {
   if (sum !== toCents(order.total) || items.length === 0) {
     throw new CheckoutLinkError(checkoutMessages.unavailable);
   }
+
+  // A API só aceita desconto percentual no link inteiro. O percentual
+  // equivalente tira 5% dos produtos e deixa o frete de fora.
+  const pixDiscount = pixCheckoutDiscount(productCents, sum);
 
   const phone = order.customerPhone.replace(/\D/g, "");
   const webhookUrl = readWebhookUrl(config);
@@ -271,6 +282,9 @@ function buildLinkPayload(order: ICheckoutOrder, config: IInfinitePayConfig) {
       assured_installments: assuredInstallments,
       single_payment: true,
       payment_methods_enabled: ["pix", "credit_card"],
+      ...(pixDiscount.percent === null
+        ? {}
+        : { discounts: { pix: pixDiscount.percent } }),
       ...(order.expiresAt
         ? { valid_until: order.expiresAt.toISOString() }
         : {}),

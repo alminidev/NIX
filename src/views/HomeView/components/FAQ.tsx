@@ -1,3 +1,8 @@
+import {
+  cardInstallmentsLabel,
+  interestDisclosure,
+  pixDiscountLabel,
+} from "@/lib/payment-terms";
 import { ChevronDown } from "lucide-react";
 
 const items = [
@@ -18,8 +23,7 @@ const items = [
   },
   {
     pergunta: "Como é feito o pagamento e a segurança da compra?",
-    resposta:
-      "A transação é processada diretamente pelo gateway seguro da InfinitePay, com criptografia de ponta a ponta e suporte a Pix e cartão de crédito em até 3x sem juros.",
+    resposta: `A transação é processada pelo gateway da InfinitePay, com criptografia de ponta a ponta. ${pixDiscountLabel()} sobre os produtos — o frete não entra nesse desconto — e ${cardInstallmentsLabel()}. ${interestDisclosure()}`,
   },
 ];
 

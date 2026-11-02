@@ -1,4 +1,8 @@
 import { isInfinitePayCheckoutUrl } from "@/lib/checkout-url";
+import {
+  cardInstallmentsLabel,
+  pixDiscountLabel,
+} from "@/lib/payment-terms";
 import type { IAdminOrderDetail } from "@/types/admin-order";
 import {
   currencyFormat,
@@ -47,6 +51,14 @@ export default function OrderPayment({ payment }: IOrderPaymentProps) {
               <Money value={payment.amount} />
             </dd>
           </div>
+          {payment.discount !== null && payment.discount > 0 ? (
+            <div className="flex items-center justify-between gap-4">
+              <dt className="text-ink-secondary">Desconto no Pix</dt>
+              <dd className="text-right font-semibold text-ink-primary tabular-nums">
+                − <Money value={payment.discount} />
+              </dd>
+            </div>
+          ) : null}
           <div className="flex items-center justify-between gap-4">
             <dt className="text-ink-secondary">Valor pago</dt>
             <dd className="text-right font-semibold text-ink-primary tabular-nums">
@@ -84,7 +96,8 @@ export default function OrderPayment({ payment }: IOrderPaymentProps) {
         </dl>
       ) : (
         <p className="text-[0.875rem] text-ink-secondary">
-          Ainda sem confirmação de pagamento.
+          Ainda sem confirmação de pagamento. {pixDiscountLabel()} sobre os
+          produtos e {cardInstallmentsLabel()}.
         </p>
       )}
 

@@ -1,5 +1,6 @@
 "use client";
 
+import PaymentTerms from "@/components/PaymentTerms";
 import { useCartContext, type TAddItemResult } from "@/contexts/CartContext";
 import { formatDimensions } from "@/lib/product-dimensions";
 import type { IProduct } from "@/types/product";
@@ -120,6 +121,7 @@ export default function ProductCard({
               {product.installments}
             </span>
           </div>
+          <PaymentTerms className="mb-3.5" />
 
           <button
             type="button"

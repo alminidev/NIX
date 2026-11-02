@@ -162,6 +162,7 @@ export async function getAdminOrder(
       method: order.paymentMethod,
       amount: order.paymentAmount === null ? null : Number(order.paymentAmount),
       paidAmount: order.paidAmount === null ? null : Number(order.paidAmount),
+      discount: order.discount === null ? null : Number(order.discount),
       installments: order.paymentInstallments,
       transactionNsu: order.paymentTransactionNsu,
       invoiceSlug: order.paymentInvoiceSlug,

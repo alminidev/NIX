@@ -1,4 +1,6 @@
+import PaymentTerms from "@/components/PaymentTerms";
 import { calculateTotal, formatCurrency } from "@/lib/cart-calculation";
+import { pixCheckoutDiscount, pixDiscountPercent } from "@/lib/payment-terms";
 import {
   formatShippingAmount,
   shippingChoiceLabel,
@@ -40,6 +42,14 @@ export default function OrderSummary({
   const shippingPrice = selected?.price ?? null;
   const total = calculateTotal(subtotal, shippingPrice);
   const quoted = shippingPrice !== null;
+  const productCents = Math.round(subtotal * 100);
+  const quote = pixCheckoutDiscount(
+    productCents,
+    quoted ? Math.round(total * 100) : productCents,
+  );
+  const discount = quote.discountCents / 100;
+  const pixTotal = (Math.round(total * 100) - quote.discountCents) / 100;
+  const showPixTotal = quoted && discount > 0;
 
   return (
     <aside
@@ -70,13 +80,38 @@ export default function OrderSummary({
             ) : null}
           </dd>
         </div>
+        {summary && discount > 0 && (
+          <div className="flex items-baseline justify-between gap-2">
+            <dt className="text-ink-secondary">
+              Desconto no Pix
+              <span className="mt-0.5 block text-xs font-normal">
+                {pixDiscountPercent}% dos produtos. O frete não entra.
+              </span>
+            </dt>
+            <dd className="font-semibold text-ink-primary">
+              − {formatCurrency(discount)}
+            </dd>
+          </div>
+        )}
         <div className="flex items-baseline justify-between gap-2 border-t border-border-hairline pt-3">
-          <dt className="font-semibold text-ink-primary">Total</dt>
+          <dt className="font-semibold text-ink-primary">
+            {showPixTotal ? "Total no cartão" : "Total"}
+          </dt>
           <dd className="text-[1.375rem] font-bold tracking-[-0.02em] text-ink-primary">
             {summary ? formatCurrency(total) : "—"}
           </dd>
         </div>
+        {summary && showPixTotal && (
+          <div className="flex items-baseline justify-between gap-2">
+            <dt className="font-semibold text-ink-primary">Total no Pix</dt>
+            <dd className="text-[1.375rem] font-bold tracking-[-0.02em] text-ink-primary">
+              {formatCurrency(pixTotal)}
+            </dd>
+          </div>
+        )}
       </dl>
+
+      <PaymentTerms className="mb-4" />
 
       <button
         type="submit"

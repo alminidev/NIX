@@ -6,6 +6,10 @@ import {
   createCheckoutLink,
   type ICheckoutOrder,
 } from "../src/lib/infinitepay";
+import {
+  pixCheckoutDiscount,
+  productPixDiscountCents,
+} from "../src/lib/payment-terms";
 
 const apiKey = "inchk_teste-secreto";
 const envKeys = [
@@ -107,6 +111,10 @@ describe("createCheckoutLink", () => {
     assert.equal(body.address.cep, "01310100");
     assert.equal(body.address.city, "São Paulo");
     assert.equal(body.options.assured_installments, assuredInstallments);
+    const quote = pixCheckoutDiscount(238100, 242610);
+    assert.equal(quote.discountCents, productPixDiscountCents(238100));
+    assert.equal(body.options.discounts.pix, quote.percent);
+    assert.notEqual(body.options.discounts.pix, 5);
     assert.equal(body.options.single_payment, true);
     assert.deepEqual(body.options.payment_methods_enabled, [
       "pix",
@@ -140,6 +148,28 @@ describe("createCheckoutLink", () => {
     assert.equal(body.redirect_url, "http://localhost:3000/pedido/obrigado");
     assert.deepEqual(body.items, [
       { quantity: 2, price: 119050, description: "Dry Box" },
+    ]);
+    assert.equal(body.options.discounts.pix, 5);
+  });
+
+  it("omits the pix discount when the charge would fall below one real", async () => {
+    const fetchMock = mock.method(globalThis, "fetch", async () =>
+      jsonResponse({ checkout_url: checkoutUrl() }),
+    );
+
+    await createCheckoutLink({
+      ...order,
+      shipping: 0,
+      total: 1,
+      items: [{ name: "Amostra", quantity: 1, unitPrice: 1 }],
+    });
+
+    const body = JSON.parse(
+      String((fetchMock.mock.calls[0].arguments as [string, RequestInit])[1].body),
+    );
+    assert.equal(body.options.discounts, undefined);
+    assert.deepEqual(body.items, [
+      { quantity: 1, price: 100, description: "Amostra" },
     ]);
   });
 

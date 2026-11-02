@@ -197,6 +197,8 @@ model Order {
   paymentAmount          Decimal?  @db.Decimal(10, 2)
   // paid_amount do payment_check, em reais (pode ser maior que o total por causa das taxas)
   paidAmount             Decimal?  @db.Decimal(10, 2)
+  // desconto de Pix aplicado neste pagamento, em reais; 0 no cartão; null antes de confirmar
+  discount               Decimal?  @db.Decimal(10, 2)
   paymentInstallments    Int?
   receiptUrl             String?
   paidAt                 DateTime?

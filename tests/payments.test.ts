@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { after, before, describe, it, mock } from "node:test";
+import { pixCheckoutDiscount } from "../src/lib/payment-terms";
 import type { IOrderInput } from "../src/types/order";
 
 // Estes testes usam o banco de DATABASE_URL e simulam a API da InfinitePay.
@@ -256,6 +257,8 @@ describe(
       assert.equal(order.paymentInvoiceSlug, `slug-${created.id}`);
       assert.equal(order.receiptUrl, "https://comprovante.example/recibo");
       assert.equal(order.paymentReview, false);
+      assert.notEqual(order.discount, null);
+      assert.equal(Number(order.discount), 0);
       assert.equal(await stockOf(product.id), 3);
 
       const event = await prisma.paymentEvent.findFirstOrThrow({
@@ -461,6 +464,112 @@ describe(
       assert.equal(order.status, "AWAITING_PAYMENT");
       assert.equal(order.receiptUrl, null);
       assert.equal(order.paymentTransactionNsu, null);
+    });
+
+    it("accepts a pix discount on products only and stores it on the order", async () => {
+      const product = await createProduct(3, 200);
+      const created = await createOrder(
+        orderInput([{ productId: product.id, quantity: 1 }]),
+      );
+      const quote = pixCheckoutDiscount(20000, 21000);
+      assert.equal(quote.discountCents, 1000);
+      assert.ok(quote.percent !== null && quote.percent < 5);
+
+      nextCheck = {
+        status: 200,
+        body: { checkout_url: "https://checkout.infinitepay.io/nix3d/desconto" },
+      };
+      const checkout = await startCheckout(created.id);
+      assert.equal(checkout.ok, true);
+
+      const linkBody = JSON.parse(
+        String(
+          (fetchMock.mock.calls.at(-1)?.arguments as [string, RequestInit])[1]
+            .body,
+        ),
+      );
+      assert.equal(linkBody.options.discounts.pix, quote.percent);
+      assert.equal(
+        linkBody.items.find(
+          (item: { description: string }) => item.description === "Frete",
+        ).price,
+        1000,
+      );
+
+      const chargeCents = 21000 - quote.discountCents;
+      paidCheck(chargeCents, 0);
+      const paid = await confirmPayment(
+        notice(created.id, `txn-pix-off-${created.id}`),
+      );
+      assert.equal(paid.status, "paid");
+
+      const order = await prisma.order.findUniqueOrThrow({
+        where: { id: created.id },
+      });
+      assert.equal(order.status, "PAID");
+      assert.equal(order.paymentReview, false);
+      assert.equal(order.paymentMethod, "pix");
+      assert.equal(Number(order.discount), 10);
+      assert.equal(Number(order.paymentAmount), chargeCents / 100);
+      assert.equal(await stockOf(product.id), 2);
+
+      const fromPaidAmount = await createOrder(
+        orderInput([{ productId: product.id, quantity: 1 }]),
+      );
+      nextCheck = {
+        status: 200,
+        body: {
+          success: true,
+          paid: true,
+          amount: 21000,
+          paid_amount: 20000,
+          installments: 1,
+          capture_method: "pix",
+        },
+      };
+      const recorded = await confirmPayment(
+        notice(fromPaidAmount.id, `txn-pix-paid-${fromPaidAmount.id}`),
+      );
+      assert.equal(recorded.status, "paid");
+      assert.equal(
+        Number(
+          (
+            await prisma.order.findUniqueOrThrow({
+              where: { id: fromPaidAmount.id },
+            })
+          ).discount,
+        ),
+        10,
+      );
+
+      const card = await createOrder(
+        orderInput([{ productId: product.id, quantity: 1 }]),
+      );
+      nextCheck = {
+        status: 200,
+        body: {
+          success: true,
+          paid: true,
+          amount: chargeCents,
+          paid_amount: chargeCents,
+          installments: 1,
+          capture_method: "credit_card",
+        },
+      };
+      const rejected = await handleInfinitePayWebhook(
+        webhook({
+          ...webhookBody(card.id),
+          transaction_nsu: `txn-card-off-${card.id}`,
+        }),
+      );
+      assert.equal(rejected.status, 200);
+      const reviewed = await prisma.order.findUniqueOrThrow({
+        where: { id: card.id },
+      });
+      assert.equal(reviewed.paymentReview, true);
+      assert.equal(reviewed.paymentReviewReason, paymentReviewReasons.amount);
+      assert.equal(reviewed.status, "AWAITING_PAYMENT");
+      assert.equal(reviewed.discount, null);
     });
   },
 );

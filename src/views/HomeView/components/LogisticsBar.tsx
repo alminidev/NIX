@@ -1,3 +1,8 @@
+import {
+  cardInstallmentsLabel,
+  interestDisclosure,
+  pixDiscountLabel,
+} from "@/lib/payment-terms";
 import { Camera, CreditCard, MapPin, Truck } from "lucide-react";
 
 /**
@@ -40,10 +45,10 @@ export default function LogisticsBar() {
             </div>
             <div>
               <h3 className="mb-1 text-base leading-[1.25] font-semibold tracking-[-0.01em] text-ink-primary">
-                Até 3x Sem Juros
+                {pixDiscountLabel()}
               </h3>
               <p className="text-[0.8125rem] leading-[1.4] text-ink-secondary">
-                Pagamento facilitado em até 3x sem juros no cartão de crédito.
+                {`${cardInstallmentsLabel()}. ${interestDisclosure()}`}
               </p>
             </div>
           </div>

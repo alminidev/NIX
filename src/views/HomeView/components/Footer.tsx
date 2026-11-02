@@ -1,3 +1,8 @@
+import {
+  cardInstallmentsLabel,
+  pixDiscountLabel,
+} from "@/lib/payment-terms";
+
 /**
  * Footer — Rodapé da NIX 3D.
  */
@@ -87,7 +92,10 @@ export default function Footer() {
               </h4>
               <ul>
                 <li className="mb-2.5">
-                  <span>Até 3x sem juros</span>
+                  <span>{pixDiscountLabel()}</span>
+                </li>
+                <li className="mb-2.5">
+                  <span>{cardInstallmentsLabel()}</span>
                 </li>
                 <li className="mb-2.5">
                   <span>Envio para todo o Brasil</span>

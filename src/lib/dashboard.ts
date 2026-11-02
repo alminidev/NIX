@@ -45,7 +45,7 @@ export async function getDashboardMetrics(): Promise<IDashboardMetrics> {
     prisma.order.groupBy({
       by: ["status"],
       _count: { _all: true },
-      _sum: { total: true },
+      _sum: { total: true, discount: true },
     }),
     prisma.order.count({ where: { paymentReview: true } }),
   ]);
@@ -64,10 +64,11 @@ export async function getDashboardMetrics(): Promise<IDashboardMetrics> {
     0,
   );
   // Centavos inteiros para não acumular erro de ponto flutuante.
-  const revenueCents = paidGroups.reduce(
-    (sum, group) => sum + Math.round(Number(group._sum.total ?? 0) * 100),
-    0,
-  );
+  const revenueCents = paidGroups.reduce((sum, group) => {
+    const total = Math.round(Number(group._sum.total ?? 0) * 100);
+    const discount = Math.round(Number(group._sum.discount ?? 0) * 100);
+    return sum + total - discount;
+  }, 0);
 
   return {
     orders: ordersByStatus.reduce((sum, item) => sum + item.count, 0),
