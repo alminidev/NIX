@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { MessageCircle, ShoppingCart } from 'lucide-react';
 import { useCartContext } from '@/contexts/CartContext';
+import Image from 'next/image';
 import Link from 'next/link';
 
 /**
@@ -76,13 +77,13 @@ export default function Header({ homePath = '' }: { homePath?: string }) {
     >
       <div className="mx-auto flex h-full w-full max-w-[1200px] items-center justify-between px-4 min-[640px]:px-6">
         <a href={`${homePath}#hero`} className="flex items-center" aria-label="NIX 3D — Página Inicial">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src="/images/logo-nix.png"
             alt="Logotipo NIX"
             width={110}
             height={32}
             className="h-8 w-auto object-contain"
+            style={{ width: "auto", height: "2rem" }}
           />
         </a>
 

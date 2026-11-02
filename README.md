@@ -24,6 +24,7 @@ Antes de iniciar, certifique-se de ter instalado em seu computador:
 - **Node.js:** Versão `v18.17+` ou `v20+` (LTS recomendada; testado com sucesso no Node.js v24).
 - **npm:** Versão `v10+` (já acompanha a instalação do Node.js).
 - **Git:** Para controle de versão e download do repositório.
+- **Docker:** o Supabase local sobe Postgres, Storage e Studio por ele. A CLI entra com `npm install` (`supabase` nas dependências de desenvolvimento).
 
 Para verificar se estão instalados, abra o terminal e digite:
 
@@ -61,6 +62,60 @@ Copy-Item .env.example .env.local
 # No Linux / macOS:
 cp .env.example .env.local
 ```
+
+### Banco local e fotos dos produtos (Supabase)
+
+O Postgres e as fotos dos produtos ficam no Supabase. No desenvolvimento a CLI sobe tudo no Docker. Em produção é o projeto cloud. O código é o mesmo; mudam `DATABASE_URL` e as três variáveis do Supabase. No WSL com Docker Desktop, `db:up` aponta a CLI para `/var/run/docker.sock` quando o contexto do Docker é um named pipe.
+
+```bash
+npm run db:up          # supabase start e cria o banco de sombra nix_shadow
+npm run supabase:status
+npm run db:migrate
+npm run db:seed
+```
+
+`npm run supabase:status` mostra a URL da API, as chaves e a connection string. Copie para o `.env.local`:
+
+| Variável | Onde usar |
+| --- | --- |
+| `DATABASE_URL` | Postgres local, porta **54322**, banco `postgres`. Em produção, a string do **pooler** (porta 6543, com `?pgbouncer=true`) para o app. |
+| `SHADOW_DATABASE_URL` | Banco `nix_shadow` na mesma instância. O `db:up` cria esse banco. Só o `prisma migrate dev` precisa dele. |
+| `NEXT_PUBLIC_SUPABASE_URL` | URL da API (`http://127.0.0.1:54321` no local). |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Chave anônima. Pode ir para o navegador. O upload de hoje não a usa. |
+| `SUPABASE_SERVICE_ROLE_KEY` | **Só no servidor.** Sem o prefixo `NEXT_PUBLIC_`. Nunca em log, resposta ou cliente. |
+
+O Studio abre em [http://127.0.0.1:54323](http://127.0.0.1:54323). `npm run db:down` executa `supabase stop`.
+
+O admin envia cada foto assim que o arquivo é escolhido (JPEG, PNG ou WebP, até **4 MB**). A URL pública do bucket `produtos` fica em `ProductImage.url`. Caminhos `/images/...` do site continuam válidos. Qualquer outra URL é recusada. Trocar, remover ou excluir o produto apaga o arquivo do bucket depois de gravar o banco. Se o Storage falhar nessa hora, o produto fica salvo e a falha vai para o log.
+
+Um upload que nunca é salvo vira arquivo órfão. A limpeza é manual:
+
+```bash
+npm run images:cleanup            # só lista
+npm run images:cleanup -- --apply # apaga o que nenhum produto usa
+```
+
+O seed publica as seis fotos do catálogo no bucket e **não troca** a foto de um produto que já tem imagem. Rodar o seed de novo não desfaz um upload do admin.
+
+`supabase db reset` recria o banco só com `supabase/migrations`. As tabelas do Prisma somem. Em seguida rode `npm run db:migrate` e `npm run db:seed`. O bucket `produtos` volta da migration, sem passo manual.
+
+**Produção.** Ainda não há banco de produção com pedidos. O projeto cloud (região `sa-east-1`, Postgres **17**, a mesma `major_version` do `supabase/config.toml`) fica a cargo de quem é dono da conta. A CLI 3 do repositório não sobe Postgres 16. A ordem, quando o projeto existir:
+
+1. `prisma migrate deploy` com a conexão de **sessão** do pooler (porta 5432). A conexão direta é IPv6 e pode não funcionar no ambiente de deploy.
+2. `supabase link` e `supabase db push`, para criar o bucket e as regras de acesso.
+3. Cadastrar na hospedagem a `DATABASE_URL` do pooler (porta 6543) e as três variáveis do Supabase. A `service_role` sem `NEXT_PUBLIC_`.
+4. Publicar o app.
+
+Se alguma `ProductImage.url` antiga apontar para `/images/...`, o script abaixo sobe o arquivo e troca a URL. URLs de fora do site ele não baixa.
+
+```bash
+npm run images:migrate            # --dry-run, não grava
+npm run images:migrate -- --apply
+```
+
+As fotos passam por `next/image`. Cada tamanho gerado conta na cota de otimização da hospedagem. O cache otimizado fica em 31 dias porque o nome do arquivo muda a cada troca. No `next dev`, o otimizador pode buscar o Storage em `127.0.0.1`; em produção esse acesso a IP local fica desligado.
+
+A API de dados do Supabase enxerga o schema `public`. A migration do Prisma liga RLS em todas as tabelas, sem policies, e revoga o acesso de `anon` e `authenticated`. O Prisma continua pelo papel dono das tabelas. Tabelas novas nascem com a mesma trava.
 
 ### Passo 4: Iniciar o servidor de desenvolvimento
 
@@ -128,8 +183,10 @@ nix-nextjs/
 
 ## 📦 4. Onde Editar Produtos, Preços e Galeria
 
-O catálogo persistido é semeado a partir de:  
+O catálogo inicial é semeado a partir de:  
 👉 **`prisma/catalog.ts`**
+
+Depois do seed, preço, texto e fotos mudam no admin (`/admin/products`). A foto sobe para o bucket `produtos` e o seed seguinte não desfaz essa troca. As imagens de logo e do hero continuam em `public/images`.
 
 ### Como alterar um preço ou descrição
 
@@ -152,7 +209,7 @@ Abra `prisma/catalog.ts` e localize o produto no array `PRODUCTS`. Exemplo:
     'Controle térmico ativo permanente < 20% UR',
     'Display digital de temperatura e umidade',
   ],
-  images: [{ url: '/images/dry-box-12.jpg', isPrimary: true }],
+  images: [{ url: '/images/dry-box-12.jpg', isPrimary: true }], // arquivo em public/; o seed publica no Storage
   featured: false,
   sortOrder: 1,
 }
@@ -300,7 +357,7 @@ Use um intervalo menor ou igual a `ORDER_EXPIRATION_MINUTES` para que o estoque 
 npm test
 ```
 
-Executa os testes de `tests/` (Node test runner) sobre as regras do carrinho, CEP e ViaCEP, dimensões, leitura dos formulários, criação de pedidos, checkout da InfinitePay (API simulada), lista e página de pedidos do painel (incluindo a mudança de status) e métricas do dashboard. Os arquivos rodam um de cada vez (`--test-concurrency=1`) porque compartilham o banco. Os testes de pedido usam o banco de `DATABASE_URL` (lido do `.env`): criam produtos próprios e removem tudo no final. Sem `DATABASE_URL` eles são ignorados.
+Executa os testes de `tests/` (Node test runner) sobre as regras do carrinho, CEP e ViaCEP, dimensões, leitura dos formulários, fotos de produto (tipo, tamanho e URL), criação de pedidos, checkout da InfinitePay (API simulada), lista e página de pedidos do painel (incluindo a mudança de status) e métricas do dashboard. Com `DATABASE_URL`, também confere se toda tabela do `public` está com RLS ligado. Os arquivos rodam um de cada vez (`--test-concurrency=1`) porque compartilham o banco. Os testes de pedido usam o banco de `DATABASE_URL` (lido do `.env`): criam produtos próprios e removem tudo no final. Sem `DATABASE_URL` eles são ignorados.
 
 ---
 
@@ -384,7 +441,7 @@ O componente **`src/components/ProductLightbox.tsx`** é responsável pela exper
 
 1. Crie uma conta em [vercel.com](https://vercel.com) e importe o repositório.
 2. Defina o **Root Directory** como `nix-nextjs`.
-3. Adicione as variáveis de ambiente do `.env.example` (banco, InfinitePay, Melhor Envio e `NEXT_PUBLIC_SITE_URL`) nas configurações do projeto.
+3. Adicione as variáveis de ambiente do `.env.example` (banco do pooler, as três variáveis do Supabase, InfinitePay, Melhor Envio e `NEXT_PUBLIC_SITE_URL`) nas configurações do projeto. A `SUPABASE_SERVICE_ROLE_KEY` fica sem o prefixo `NEXT_PUBLIC_`. Antes do deploy: `prisma migrate deploy` (conexão de sessão) e `supabase db push`. O corpo de cada Server Action aceita 4,5 MB, dentro do limite de 4,5 MB das funções da Vercel, para uma foto de 4 MB.
 4. Clique em **Deploy**. A Vercel executará `npm run build` e configurará CDN global e SSL automaticamente.
 
 ### Opção B: Netlify
@@ -414,7 +471,7 @@ npm run start
 
 1. Crie uma conta em [vercel.com](https://vercel.com) e importe o repositório.
 2. Defina o **Root Directory** como `nix-nextjs`.
-3. Adicione as variáveis de ambiente do `.env.example` (banco, InfinitePay, Melhor Envio e `NEXT_PUBLIC_SITE_URL`) nas configurações do projeto.
+3. Adicione as variáveis de ambiente do `.env.example` (banco do pooler, as três variáveis do Supabase, InfinitePay, Melhor Envio e `NEXT_PUBLIC_SITE_URL`) nas configurações do projeto. A `SUPABASE_SERVICE_ROLE_KEY` fica sem o prefixo `NEXT_PUBLIC_`. Antes do deploy: `prisma migrate deploy` (conexão de sessão) e `supabase db push`. O corpo de cada Server Action aceita 4,5 MB, dentro do limite de 4,5 MB das funções da Vercel, para uma foto de 4 MB.
 4. Clique em **Deploy**. A Vercel executará `npm run build` e configurará CDN global e SSL automaticamente.
 
 ### Opção B: Netlify

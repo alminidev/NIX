@@ -5,24 +5,26 @@ import { useCartContext, type TAddItemResult } from "@/contexts/CartContext";
 import { formatDimensions } from "@/lib/product-dimensions";
 import type { IProduct } from "@/types/product";
 import { Lock, ShoppingCart } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
 interface IProductCardProps {
   product: IProduct;
   onOpenLightbox?: (product: IProduct) => void;
+  /** Primeiro card da vitrine, acima da dobra. */
+  preload?: boolean;
 }
 
 /**
  * ProductCard — Card individual de produto.
  * data-sku e data-id preservados para compatibilidade futura.
- *
- * Usa <img> nativa (não next/image).
  * Ao clicar na imagem, abre o overlay de visualização ampliada (Lightbox).
  */
 export default function ProductCard({
   product,
   onOpenLightbox,
+  preload = false,
 }: IProductCardProps) {
   const { addItem } = useCartContext();
   const [adding, setAdding] = useState(false);
@@ -58,21 +60,20 @@ export default function ProductCard({
         )}
       </div>
 
-      <div className="mb-5 flex aspect-square w-full items-center justify-center overflow-hidden rounded-input border border-black/[0.03] bg-white p-4">
+      <div className="relative mb-5 aspect-square w-full overflow-hidden rounded-input border border-black/[0.03] bg-white">
         <button
           type="button"
-          className="flex h-full w-full cursor-zoom-in items-center justify-center bg-transparent p-0 focus-visible:rounded-input"
+          className="absolute inset-0 cursor-zoom-in bg-transparent p-0 focus-visible:rounded-input"
           onClick={() => onOpenLightbox?.(product)}
           aria-label={`Ampliar foto de ${product.name}`}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src={product.image}
             alt={`${product.name} — Armazenamento com controle térmico para filamentos 3D`}
-            loading="lazy"
-            width={320}
-            height={320}
-            className="max-h-full max-w-full object-contain transition-[scale] duration-[250ms] ease-nix group-hover:scale-[1.02]"
+            fill
+            sizes="(max-width: 639px) 100vw, (max-width: 991px) 50vw, 33vw"
+            preload={preload}
+            className="object-contain p-4 transition-[scale] duration-[250ms] ease-nix group-hover:scale-[1.02]"
           />
         </button>
       </div>

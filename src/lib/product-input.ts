@@ -1,3 +1,4 @@
+import { isProductImageUrl, productImageMessages } from "@/lib/product-image";
 import {
   maxDimension,
   maxWeight,
@@ -83,19 +84,6 @@ function parsePrice(raw: string): { value: string } | { error: string } {
   }
 
   return { value: numeric.toFixed(2) };
-}
-
-function isSafeImageUrl(url: string) {
-  if (url.startsWith("/") && !url.startsWith("//")) {
-    return url.length > 1 && !url.includes("\\") && !url.includes("..");
-  }
-
-  try {
-    const parsed = new URL(url);
-    return parsed.protocol === "https:" || parsed.protocol === "http:";
-  } catch {
-    return false;
-  }
 }
 
 export function readProductForm(formData: FormData): IParsedProductForm {
@@ -192,8 +180,14 @@ export function readProductForm(formData: FormData): IParsedProductForm {
     fieldErrors.images = "Informe ao menos uma imagem.";
   } else if (imageRows.length > productFieldLimits.images) {
     fieldErrors.images = `Use no máximo ${productFieldLimits.images} imagens.`;
-  } else if (imageRows.some((image) => image.url.length > productFieldLimits.image || !isSafeImageUrl(image.url))) {
-    fieldErrors.images = "Use um caminho do site (/images/...) ou um endereço http(s).";
+  } else if (
+    imageRows.some(
+      (image) =>
+        image.url.length > productFieldLimits.image ||
+        !isProductImageUrl(image.url, process.env.NEXT_PUBLIC_SUPABASE_URL),
+    )
+  ) {
+    fieldErrors.images = productImageMessages.url;
   }
 
   if (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useAuthContext } from "@/contexts/AuthContext";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 
@@ -36,7 +37,7 @@ export default function AdminLogin() {
         onSubmit={handleSubmit}
         noValidate
       >
-        <img src="/images/logo-nix.png" alt="NIX" width={110} height={32} />
+        <Image src="/images/logo-nix.png" alt="NIX" width={110} height={32} />
         <div>
           <p className="mb-3 inline-block text-xs leading-[1.4] font-bold tracking-[0.08em] text-brand-blue-hover uppercase">
             Acesso restrito

@@ -1,6 +1,10 @@
 "use client";
 
-import { saveProduct } from "@/app/admin/products/actions";
+import {
+  saveProduct,
+  uploadProductImageAction,
+} from "@/app/admin/products/actions";
+import { productImageLimitBytes } from "@/lib/product-image";
 import {
   formatDimensionInput,
   formatDimensions,
@@ -14,6 +18,7 @@ import {
   type IAdminProduct,
 } from "@/types/admin-product";
 import { ArrowLeft, ImagePlus, Plus, Star, Trash2 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useActionState, useRef, useState, type ReactNode } from "react";
 import DeleteProductButton from "./DeleteProductButton";
@@ -27,6 +32,8 @@ interface IImageRow {
   key: string;
   url: string;
   isPrimary: boolean;
+  uploading: boolean;
+  error: string;
 }
 
 interface IProductFormProps {
@@ -103,6 +110,8 @@ export default function ProductForm({
       key: `image-${index}`,
       url: image.url,
       isPrimary: hasInitialPrimary ? image.isPrimary : index === 0,
+      uploading: false,
+      error: "",
     })),
   );
 
@@ -122,6 +131,7 @@ export default function ProductForm({
         })
       : "";
   const title = name.trim() || (product ? "Editar produto" : "Novo produto");
+  const uploading = images.some((image) => image.uploading);
 
   function addSpec() {
     specCounter.current += 1;
@@ -144,14 +154,53 @@ export default function ProductForm({
     const key = `image-${imageCounter.current}`;
     setImages((current) => [
       ...current,
-      { key, url: "", isPrimary: current.length === 0 },
+      {
+        key,
+        url: "",
+        isPrimary: current.length === 0,
+        uploading: false,
+        error: "",
+      },
     ]);
   }
 
-  function updateImage(key: string, url: string) {
+  function patchImage(key: string, patch: Partial<IImageRow>) {
     setImages((current) =>
-      current.map((row) => (row.key === key ? { ...row, url } : row)),
+      current.map((row) => (row.key === key ? { ...row, ...patch } : row)),
     );
+  }
+
+  async function onPickFile(key: string, list: FileList | null) {
+    const file = list?.[0];
+    if (!file) return;
+
+    if (file.size === 0) {
+      patchImage(key, { uploading: false, error: "A imagem está vazia." });
+      return;
+    }
+
+    if (file.size > productImageLimitBytes) {
+      patchImage(key, { uploading: false, error: "A imagem passa de 4 MB." });
+      return;
+    }
+
+    patchImage(key, { uploading: true, error: "" });
+    const body = new FormData();
+    body.set("file", file);
+
+    try {
+      const result = await uploadProductImageAction(body);
+      if ("error" in result) {
+        patchImage(key, { uploading: false, error: result.error });
+        return;
+      }
+      patchImage(key, { uploading: false, error: "", url: result.url });
+    } catch {
+      patchImage(key, {
+        uploading: false,
+        error: "Não foi possível enviar a imagem. Tente novamente.",
+      });
+    }
   }
 
   function setPrimary(key: string) {
@@ -170,6 +219,8 @@ export default function ProductForm({
             key: `image-${imageCounter.current}`,
             url: "",
             isPrimary: true,
+            uploading: false,
+            error: "",
           },
         ];
       }
@@ -217,14 +268,16 @@ export default function ProductForm({
             </Link>
             <button
               type="submit"
-              disabled={pending || categories.length === 0}
+              disabled={pending || uploading || categories.length === 0}
               className="inline-flex min-h-11 items-center justify-center rounded-pill bg-brand-blue px-5 text-sm font-medium text-ink-inverse transition-[background-color,translate] duration-200 ease-nix hover:-translate-y-px hover:bg-brand-blue-hover disabled:cursor-progress disabled:opacity-70"
             >
               {pending
                 ? "Salvando…"
-                : product
-                  ? "Salvar alterações"
-                  : "Criar produto"}
+                : uploading
+                  ? "Enviando foto…"
+                  : product
+                    ? "Salvar alterações"
+                    : "Criar produto"}
             </button>
           </div>
         </div>
@@ -588,7 +641,7 @@ export default function ProductForm({
           <Section
             index="05"
             title="Imagens"
-            description="A foto principal é a que abre o card. Use um caminho do site ou um endereço público."
+            description="A foto principal é a que abre o card. JPEG, PNG ou WebP, até 4 MB. A foto sobe ao ser escolhida."
           >
             <div className="grid gap-4 min-[760px]:grid-cols-2">
               {images.map((image, index) => {
@@ -602,13 +655,14 @@ export default function ProductForm({
                         : "overflow-hidden rounded-card border border-border-hairline bg-white"
                     }
                   >
-                    <div className="relative grid aspect-4/3 place-items-center bg-[linear-gradient(180deg,#f7f8fa,white)]">
+                    <div className="relative grid aspect-4/3 place-items-center overflow-hidden bg-[linear-gradient(180deg,#f7f8fa,white)]">
                       {preview ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
+                        <Image
                           src={image.url.trim()}
                           alt=""
-                          className="max-h-full max-w-full object-contain p-4"
+                          fill
+                          sizes="(max-width: 759px) 100vw, 40vw"
+                          className="object-contain p-4"
                         />
                       ) : (
                         <ImagePlus
@@ -618,49 +672,60 @@ export default function ProductForm({
                         />
                       )}
                       {image.isPrimary ? (
-                        <span className="absolute top-3 left-3 inline-flex items-center gap-1 rounded-pill bg-ink-primary px-2.5 py-1 text-[0.6875rem] font-bold tracking-[0.04em] text-ink-inverse uppercase">
+                        <span className="absolute top-3 left-3 z-10 inline-flex items-center gap-1 rounded-pill bg-ink-primary px-2.5 py-1 text-[0.6875rem] font-bold tracking-[0.04em] text-ink-inverse uppercase">
                           <Star size={12} aria-hidden />
                           Principal
                         </span>
                       ) : null}
+                      {image.uploading ? (
+                        <span className="absolute inset-x-3 bottom-3 z-10 rounded-pill bg-ink-primary/85 px-2.5 py-1 text-center text-xs font-semibold text-ink-inverse">
+                          Enviando…
+                        </span>
+                      ) : null}
                     </div>
                     <div className="flex flex-col gap-3 border-t border-border-hairline p-3">
-                      <label className="sr-only" htmlFor={image.key}>
-                        Imagem {index + 1}
-                      </label>
-                      <input
-                        id={image.key}
-                        name="images"
-                        value={image.url}
-                        onChange={(event) =>
-                          updateImage(image.key, event.target.value)
-                        }
-                        maxLength={productFieldLimits.image}
-                        disabled={pending}
-                        spellCheck={false}
-                        placeholder="/images/produto.jpg"
-                        aria-invalid={Boolean(errors.images)}
-                        className={controlClass(Boolean(errors.images))}
-                      />
-                      <div className="flex items-center justify-between gap-2">
-                        <label className="inline-flex min-h-9 cursor-pointer items-center gap-2 text-[0.8125rem] font-semibold text-ink-secondary">
+                      <input type="hidden" name="images" value={image.url} />
+                      <div className="flex flex-col gap-2 min-[480px]:flex-row min-[480px]:items-center min-[480px]:justify-between">
+                        <label className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-pill border border-border-hairline px-3 text-sm font-semibold text-ink-primary transition-[background-color,border-color] duration-200 ease-nix hover:border-[rgba(23,107,255,0.35)] hover:bg-brand-blue-subtle">
+                          <span className="sr-only">Imagem {index + 1}</span>
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+                            disabled={pending || image.uploading}
+                            className="sr-only"
+                            onChange={(event) => {
+                              const list = event.target.files;
+                              event.target.value = "";
+                              void onPickFile(image.key, list);
+                            }}
+                          />
+                          {image.url ? "Trocar foto" : "Enviar foto"}
+                        </label>
+                        <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 text-[0.8125rem] font-semibold text-ink-secondary">
                           <input
                             type="radio"
                             name="primaryImage"
                             value={index}
                             checked={image.isPrimary}
                             onChange={() => setPrimary(image.key)}
-                            disabled={pending}
+                            disabled={pending || image.uploading}
                             className="size-4 accent-brand-blue"
                           />
                           Usar no card
                         </label>
+                      </div>
+                      {image.error ? (
+                        <p className="text-[0.8125rem] text-[#9b1c1c]" role="alert">
+                          {image.error}
+                        </p>
+                      ) : null}
+                      <div className="flex justify-end">
                         <button
                           type="button"
                           onClick={() => removeImage(image.key)}
                           disabled={pending}
                           aria-label={`Remover imagem ${index + 1}`}
-                          className="grid size-9 place-items-center rounded-pill text-ink-secondary transition-[background-color,color] duration-200 ease-nix hover:bg-[#fff1f1] hover:text-[#9b1c1c] disabled:opacity-70"
+                          className="grid size-11 place-items-center rounded-pill text-ink-secondary transition-[background-color,color] duration-200 ease-nix hover:bg-[#fff1f1] hover:text-[#9b1c1c] disabled:opacity-70"
                         >
                           <Trash2 size={16} aria-hidden />
                         </button>
@@ -675,7 +740,7 @@ export default function ProductForm({
               type="button"
               onClick={addImage}
               disabled={pending || images.length >= productFieldLimits.images}
-              className="mt-4 inline-flex min-h-10 items-center gap-1.5 rounded-pill border border-border-hairline px-3 text-sm font-semibold text-ink-primary transition-[background-color,border-color] duration-200 ease-nix hover:border-[rgba(23,107,255,0.35)] hover:bg-brand-blue-subtle disabled:cursor-not-allowed disabled:opacity-70"
+              className="mt-4 inline-flex min-h-11 items-center gap-1.5 rounded-pill border border-border-hairline px-3 text-sm font-semibold text-ink-primary transition-[background-color,border-color] duration-200 ease-nix hover:border-[rgba(23,107,255,0.35)] hover:bg-brand-blue-subtle disabled:cursor-not-allowed disabled:opacity-70"
             >
               <Plus size={16} aria-hidden />
               Adicionar imagem
@@ -894,13 +959,14 @@ function Preview({
           ) : null}
         </div>
 
-        <div className="mb-4 grid aspect-square place-items-center overflow-hidden rounded-input border border-black/4 bg-white">
+        <div className="relative mb-4 grid aspect-square place-items-center overflow-hidden rounded-input border border-black/4 bg-white">
           {preview ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               src={image.trim()}
               alt=""
-              className="max-h-full max-w-full object-contain p-6"
+              fill
+              sizes="340px"
+              className="object-contain p-6"
             />
           ) : (
             <ImagePlus size={32} className="text-ink-muted" aria-hidden />

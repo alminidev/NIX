@@ -8,12 +8,12 @@ export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
     path: "prisma/migrations",
-    seed: "tsx prisma/seed.ts",
+    seed: "node --conditions=react-server --import tsx prisma/seed.ts",
   },
   datasource: {
     url:
       process.env.DATABASE_URL ??
-      "postgres://postgres:postgres@localhost:5432/nix?sslmode=disable",
+      "postgresql://postgres:postgres@127.0.0.1:54322/postgres?sslmode=disable",
     ...(process.env.SHADOW_DATABASE_URL
       ? { shadowDatabaseUrl: process.env.SHADOW_DATABASE_URL }
       : {}),

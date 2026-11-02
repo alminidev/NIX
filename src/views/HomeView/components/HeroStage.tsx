@@ -1,12 +1,11 @@
 import { ArrowDown } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import GlowAtmosphere from "../../../components/GlowAtmosphere";
 
 /**
  * HeroStage — Seção hero do showroom NIX 3D.
- *
- * Usa <img> nativa (não next/image) para preservar o markup e as dimensões
- * exatas de renderização (aspect-ratio 16/9, 4/3 no mobile).
+ * O quadro mantém 16/9 (4/3 no mobile) e a foto cobre essa área.
  */
 export default function HeroStage() {
   return (
@@ -29,14 +28,13 @@ export default function HeroStage() {
         </div>
 
         <div className="relative mx-auto aspect-video w-[min(100%,1120px,max(280px,calc((100svh-540px)*16/9)))] max-w-280 overflow-hidden rounded-card border border-border-dark-hairline bg-surface-hero-void shadow-hero-media after:pointer-events-none after:absolute after:inset-x-0 after:bottom-0 after:h-20 after:bg-[linear-gradient(to_bottom,transparent,rgba(10,11,14,0.85))] after:content-[''] max-[640px]:aspect-4/3 max-[640px]:w-[min(100%,max(240px,calc((100svh-460px)*4/3)))]">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src="/images/hero-showroom.jpg"
             alt="Linha completa NIX em bancada de estúdio de tecnologia"
-            width={1120}
-            height={630}
-            loading="eager"
-            className="h-full w-full object-cover object-bottom"
+            fill
+            preload
+            sizes="(max-width: 640px) 100vw, 1120px"
+            className="object-cover object-bottom"
           />
         </div>
 

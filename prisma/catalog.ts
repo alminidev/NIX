@@ -11,6 +11,10 @@ export interface IProductSeed {
   installments: string;
   description: string;
   specifications: string[];
+  /**
+   * Arquivo em `public/` (ex.: `/images/dry-box-12.jpg`).
+   * O seed publica o arquivo no bucket `produtos` e grava a URL pública.
+   */
   images: { url: string; isPrimary?: boolean }[];
   featured: boolean;
   sortOrder: number;

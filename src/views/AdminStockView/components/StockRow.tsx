@@ -12,6 +12,7 @@ import {
   type TStockDirection,
 } from "@/views/AdminStockView/components/stock-display";
 import { Minus, Plus } from "lucide-react";
+import Image from "next/image";
 import { useActionState, useCallback, useEffect, useState } from "react";
 
 interface IStockRowProps {
@@ -56,15 +57,14 @@ export function StockRow({ product }: IStockRowProps) {
   return (
     <li className="flex flex-col gap-4 border-t border-border-hairline px-4 py-4 first:border-t-0 min-[980px]:flex-row min-[980px]:items-center min-[980px]:px-5">
       <div className="flex min-w-0 flex-1 items-center gap-4">
-        <div className="grid size-16 shrink-0 place-items-center overflow-hidden rounded-input border border-black/4 bg-white">
+        <div className="relative grid size-16 shrink-0 place-items-center overflow-hidden rounded-input border border-black/4 bg-white">
           {product.image ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               src={product.image}
               alt=""
-              width={64}
-              height={64}
-              className="max-h-full max-w-full object-contain"
+              fill
+              sizes="64px"
+              className="object-contain"
             />
           ) : (
             <span className="text-[0.6875rem] text-ink-muted">Sem foto</span>

@@ -1,8 +1,11 @@
 "use server";
 
+import { MissingEnvironmentVariableError } from "@/app/_errors/missing-environment-variable.error";
 import { prisma } from "@/lib/prisma";
+import { productImageMessages } from "@/lib/product-image";
 import { readProductForm } from "@/lib/product-input";
 import { getSession } from "@/lib/session";
+import { deleteRemovedProductImages, uploadProductImage } from "@/lib/storage";
 import type {
   IDeleteProductState,
   IProductFormState,
@@ -53,6 +56,14 @@ export async function saveProduct(
   }
 
   const input = parsed.input;
+  const previousUrls = parsed.id
+    ? (
+        await prisma.productImage.findMany({
+          where: { productId: parsed.id },
+          select: { url: true },
+        })
+      ).map((image) => image.url)
+    : [];
   const category = await prisma.category.findUnique({
     where: { id: input.categoryId },
     select: { id: true },
@@ -143,8 +154,34 @@ export async function saveProduct(
     throw error;
   }
 
+  await deleteRemovedProductImages(
+    previousUrls,
+    input.images.map((image) => image.url),
+  );
   updateTag("products");
   redirect("/admin/products");
+}
+
+export async function uploadProductImageAction(
+  formData: FormData,
+): Promise<{ url: string } | { error: string }> {
+  if (!(await assertAdmin())) return { error: "Acesso negado." };
+
+  const file = formData.get("file");
+  if (!(file instanceof File)) return { error: "Envie uma imagem." };
+
+  try {
+    const uploaded = await uploadProductImage(new Uint8Array(await file.arrayBuffer()));
+    if (!uploaded.ok) return { error: uploaded.error };
+    return { url: uploaded.url };
+  } catch (error) {
+    if (error instanceof MissingEnvironmentVariableError) {
+      console.error(error.message);
+    } else {
+      console.error("Falha ao enviar imagem de produto.");
+    }
+    return { error: productImageMessages.upload };
+  }
 }
 
 export async function deleteProduct(
@@ -160,6 +197,11 @@ export async function deleteProduct(
   if (!Number.isInteger(id) || id <= 0) {
     return { status: "error", message: "Produto inválido." };
   }
+
+  const images = await prisma.productImage.findMany({
+    where: { productId: id },
+    select: { url: true },
+  });
 
   try {
     await prisma.product.delete({ where: { id } });
@@ -177,6 +219,10 @@ export async function deleteProduct(
     throw error;
   }
 
+  await deleteRemovedProductImages(
+    images.map((image) => image.url),
+    [],
+  );
   updateTag("products");
   redirect("/admin/products");
 }

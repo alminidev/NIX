@@ -1,9 +1,16 @@
 import { MissingEnvironmentVariableError } from '../src/app/_errors/missing-environment-variable.error';
+import { uploadProductImage } from '../src/lib/storage';
 import { randomUUID } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 import { hashPassword } from 'better-auth/crypto';
+import { config } from 'dotenv';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '../src/generated/prisma/client';
 import { CATEGORIES, PRODUCTS } from './catalog';
+
+config({ path: '.env' });
+config({ path: '.env.local', override: true });
 
 const ADMIN_EMAIL = 'admin@admin.com';
 const ADMIN_PASSWORD = 'admin';
@@ -83,6 +90,31 @@ async function seedAdmin() {
   });
 }
 
+const catalogUrls = new Map<string, string>();
+
+async function catalogImageUrl(sitePath: string) {
+  const cached = catalogUrls.get(sitePath);
+  if (cached) return cached;
+
+  const filename = sitePath.startsWith('/images/') ? sitePath.slice('/images/'.length) : '';
+  if (!filename || filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+    throw new Error(`Caminho de imagem do catálogo inválido: ${sitePath}`);
+  }
+
+  const bytes = await readFile(path.join(process.cwd(), 'public', 'images', filename));
+  const uploaded = await uploadProductImage(new Uint8Array(bytes), {
+    path: `catalog/${filename}`,
+    upsert: true,
+  });
+
+  if (!uploaded.ok) {
+    throw new Error(uploaded.error);
+  }
+
+  catalogUrls.set(sitePath, uploaded.url);
+  return uploaded.url;
+}
+
 async function main() {
   await seedAdmin();
 
@@ -124,7 +156,6 @@ async function main() {
     });
 
     await prisma.specification.deleteMany({ where: { productId: saved.id } });
-    await prisma.productImage.deleteMany({ where: { productId: saved.id } });
 
     await prisma.specification.createMany({
       data: product.specifications.map((text, sortOrder) => ({
@@ -134,14 +165,27 @@ async function main() {
       })),
     });
 
-    await prisma.productImage.createMany({
-      data: product.images.map((image, sortOrder) => ({
-        url: image.url,
-        sortOrder,
-        isPrimary: image.isPrimary ?? sortOrder === 0,
-        productId: saved.id,
-      })),
+    const imageCount = await prisma.productImage.count({
+      where: { productId: saved.id },
     });
+
+    if (imageCount === 0) {
+      const images = [];
+      for (const [sortOrder, image] of product.images.entries()) {
+        images.push({
+          url: await catalogImageUrl(image.url),
+          sortOrder,
+          isPrimary: image.isPrimary ?? sortOrder === 0,
+          productId: saved.id,
+        });
+      }
+
+      await prisma.productImage.createMany({ data: images });
+    } else {
+      for (const image of product.images) {
+        await catalogImageUrl(image.url);
+      }
+    }
   }
 
   await prisma.$queryRaw`

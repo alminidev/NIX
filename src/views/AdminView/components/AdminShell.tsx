@@ -9,6 +9,7 @@ import {
   Package,
   type LucideIcon,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
@@ -75,12 +76,13 @@ export default function AdminShell({ user, children }: IAdminShellProps) {
             className="order-1 flex min-h-12 items-center px-2 min-[861px]:order-none"
             aria-label="NIX — Dashboard"
           >
-            <img
+            <Image
               src="/images/logo-nix.png"
               alt=""
               width={110}
               height={32}
               className="h-7 w-auto object-contain"
+              style={{ width: "auto", height: "1.75rem" }}
             />
           </Link>
 

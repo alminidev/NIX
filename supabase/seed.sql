@@ -1,0 +1,3 @@
+-- O catálogo da loja é semeado pelo Prisma (`npm run db:seed`), que também
+-- publica as fotos em storage. Este arquivo existe porque o config.toml
+-- aponta para ele no `supabase db reset`.

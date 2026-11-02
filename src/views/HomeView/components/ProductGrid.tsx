@@ -103,10 +103,11 @@ export default function ProductGrid({ products }: IProductGridProps) {
                       : "grid w-full grid-cols-1 gap-5 min-[640px]:grid-cols-2 min-[992px]:grid-cols-3 min-[992px]:gap-7"
                   }
                 >
-                  {section.products.map((product) => (
+                  {section.products.map((product, productIndex) => (
                     <ProductCard
                       key={product.sku}
                       product={product}
+                      preload={index === 0 && productIndex === 0}
                       onOpenLightbox={(item) => setActiveLightboxProduct(item)}
                     />
                   ))}

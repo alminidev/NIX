@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { productImageMessages, productImagePublicUrl } from "../src/lib/product-image";
 import { readProductForm } from "../src/lib/product-input";
 
 function form(overrides: Record<string, string> = {}) {
@@ -24,6 +25,41 @@ function form(overrides: Record<string, string> = {}) {
   data.append("images", "/images/dry-box-12.jpg");
   return data;
 }
+
+describe("readProductForm images", () => {
+  const origin = "http://127.0.0.1:54321";
+
+  it("aceita caminho do site e URL do bucket produtos", () => {
+    const previous = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    process.env.NEXT_PUBLIC_SUPABASE_URL = origin;
+
+    try {
+      const site = readProductForm(form());
+      assert.equal(site.input?.images[0]?.url, "/images/dry-box-12.jpg");
+
+      const data = form();
+      data.delete("images");
+      const bucketUrl = productImagePublicUrl(origin, "catalog/dry-box-12.jpg");
+      data.append("images", bucketUrl);
+      const bucket = readProductForm(data);
+      assert.equal(bucket.fieldErrors.images, undefined);
+      assert.equal(bucket.input?.images[0]?.url, bucketUrl);
+    } finally {
+      if (previous === undefined) delete process.env.NEXT_PUBLIC_SUPABASE_URL;
+      else process.env.NEXT_PUBLIC_SUPABASE_URL = previous;
+    }
+  });
+
+  it("recusa uma URL externa", () => {
+    const data = form();
+    data.delete("images");
+    data.append("images", "https://exemplo.com/a.jpg");
+    const { input, fieldErrors } = readProductForm(data);
+
+    assert.equal(input, null);
+    assert.equal(fieldErrors.images, productImageMessages.url);
+  });
+});
 
 describe("readProductForm dimensions", () => {
   it("reads length, width and height as numbers", () => {

@@ -1,6 +1,7 @@
 import { formatDimensions } from "@/lib/product-dimensions";
 import type { ICartLine } from "@/types/cart";
 import { Minus, Plus, Trash2 } from "lucide-react";
+import Image from "next/image";
 
 interface ICartLineItemProps {
   line: ICartLine;
@@ -23,15 +24,13 @@ export default function CartLineItem({
       className="flex flex-col gap-4 rounded-card border border-border-hairline bg-surface-card p-4 min-[640px]:flex-row min-[640px]:items-center min-[640px]:p-5"
       data-sku={line.sku}
     >
-      <div className="flex aspect-square w-24 shrink-0 items-center justify-center overflow-hidden rounded-input border border-black/[0.03] bg-white p-2 max-[640px]:w-20">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+      <div className="relative aspect-square w-24 shrink-0 overflow-hidden rounded-input border border-black/[0.03] bg-white max-[640px]:w-20">
+        <Image
           src={line.image}
           alt=""
-          loading="lazy"
-          width={96}
-          height={96}
-          className="max-h-full max-w-full object-contain"
+          fill
+          sizes="96px"
+          className="object-contain p-2"
         />
       </div>
 

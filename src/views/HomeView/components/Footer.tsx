@@ -2,6 +2,7 @@ import {
   cardInstallmentsLabel,
   pixDiscountLabel,
 } from "@/lib/payment-terms";
+import Image from "next/image";
 
 /**
  * Footer — Rodapé da NIX 3D.
@@ -18,13 +19,13 @@ export default function Footer() {
       <div className="mx-auto w-full max-w-[1200px] px-4 min-[640px]:px-6">
         <div className="mb-12 flex flex-col flex-wrap items-start justify-between gap-8 min-[640px]:flex-row min-[640px]:gap-12">
           <div className="max-w-[360px]">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src="/images/logo-nix.png"
               alt="Logotipo NIX"
               width={100}
               height={30}
               className="mb-4 h-7 w-auto brightness-0 invert"
+              style={{ width: "auto", height: "1.75rem" }}
             />
             <p className="leading-[1.6]">
               Mobiliário técnico e soluções inteligentes com controle térmico

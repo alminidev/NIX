@@ -2,6 +2,7 @@
 
 import type { IProduct } from "@/types/product";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
@@ -329,17 +330,22 @@ export default function ProductLightbox({
         )}
 
         <div className="flex max-h-[75vh] max-w-[90vw] items-center justify-center max-[641px]:max-h-[72vh] max-[641px]:max-w-[96vw]">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src={currentFoto}
             alt={altText}
-            className="max-h-[75vh] max-w-full rounded-input object-contain shadow-lightbox transition-transform duration-[120ms] ease-out max-[641px]:max-h-[72vh] motion-reduce:transition-none!"
+            width={1600}
+            height={1200}
+            sizes="90vw"
+            draggable={false}
+            className="h-auto max-h-[75vh] w-auto max-w-full rounded-input object-contain shadow-lightbox transition-transform duration-[120ms] ease-out max-[641px]:max-h-[72vh] motion-reduce:transition-none!"
             style={{
+              width: "auto",
+              height: "auto",
+              maxHeight: "75vh",
               transform: `scale(${zoomScale}) translate(${panOffset.x / zoomScale}px, ${panOffset.y / zoomScale}px)`,
               cursor: zoomScale > 1 ? "grab" : "zoom-in",
             }}
             onDoubleClick={handleDoubleClick}
-            draggable={false}
           />
         </div>
 

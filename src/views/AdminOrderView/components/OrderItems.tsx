@@ -5,6 +5,7 @@ import {
 import type { IAdminOrderDetail } from "@/types/admin-order";
 import { currencyFormat } from "@/views/AdminOrdersView/components/order-display";
 import OrderCard from "@/views/AdminOrderView/components/OrderCard";
+import Image from "next/image";
 import Link from "next/link";
 
 interface IOrderItemsProps {
@@ -23,15 +24,14 @@ export default function OrderItems({ order }: IOrderItemsProps) {
             key={item.id}
             className="flex items-start gap-4 border-t border-border-hairline py-4 first:border-t-0 first:pt-0"
           >
-            <div className="grid size-16 shrink-0 place-items-center overflow-hidden rounded-input border border-black/4 bg-white">
+            <div className="relative grid size-16 shrink-0 place-items-center overflow-hidden rounded-input border border-black/4 bg-white">
               {item.image ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
+                <Image
                   src={item.image}
                   alt=""
-                  width={64}
-                  height={64}
-                  className="max-h-full max-w-full object-contain"
+                  fill
+                  sizes="64px"
+                  className="object-contain"
                 />
               ) : (
                 <span className="text-[0.6875rem] text-ink-muted">
