@@ -21,7 +21,35 @@ function supabaseProductImages() {
   }
 }
 
+/** Hosts de onde o `next dev` pode servir `/_next`. Sem isso, o túnel devolve 403 e o painel não hidrata. */
+function allowedDevOrigins() {
+  const origins = [
+    "*.ngrok-free.dev",
+    "*.ngrok-free.app",
+    "*.ngrok.io",
+    "*.ngrok.app",
+    "*.ngrok.dev",
+  ];
+
+  for (const key of ["NEXT_PUBLIC_SITE_URL", "BETTER_AUTH_URL"]) {
+    const raw = process.env[key]?.trim();
+    if (!raw) continue;
+
+    try {
+      const hostname = new URL(raw).hostname;
+      if (hostname && hostname !== "localhost" && hostname !== "127.0.0.1") {
+        origins.push(hostname);
+      }
+    } catch {
+      // URL inválida não entra na lista.
+    }
+  }
+
+  return origins;
+}
+
 const nextConfig: NextConfig = {
+  allowedDevOrigins: allowedDevOrigins(),
   cacheComponents: true,
   partialPrefetching: true,
   serverExternalPackages: ["pg", "@prisma/adapter-pg"],

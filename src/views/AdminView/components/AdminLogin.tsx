@@ -52,7 +52,6 @@ export default function AdminLogin() {
           <input
             className="min-h-12 w-full rounded-input border border-border-hairline bg-white px-3.5 py-3 font-normal text-ink-primary focus:border-brand-blue focus:outline-2 focus:outline-offset-1 focus:outline-border-focus"
             type="email"
-            name="email"
             autoComplete="username"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
@@ -66,7 +65,6 @@ export default function AdminLogin() {
           <input
             className="min-h-12 w-full rounded-input border border-border-hairline bg-white px-3.5 py-3 font-normal text-ink-primary focus:border-brand-blue focus:outline-2 focus:outline-offset-1 focus:outline-border-focus"
             type="password"
-            name="password"
             autoComplete="current-password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
