@@ -1,5 +1,8 @@
 import { calculateTotal, formatCurrency } from "@/lib/cart-calculation";
-import { formatDeliveryDays } from "@/lib/shipping-display";
+import {
+  formatShippingAmount,
+  shippingChoiceLabel,
+} from "@/lib/shipping-display";
 import type { ICartSummary, IShippingQuote } from "@/types/cart";
 import { ArrowRight, Lock } from "lucide-react";
 import { CHECKOUT_FORM_ID } from "./CheckoutForm";
@@ -57,10 +60,12 @@ export default function OrderSummary({
         <div className="flex items-baseline justify-between gap-2">
           <dt className="text-ink-secondary">Frete</dt>
           <dd className="text-right font-semibold text-ink-primary">
-            {shippingPrice !== null ? formatCurrency(shippingPrice) : "A calcular"}
+            {shippingPrice !== null
+              ? formatShippingAmount(shippingPrice)
+              : "A calcular"}
             {selected ? (
               <span className="mt-0.5 block text-xs font-normal text-ink-secondary">
-                {formatDeliveryDays(selected.deliveryDays)}
+                {shippingChoiceLabel(selected)}
               </span>
             ) : null}
           </dd>

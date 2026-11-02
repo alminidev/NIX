@@ -1,4 +1,7 @@
-import { formatDeliveryDays } from "@/lib/shipping-display";
+import {
+  formatDeliveryDays,
+  formatShippingAmount,
+} from "@/lib/shipping-display";
 import type { IAdminOrderDetail } from "@/types/admin-order";
 import { currencyFormat } from "@/views/AdminOrdersView/components/order-display";
 import OrderCard from "@/views/AdminOrderView/components/OrderCard";
@@ -74,7 +77,7 @@ export default function OrderItems({ order }: IOrderItemsProps) {
               "Não cotado"
             ) : (
               <>
-                {currencyFormat.format(order.shipping)}
+                {formatShippingAmount(order.shipping)}
                 {order.shippingService ? (
                   <span className="mt-0.5 block text-xs font-normal text-ink-secondary">
                     {order.shippingService}

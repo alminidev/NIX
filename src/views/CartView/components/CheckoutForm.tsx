@@ -1,8 +1,12 @@
 import { lookupAddress, quoteShipping } from "@/app/cart/actions";
 import { maskPostalCode } from "@/lib/cart-input";
-import { formatCurrency } from "@/lib/cart-calculation";
 import { brazilianStates, orderFieldLimits } from "@/lib/order-input";
-import { formatDeliveryDays } from "@/lib/shipping-display";
+import {
+  formatDeliveryDays,
+  formatShippingAmount,
+  isLocalPickup,
+  shippingChoiceLabel,
+} from "@/lib/shipping-display";
 import type { ICartItem, IShippingQuote } from "@/types/cart";
 import type { ICheckoutFieldErrors } from "@/types/order";
 import { useEffect, useRef, useState, useTransition } from "react";
@@ -241,13 +245,16 @@ export default function CheckoutForm({
           (option) => option.serviceId === selectedServiceId,
         ) ?? shipping.options[0])
       : undefined;
+  const pickupSelected = isLocalPickup(selectedOption?.serviceId);
   const statusText =
     errors.postalCode ??
     (postalMessage?.error
       ? postalMessage.text
-      : selectedOption
-        ? `Entrega em até ${formatDeliveryDays(selectedOption.deliveryDays)}.`
-        : postalMessage?.text);
+      : pickupSelected
+        ? shipping?.message || "Retirada no local, sem custo de frete."
+        : selectedOption
+          ? `Entrega em até ${formatDeliveryDays(selectedOption.deliveryDays)}.`
+          : postalMessage?.text);
   const statusIsError =
     Boolean(errors.postalCode) || (postalMessage?.error ?? false);
 
@@ -366,7 +373,6 @@ export default function CheckoutForm({
                 {shipping.options.map((option) => {
                   const id = `shipping-service-${option.serviceId}`;
                   const checked = option.serviceId === selectedOption?.serviceId;
-                  const label = formatDeliveryDays(option.deliveryDays);
 
                   return (
                     <label
@@ -385,11 +391,11 @@ export default function CheckoutForm({
                           className="size-4 shrink-0 accent-brand-blue"
                         />
                         <span className="min-w-0 text-sm font-semibold text-ink-primary">
-                          {label}
+                          {shippingChoiceLabel(option)}
                         </span>
                       </span>
                       <span className="shrink-0 text-sm font-semibold text-ink-primary tabular-nums">
-                        {formatCurrency(option.price)}
+                        {formatShippingAmount(option.price)}
                       </span>
                     </label>
                   );

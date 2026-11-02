@@ -34,8 +34,9 @@ export interface IOrderInput {
   /** Frete em reais; null enquanto não houver cotação */
   shipping: number | null;
   /**
-   * Rótulo opcional do frete. A cotação do site não grava a transportadora;
-   * o prazo escolhido fica em deliveryDays.
+   * Rótulo opcional do frete. A entrega cotada no site não grava a
+   * transportadora; a retirada no local grava o próprio nome. O prazo da
+   * entrega fica em deliveryDays.
    */
   shippingService?: string | null;
   /** Prazo em dias úteis da opção escolhida; null sem cotação */

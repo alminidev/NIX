@@ -67,8 +67,9 @@ export interface IShippingQuote {
   company: string | null;
   serviceName: string | null;
   /**
-   * Até duas opções, sem nome de transportadora: a de preço intermediário
-   * (maior prazo) e, quando existir, a mais cara (menor prazo).
+   * Opções do carrinho. A cotação traz no máximo duas entregas (preço
+   * intermediário com maior prazo e, se houver, a mais cara com menor prazo).
+   * A retirada no local entra em seguida, sempre de graça.
    */
   options: IShippingOption[];
 }

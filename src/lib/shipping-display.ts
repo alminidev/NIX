@@ -1,10 +1,95 @@
-import type { IShippingOption } from "@/types/cart";
+import { formatCurrency } from "@/lib/cart-calculation";
+import type { IShippingOption, IShippingQuote } from "@/types/cart";
+
+/** Id reservado: não existe no Melhor Envio. O preço é sempre zero. */
+export const localPickupServiceId = 0;
+
+export const localPickupOption: IShippingOption = {
+  serviceId: localPickupServiceId,
+  company: "",
+  name: "Retirada no local",
+  price: 0,
+  deliveryDays: 0,
+};
+
+export const localPickupFallbackMessage =
+  "Não foi possível cotar a entrega. A retirada no local continua disponível, sem custo.";
+
+export function isLocalPickup(serviceId: number | null | undefined) {
+  return serviceId === localPickupServiceId;
+}
+
+/** "Grátis" quando o frete é zero, para não parecer um valor somado ao pedido. */
+export function formatShippingAmount(price: number) {
+  return price === 0 ? "Grátis" : formatCurrency(price);
+}
+
+/**
+ * Cotação só da retirada no local. O valor não vem do navegador nem do
+ * Melhor Envio: a retirada é sempre grátis.
+ */
+export function localPickupQuote(
+  carriers: IShippingOption[] = [],
+  message: string | null = null,
+): IShippingQuote {
+  return {
+    status: "quoted",
+    price: 0,
+    deliveryDays: null,
+    message,
+    serviceId: localPickupServiceId,
+    company: null,
+    serviceName: null,
+    options: [
+      ...carriers.filter((option) => !isLocalPickup(option.serviceId)),
+      localPickupOption,
+    ],
+  };
+}
+
+/**
+ * Inclui a retirada no local na cotação do carrinho.
+ *
+ * Com entrega disponível, ela entra no fim e a opção já escolhida continua
+ * valendo. Se a pessoa escolheu a retirada, o frete fica zero. Se a cotação
+ * da entrega falhou e nenhuma entrega foi escolhida, só a retirada aparece.
+ */
+export function offerLocalPickup(
+  quote: IShippingQuote,
+  serviceId?: number | null,
+): IShippingQuote {
+  if (isLocalPickup(serviceId)) {
+    return localPickupQuote(quote.status === "quoted" ? quote.options : []);
+  }
+
+  if (quote.status !== "quoted" || quote.price === null) {
+    if (quote.status === "error" && serviceId == null) {
+      return localPickupQuote([], localPickupFallbackMessage);
+    }
+
+    return quote;
+  }
+
+  return {
+    ...quote,
+    options: [
+      ...quote.options.filter((option) => !isLocalPickup(option.serviceId)),
+      localPickupOption,
+    ],
+  };
+}
 
 /** Texto do prazo para a pessoa (ex.: "7 dias úteis"). */
 export function formatDeliveryDays(days: number) {
   if (days === 0) return "No mesmo dia";
   if (days === 1) return "1 dia útil";
   return `${days} dias úteis`;
+}
+
+/** Rótulo da opção no carrinho. A retirada não usa prazo de entrega. */
+export function shippingChoiceLabel(option: IShippingOption) {
+  if (isLocalPickup(option.serviceId)) return localPickupOption.name;
+  return formatDeliveryDays(option.deliveryDays);
 }
 
 function cents(value: number) {

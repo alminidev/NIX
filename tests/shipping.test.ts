@@ -8,9 +8,16 @@ import {
 } from "../src/lib/shipping";
 import {
   formatDeliveryDays,
+  formatShippingAmount,
+  localPickupFallbackMessage,
+  localPickupOption,
+  localPickupQuote,
+  localPickupServiceId,
+  offerLocalPickup,
   presentShippingChoices,
+  shippingChoiceLabel,
 } from "../src/lib/shipping-display";
-import type { IShippingOption } from "../src/types/cart";
+import type { IShippingOption, IShippingQuote } from "../src/types/cart";
 
 const token = "token-secreto";
 const envKeys = [
@@ -421,5 +428,111 @@ describe("shipping labels", () => {
     assert.equal(formatDeliveryDays(0), "No mesmo dia");
     assert.equal(formatDeliveryDays(1), "1 dia útil");
     assert.equal(formatDeliveryDays(7), "7 dias úteis");
+  });
+
+  it("labels local pickup without a delivery estimate and shows it as free", () => {
+    assert.equal(shippingChoiceLabel(localPickupOption), "Retirada no local");
+    assert.equal(formatShippingAmount(0), "Grátis");
+    assert.equal(formatShippingAmount(42.5), "R$\u00a042,50");
+  });
+});
+
+function quoted(price: number, serviceId = 1): IShippingQuote {
+  return {
+    status: "quoted",
+    price,
+    deliveryDays: 9,
+    message: null,
+    serviceId,
+    company: null,
+    serviceName: null,
+    options: [
+      {
+        serviceId,
+        company: "",
+        name: "",
+        price,
+        deliveryDays: 9,
+      },
+    ],
+  };
+}
+
+describe("local pickup", () => {
+  it("appends a free pickup option without changing the selected delivery", () => {
+    const result = offerLocalPickup(quoted(42.5));
+
+    assert.equal(result.status, "quoted");
+    assert.equal(result.price, 42.5);
+    assert.equal(result.serviceId, 1);
+    assert.deepEqual(
+      result.options.map((choice) => [choice.serviceId, choice.price, choice.name]),
+      [
+        [1, 42.5, ""],
+        [localPickupServiceId, 0, "Retirada no local"],
+      ],
+    );
+    assert.equal(calculateTotal(1190.5, result.price), 1233);
+  });
+
+  it("keeps the order total unchanged when pickup is selected", () => {
+    const result = offerLocalPickup(quoted(42.5), localPickupServiceId);
+
+    assert.equal(result.price, 0);
+    assert.equal(result.deliveryDays, null);
+    assert.equal(result.serviceId, localPickupServiceId);
+    assert.equal(result.options.at(-1)?.name, "Retirada no local");
+    assert.equal(calculateTotal(1190.5, result.price), 1190.5);
+    assert.deepEqual(localPickupQuote(), {
+      status: "quoted",
+      price: 0,
+      deliveryDays: null,
+      message: null,
+      serviceId: localPickupServiceId,
+      company: null,
+      serviceName: null,
+      options: [localPickupOption],
+    });
+  });
+
+  it("offers only free pickup when delivery cannot be quoted", () => {
+    const failed: IShippingQuote = {
+      status: "error",
+      price: null,
+      deliveryDays: null,
+      message: shippingMessages.uncovered,
+      serviceId: null,
+      company: null,
+      serviceName: null,
+      options: [],
+    };
+
+    const result = offerLocalPickup(failed);
+
+    assert.equal(result.status, "quoted");
+    assert.equal(result.price, 0);
+    assert.equal(result.serviceId, localPickupServiceId);
+    assert.equal(result.message, localPickupFallbackMessage);
+    assert.deepEqual(result.options, [localPickupOption]);
+    assert.equal(calculateTotal(1190.5, result.price), 1190.5);
+  });
+
+  it("keeps the delivery error when a paid option was selected and the new quote fails", () => {
+    const failed: IShippingQuote = {
+      status: "error",
+      price: null,
+      deliveryDays: null,
+      message: shippingMessages.unavailable,
+      serviceId: null,
+      company: null,
+      serviceName: null,
+      options: [],
+    };
+
+    const result = offerLocalPickup(failed, 2);
+
+    assert.equal(result.status, "error");
+    assert.equal(result.price, null);
+    assert.equal(result.message, shippingMessages.unavailable);
   });
 });

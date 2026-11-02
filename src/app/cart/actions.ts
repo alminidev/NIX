@@ -7,6 +7,12 @@ import { readCheckoutForm } from "@/lib/order-input";
 import { startCheckout } from "@/lib/payments";
 import { createOrder, expireOverdueOrders } from "@/lib/orders";
 import { calculateShipping } from "@/lib/shipping";
+import {
+  isLocalPickup,
+  localPickupOption,
+  localPickupQuote,
+  offerLocalPickup,
+} from "@/lib/shipping-display";
 import { checkAddressPostalCode, lookupPostalCode } from "@/lib/viacep";
 import type { ICartSummary, IShippingResult } from "@/types/cart";
 import type { ICheckoutFormState } from "@/types/order";
@@ -63,7 +69,9 @@ export async function quoteShipping(
     };
   }
 
-  const quote = await calculateShipping({ postalCode, lines: summary.lines });
+  const quote = offerLocalPickup(
+    await calculateShipping({ postalCode, lines: summary.lines }),
+  );
 
   if (quote.status === "error") {
     return {
@@ -84,14 +92,14 @@ export async function quoteShipping(
     };
   }
 
-  return { status: "success", message: "", quote };
+  return { status: "success", message: quote.message ?? "", quote };
 }
 
 function readShippingServiceId(formData: FormData) {
   const raw = formData.get("shippingServiceId");
   if (typeof raw !== "string" || !/^\d+$/.test(raw)) return null;
   const id = Number(raw);
-  return id > 0 ? id : null;
+  return id >= 0 ? id : null;
 }
 
 /**
@@ -143,11 +151,18 @@ export async function placeOrder(
   if ((await expireOverdueOrders()) > 0) updateTag("products");
 
   const summary = await resolveCart(items);
-  const quote = await calculateShipping({
-    postalCode: address.postalCode,
-    lines: summary.lines,
-    serviceId: readShippingServiceId(formData),
-  });
+  const serviceId = readShippingServiceId(formData);
+  // A retirada não consulta a transportadora: o frete é zero no servidor.
+  const quote = isLocalPickup(serviceId)
+    ? localPickupQuote()
+    : offerLocalPickup(
+        await calculateShipping({
+          postalCode: address.postalCode,
+          lines: summary.lines,
+          serviceId,
+        }),
+        serviceId,
+      );
 
   if (quote.status !== "quoted" || quote.price === null) {
     const message =
@@ -169,8 +184,10 @@ export async function placeOrder(
       customer,
       address,
       shipping: quote.price,
-      shippingService: null,
-      deliveryDays: quote.deliveryDays,
+      shippingService: isLocalPickup(quote.serviceId)
+        ? localPickupOption.name
+        : null,
+      deliveryDays: isLocalPickup(quote.serviceId) ? null : quote.deliveryDays,
     });
 
     updateTag("products");
