@@ -5,7 +5,9 @@ import {
   uploadProductImageAction,
 } from "@/app/admin/products/actions";
 import {
+  detectProductImage,
   productImageLimitBytes,
+  productImageMessages,
   productImagePreview,
 } from "@/lib/product-image";
 import {
@@ -23,7 +25,14 @@ import {
 import { ArrowLeft, ImagePlus, Plus, Star, Trash2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useActionState, useRef, useState, type ReactNode } from "react";
+import {
+  useActionState,
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from "react";
 import DeleteProductButton from "./DeleteProductButton";
 
 interface ISpecRow {
@@ -34,6 +43,8 @@ interface ISpecRow {
 interface IImageRow {
   key: string;
   url: string;
+  file: File | null;
+  previewUrl: string;
   isPrimary: boolean;
   uploading: boolean;
   error: string;
@@ -56,6 +67,17 @@ function previewOf(url: string) {
   return productImagePreview(url, process.env.NEXT_PUBLIC_SUPABASE_URL);
 }
 
+function revokePreview(url: string, live: Set<string>) {
+  if (!url.startsWith("blob:")) return;
+  live.delete(url);
+  URL.revokeObjectURL(url);
+}
+
+function shownImage(image: Pick<IImageRow, "previewUrl" | "url"> | undefined) {
+  if (!image) return "";
+  return image.previewUrl || image.url;
+}
+
 export default function ProductForm({
   categories,
   product,
@@ -75,6 +97,11 @@ export default function ProductForm({
   const hasInitialPrimary = initialImages.some((image) => image.isPrimary);
   const specCounter = useRef(initialSpecs.length);
   const imageCounter = useRef(initialImages.length);
+  const formRef = useRef<HTMLFormElement>(null);
+  const uploadLock = useRef(false);
+  const submitAfterUpload = useRef(false);
+  const mounted = useRef(true);
+  const livePreviews = useRef(new Set<string>());
   const [name, setName] = useState(product?.name ?? "");
   const [sku, setSku] = useState(product?.sku ?? "");
   const [categoryId, setCategoryId] = useState(
@@ -107,11 +134,18 @@ export default function ProductForm({
     initialImages.map((image, index) => ({
       key: `image-${index}`,
       url: image.url,
+      file: null,
+      previewUrl: "",
       isPrimary: hasInitialPrimary ? image.isPrimary : index === 0,
       uploading: false,
       error: "",
     })),
   );
+  const [sendingPhotos, setSendingPhotos] = useState(false);
+
+  function forgetPreview(url: string) {
+    revokePreview(url, livePreviews.current);
+  }
 
   const categoryName =
     categories.find((category) => category.id === categoryId)?.name ?? "";
@@ -129,7 +163,25 @@ export default function ProductForm({
         })
       : "";
   const title = name.trim() || (product ? "Editar produto" : "Novo produto");
-  const uploading = images.some((image) => image.uploading);
+
+  useEffect(() => {
+    const live = livePreviews.current;
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      for (const url of live) URL.revokeObjectURL(url);
+      live.clear();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!submitAfterUpload.current) return;
+    if (images.some((image) => image.file || image.uploading)) return;
+    submitAfterUpload.current = false;
+    uploadLock.current = false;
+    setSendingPhotos(false);
+    formRef.current?.requestSubmit();
+  }, [images]);
 
   function addSpec() {
     specCounter.current += 1;
@@ -155,6 +207,8 @@ export default function ProductForm({
       {
         key,
         url: "",
+        file: null,
+        previewUrl: "",
         isPrimary: current.length === 0,
         uploading: false,
         error: "",
@@ -168,37 +222,118 @@ export default function ProductForm({
     );
   }
 
-  async function onPickFile(key: string, list: FileList | null) {
-    const file = list?.[0];
+  async function onPickFile(key: string, file: File | null) {
     if (!file) return;
 
     if (file.size === 0) {
-      patchImage(key, { uploading: false, error: "A imagem está vazia." });
+      patchImage(key, { error: productImageMessages.empty });
       return;
     }
 
     if (file.size > productImageLimitBytes) {
-      patchImage(key, { uploading: false, error: "A imagem passa de 4 MB." });
+      patchImage(key, { error: productImageMessages.tooLarge });
       return;
     }
 
-    patchImage(key, { uploading: true, error: "" });
-    const body = new FormData();
-    body.set("file", file);
-
-    try {
-      const result = await uploadProductImageAction(body);
-      if ("error" in result) {
-        patchImage(key, { uploading: false, error: result.error });
-        return;
-      }
-      patchImage(key, { uploading: false, error: "", url: result.url });
-    } catch {
-      patchImage(key, {
-        uploading: false,
-        error: "Não foi possível enviar a imagem. Tente novamente.",
-      });
+    const header = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+    if (!detectProductImage(header)) {
+      patchImage(key, { error: productImageMessages.type });
+      return;
     }
+
+    const previewUrl = URL.createObjectURL(file);
+    livePreviews.current.add(previewUrl);
+    if (!mounted.current) {
+      forgetPreview(previewUrl);
+      return;
+    }
+
+    setImages((current) => {
+      if (!current.some((row) => row.key === key)) {
+        forgetPreview(previewUrl);
+        return current;
+      }
+
+      return current.map((row) => {
+        if (row.key !== key) return row;
+        forgetPreview(row.previewUrl);
+        return {
+          ...row,
+          file,
+          previewUrl,
+          uploading: false,
+          error: "",
+        };
+      });
+    });
+  }
+
+  async function uploadThenSubmit(pendingFiles: IImageRow[]) {
+    if (uploadLock.current) return;
+    uploadLock.current = true;
+    setSendingPhotos(true);
+    const pendingKeys = new Set(pendingFiles.map((image) => image.key));
+    setImages((current) =>
+      current.map((row) =>
+        pendingKeys.has(row.key) ? { ...row, uploading: true, error: "" } : row,
+      ),
+    );
+
+    const uploaded = new Map<string, string>();
+    const failures = new Map<string, string>();
+
+    await Promise.all(
+      pendingFiles.map(async (image) => {
+        const file = image.file;
+        if (!file) {
+          failures.set(image.key, productImageMessages.upload);
+          return;
+        }
+
+        const body = new FormData();
+        body.set("file", file);
+
+        try {
+          const result = await uploadProductImageAction(body);
+          if ("error" in result) failures.set(image.key, result.error);
+          else uploaded.set(image.key, result.url);
+        } catch {
+          failures.set(image.key, productImageMessages.upload);
+        }
+      }),
+    );
+
+    if (!mounted.current) return;
+
+    if (failures.size > 0) {
+      uploadLock.current = false;
+      setSendingPhotos(false);
+    } else {
+      submitAfterUpload.current = true;
+    }
+
+    setImages((current) =>
+      current.map((row) => {
+        const url = uploaded.get(row.key);
+        const error = failures.get(row.key);
+        if (url) return { ...row, url, file: null, uploading: false, error: "" };
+        if (error) return { ...row, uploading: false, error };
+        return row.uploading ? { ...row, uploading: false } : row;
+      }),
+    );
+  }
+
+  function onSubmit(event: FormEvent<HTMLFormElement>) {
+    if (uploadLock.current || pending) {
+      event.preventDefault();
+      return;
+    }
+
+    const pendingFiles = images.filter((image) => image.file);
+    if (pendingFiles.length === 0) return;
+
+    event.preventDefault();
+    void uploadThenSubmit(pendingFiles);
   }
 
   function setPrimary(key: string) {
@@ -209,6 +344,8 @@ export default function ProductForm({
 
   function removeImage(key: string) {
     setImages((current) => {
+      const removed = current.find((row) => row.key === key);
+      if (removed) forgetPreview(removed.previewUrl);
       const next = current.filter((row) => row.key !== key);
       if (next.length === 0) {
         imageCounter.current += 1;
@@ -216,6 +353,8 @@ export default function ProductForm({
           {
             key: `image-${imageCounter.current}`,
             url: "",
+            file: null,
+            previewUrl: "",
             isPrimary: true,
             uploading: false,
             error: "",
@@ -231,10 +370,13 @@ export default function ProductForm({
 
   return (
     <form
+      ref={formRef}
       action={action}
+      onSubmit={onSubmit}
       autoComplete="off"
       className="flex w-full flex-1 flex-col"
     >
+      <button type="submit" hidden disabled={categories.length === 0} />
       {product ? <input type="hidden" name="id" value={product.id} /> : null}
 
       <header className="sticky top-0 z-20 border-b border-border-hairline bg-surface-card/95 backdrop-blur-md">
@@ -266,12 +408,12 @@ export default function ProductForm({
             </Link>
             <button
               type="submit"
-              disabled={pending || uploading || categories.length === 0}
+              disabled={pending || sendingPhotos || categories.length === 0}
               className="inline-flex min-h-11 items-center justify-center rounded-pill bg-brand-blue px-5 text-sm font-medium text-ink-inverse transition-[background-color,translate] duration-200 ease-nix hover:-translate-y-px hover:bg-brand-blue-hover disabled:cursor-progress disabled:opacity-70"
             >
               {pending
                 ? "Salvando…"
-                : uploading
+                : sendingPhotos
                   ? "Enviando foto…"
                   : product
                     ? "Salvar alterações"
@@ -639,11 +781,11 @@ export default function ProductForm({
           <Section
             index="05"
             title="Imagens"
-            description="A foto principal é a que abre o card. JPEG, PNG ou WebP, até 4 MB. A foto sobe ao ser escolhida."
+            description="A foto principal é a que abre o card. JPEG, PNG ou WebP, até 4 MB. A foto aparece na hora e sobe ao salvar."
           >
             <div className="grid gap-4 min-[760px]:grid-cols-2">
               {images.map((image, index) => {
-                const preview = previewOf(image.url);
+                const shown = shownImage(image);
                 return (
                   <article
                     key={image.key}
@@ -654,22 +796,12 @@ export default function ProductForm({
                     }
                   >
                     <div className="relative grid aspect-4/3 place-items-center overflow-hidden bg-[linear-gradient(180deg,#f7f8fa,white)]">
-                      {preview !== "hidden" ? (
-                        <Image
-                          src={image.url.trim()}
-                          alt=""
-                          fill
-                          unoptimized={preview === "plain"}
-                          sizes="(max-width: 759px) 100vw, 40vw"
-                          className="object-contain p-4"
-                        />
-                      ) : (
-                        <ImagePlus
-                          size={28}
-                          className="text-ink-muted"
-                          aria-hidden
-                        />
-                      )}
+                      <ProductPhoto
+                        src={shown}
+                        sizes="(max-width: 759px) 100vw, 40vw"
+                        iconSize={28}
+                        className="p-4"
+                      />
                       {image.isPrimary ? (
                         <span className="absolute top-3 left-3 z-10 inline-flex items-center gap-1 rounded-pill bg-ink-primary px-2.5 py-1 text-[0.6875rem] font-bold tracking-[0.04em] text-ink-inverse uppercase">
                           <Star size={12} aria-hidden />
@@ -683,22 +815,26 @@ export default function ProductForm({
                       ) : null}
                     </div>
                     <div className="flex flex-col gap-3 border-t border-border-hairline p-3">
-                      <input type="hidden" name="images" value={image.url} />
+                      <input
+                        type="hidden"
+                        name="images"
+                        value={image.file ? "" : image.url}
+                      />
                       <div className="flex flex-col gap-2 min-[480px]:flex-row min-[480px]:items-center min-[480px]:justify-between">
-                        <label className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-pill border border-border-hairline px-3 text-sm font-semibold text-ink-primary transition-[background-color,border-color] duration-200 ease-nix hover:border-[rgba(23,107,255,0.35)] hover:bg-brand-blue-subtle">
+                        <label className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-pill border border-border-hairline px-3 text-sm font-semibold text-ink-primary transition-[background-color,border-color] duration-200 ease-nix hover:border-[rgba(23,107,255,0.35)] hover:bg-brand-blue-subtle has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-70">
                           <span className="sr-only">Imagem {index + 1}</span>
                           <input
                             type="file"
                             accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
-                            disabled={pending || image.uploading}
+                            disabled={pending || sendingPhotos}
                             className="sr-only"
                             onChange={(event) => {
-                              const list = event.target.files;
+                              const file = event.target.files?.[0] ?? null;
                               event.target.value = "";
-                              void onPickFile(image.key, list);
+                              void onPickFile(image.key, file);
                             }}
                           />
-                          {image.url ? "Trocar foto" : "Enviar foto"}
+                          {shown ? "Trocar foto" : "Enviar foto"}
                         </label>
                         <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 text-[0.8125rem] font-semibold text-ink-secondary">
                           <input
@@ -707,7 +843,7 @@ export default function ProductForm({
                             value={index}
                             checked={image.isPrimary}
                             onChange={() => setPrimary(image.key)}
-                            disabled={pending || image.uploading}
+                            disabled={pending || sendingPhotos}
                             className="size-4 accent-brand-blue"
                           />
                           Usar no card
@@ -722,7 +858,7 @@ export default function ProductForm({
                         <button
                           type="button"
                           onClick={() => removeImage(image.key)}
-                          disabled={pending}
+                          disabled={pending || sendingPhotos}
                           aria-label={`Remover imagem ${index + 1}`}
                           className="grid size-11 place-items-center rounded-pill text-ink-secondary transition-[background-color,color] duration-200 ease-nix hover:bg-[#fff1f1] hover:text-[#9b1c1c] disabled:opacity-70"
                         >
@@ -738,7 +874,11 @@ export default function ProductForm({
             <button
               type="button"
               onClick={addImage}
-              disabled={pending || images.length >= productFieldLimits.images}
+              disabled={
+                pending ||
+                sendingPhotos ||
+                images.length >= productFieldLimits.images
+              }
               className="mt-4 inline-flex min-h-11 items-center gap-1.5 rounded-pill border border-border-hairline px-3 text-sm font-semibold text-ink-primary transition-[background-color,border-color] duration-200 ease-nix hover:border-[rgba(23,107,255,0.35)] hover:bg-brand-blue-subtle disabled:cursor-not-allowed disabled:opacity-70"
             >
               <Plus size={16} aria-hidden />
@@ -757,7 +897,7 @@ export default function ProductForm({
             capacity={capacity}
             dimensions={dimensions}
             description={description}
-            image={primaryImage?.url ?? ""}
+            image={shownImage(primaryImage)}
             active={active}
             featured={featured}
             specifications={visibleSpecs}
@@ -897,6 +1037,44 @@ function Toggle({
   );
 }
 
+function ProductPhoto({
+  src,
+  sizes,
+  iconSize,
+  className,
+}: {
+  src: string;
+  sizes: string;
+  iconSize: number;
+  className: string;
+}) {
+  if (src.startsWith("blob:")) {
+    return (
+      <img
+        src={src}
+        alt=""
+        className={`absolute inset-0 size-full object-contain ${className}`}
+      />
+    );
+  }
+
+  const preview = previewOf(src);
+  if (preview === "hidden") {
+    return <ImagePlus size={iconSize} className="text-ink-muted" aria-hidden />;
+  }
+
+  return (
+    <Image
+      src={src.trim()}
+      alt=""
+      fill
+      unoptimized={preview === "plain"}
+      sizes={sizes}
+      className={`object-contain ${className}`}
+    />
+  );
+}
+
 function Preview({
   name,
   sku,
@@ -924,8 +1102,6 @@ function Preview({
   featured: boolean;
   specifications: string[];
 }) {
-  const preview = previewOf(image);
-
   return (
     <section
       className="overflow-hidden rounded-card border border-border-hairline bg-surface-card shadow-card-hover"
@@ -959,18 +1135,12 @@ function Preview({
         </div>
 
         <div className="relative mb-4 grid aspect-square place-items-center overflow-hidden rounded-input border border-black/4 bg-white">
-          {preview !== "hidden" ? (
-            <Image
-              src={image.trim()}
-              alt=""
-              fill
-              unoptimized={preview === "plain"}
-              sizes="340px"
-              className="object-contain p-6"
-            />
-          ) : (
-            <ImagePlus size={32} className="text-ink-muted" aria-hidden />
-          )}
+          <ProductPhoto
+            src={image}
+            sizes="340px"
+            iconSize={32}
+            className="p-6"
+          />
         </div>
 
         <p className="text-[0.6875rem] font-semibold tracking-[0.04em] text-ink-muted uppercase">
