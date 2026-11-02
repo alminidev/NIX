@@ -1,10 +1,14 @@
 "use server";
 
+import { submitAdminOrder } from "@/lib/admin-new-order";
 import { readOrderStatusForm } from "@/lib/admin-order-input";
 import { changeOrderStatus } from "@/lib/orders";
 import { orderStatusLabels } from "@/lib/order-status";
 import { getSession } from "@/lib/session";
-import type { IOrderStatusState } from "@/types/admin-order";
+import type {
+  IAdminOrderFormState,
+  IOrderStatusState,
+} from "@/types/admin-order";
 import { refresh, updateTag } from "next/cache";
 
 async function assertAdmin() {
@@ -52,5 +56,25 @@ export async function updateOrderStatus(
       status === "CANCELLED"
         ? "Pedido cancelado e estoque devolvido."
         : `Status alterado para ${orderStatusLabels[status].toLowerCase()}.`,
+  };
+}
+
+/** Cria um pedido pelo painel. Só admin. O frete é cotado de novo no servidor. */
+export async function createAdminOrder(
+  _previous: IAdminOrderFormState,
+  formData: FormData,
+): Promise<IAdminOrderFormState> {
+  const session = await getSession();
+  const result = await submitAdminOrder(session?.user.role, formData);
+
+  if (result.stockChanged) updateTag("products");
+  if (result.status === "success") refresh();
+
+  return {
+    status: result.status,
+    message: result.message,
+    fieldErrors: result.fieldErrors,
+    orderId: result.orderId,
+    checkoutUrl: result.checkoutUrl,
   };
 }

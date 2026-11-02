@@ -152,8 +152,15 @@ export default function Dashboard({ metrics }: IDashboardProps) {
             Ver pedidos
           </Link>
           <Link
-            href="/admin/products/new"
+            href="/admin/orders/new"
             className="inline-flex min-h-11 items-center justify-center gap-2 rounded-pill bg-brand-blue px-5 text-sm font-semibold text-ink-inverse transition-[background-color] duration-200 ease-nix hover:bg-brand-blue-hover"
+          >
+            <Plus size={16} aria-hidden />
+            Novo pedido
+          </Link>
+          <Link
+            href="/admin/products/new"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-pill border border-border-hairline bg-surface-card px-5 text-sm font-semibold text-ink-primary transition-[border-color,background-color,color] duration-200 ease-nix hover:border-[rgba(23,107,255,0.35)] hover:bg-brand-blue-subtle hover:text-brand-blue-hover"
           >
             <Plus size={16} aria-hidden />
             Novo produto

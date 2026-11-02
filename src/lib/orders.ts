@@ -446,6 +446,37 @@ async function payExpiredOrder(
 }
 
 /**
+ * Pedido criado no painel e pago fora da InfinitePay. Grava a forma e a data
+ * nos campos que já existem (`paymentMethod` e `paidAt`) e o valor do pedido.
+ * Só vale enquanto ainda aguarda pagamento.
+ */
+export async function recordExternalPayment(
+  orderId: number,
+  payment: { method: "pix" | "credit_card"; paidAt: Date },
+): Promise<"paid" | "unavailable"> {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    select: { status: true, total: true },
+  });
+
+  if (!order || order.status !== "AWAITING_PAYMENT") return "unavailable";
+
+  const updated = await prisma.order.updateMany({
+    where: { id: orderId, status: "AWAITING_PAYMENT" },
+    data: {
+      status: "PAID",
+      paymentMethod: payment.method,
+      paidAt: payment.paidAt,
+      paymentAmount: order.total,
+      paidAmount: order.total,
+      discount: 0,
+    },
+  });
+
+  return updated.count === 1 ? "paid" : "unavailable";
+}
+
+/**
  * Marca o pedido como pago a partir de um pagamento já conferido. A troca de
  * status é condicional: webhook e página de obrigado ao mesmo tempo só
  * gravam uma vez. O mesmo transaction_nsu repetido não altera nada.

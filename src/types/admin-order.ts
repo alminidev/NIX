@@ -6,6 +6,7 @@
  */
 
 import type { OrderSource, OrderStatus } from "@/generated/prisma/enums";
+import type { ICheckoutFieldErrors } from "@/types/order";
 
 export interface IAdminOrder {
   id: number;
@@ -132,4 +133,48 @@ export interface IOrderStatusState {
 export const orderStatusInitialState: IOrderStatusState = {
   status: "idle",
   message: "",
+};
+
+/** Cliente que o admin pode escolher ao criar um pedido. */
+export interface IAdminCustomerOption {
+  id: string;
+  name: string;
+  email: string;
+  /** Só dígitos, com DDD; vazio quando o cliente ainda não tem pedido */
+  phone: string;
+}
+
+/** Produto ativo que pode entrar num pedido criado no painel. */
+export interface IAdminOrderProductOption {
+  id: number;
+  name: string;
+  sku: string;
+  /** Preço atual em reais */
+  price: number;
+  formattedPrice: string;
+  stock: number;
+}
+
+export interface IAdminOrderFieldErrors extends ICheckoutFieldErrors {
+  source?: string;
+  payment?: string;
+  paymentMethod?: string;
+  paidAt?: string;
+}
+
+export interface IAdminOrderFormState {
+  status: "idle" | "error" | "success";
+  message: string;
+  fieldErrors: IAdminOrderFieldErrors;
+  orderId: number | null;
+  /** Link da InfinitePay; null quando o pedido foi pago por fora */
+  checkoutUrl: string | null;
+}
+
+export const adminOrderFormInitialState: IAdminOrderFormState = {
+  status: "idle",
+  message: "",
+  fieldErrors: {},
+  orderId: null,
+  checkoutUrl: null,
 };

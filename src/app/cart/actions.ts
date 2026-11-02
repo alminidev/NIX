@@ -5,13 +5,14 @@ import { resolveCart } from "@/lib/cart";
 import { parseCartItems, parsePostalCode } from "@/lib/cart-input";
 import { readCheckoutForm } from "@/lib/order-input";
 import { startCheckout } from "@/lib/payments";
+import { quoteOrderShipping } from "@/lib/checkout-shipping";
 import { createOrder, expireOverdueOrders } from "@/lib/orders";
 import { calculateShipping } from "@/lib/shipping";
 import {
   isLocalPickup,
   localPickupOption,
-  localPickupQuote,
   offerLocalPickup,
+  readShippingServiceId,
 } from "@/lib/shipping-display";
 import { checkAddressPostalCode, lookupPostalCode } from "@/lib/viacep";
 import type { ICartSummary, IShippingResult } from "@/types/cart";
@@ -95,13 +96,6 @@ export async function quoteShipping(
   return { status: "success", message: quote.message ?? "", quote };
 }
 
-function readShippingServiceId(formData: FormData) {
-  const raw = formData.get("shippingServiceId");
-  if (typeof raw !== "string" || !/^\d+$/.test(raw)) return null;
-  const id = Number(raw);
-  return id >= 0 ? id : null;
-}
-
 /**
  * Endereço do CEP informado, consultado na ViaCEP (lib/viacep.ts).
  */
@@ -153,16 +147,11 @@ export async function placeOrder(
   const summary = await resolveCart(items);
   const serviceId = readShippingServiceId(formData);
   // A retirada não consulta a transportadora: o frete é zero no servidor.
-  const quote = isLocalPickup(serviceId)
-    ? localPickupQuote()
-    : offerLocalPickup(
-        await calculateShipping({
-          postalCode: address.postalCode,
-          lines: summary.lines,
-          serviceId,
-        }),
-        serviceId,
-      );
+  const quote = await quoteOrderShipping({
+    postalCode: address.postalCode,
+    lines: summary.lines,
+    serviceId,
+  });
 
   if (quote.status !== "quoted" || quote.price === null) {
     const message =

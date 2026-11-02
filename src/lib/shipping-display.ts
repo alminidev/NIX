@@ -19,6 +19,14 @@ export function isLocalPickup(serviceId: number | null | undefined) {
   return serviceId === localPickupServiceId;
 }
 
+/** Id da opção escolhida no formulário. 0 é a retirada no local. */
+export function readShippingServiceId(formData: FormData) {
+  const raw = formData.get("shippingServiceId");
+  if (typeof raw !== "string" || !/^\d+$/.test(raw)) return null;
+  const id = Number(raw);
+  return id >= 0 ? id : null;
+}
+
 /** "Grátis" quando o frete é zero, para não parecer um valor somado ao pedido. */
 export function formatShippingAmount(price: number) {
   return price === 0 ? "Grátis" : formatCurrency(price);
