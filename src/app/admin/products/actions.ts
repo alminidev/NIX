@@ -2,7 +2,7 @@
 
 import { MissingEnvironmentVariableError } from "@/app/_errors/missing-environment-variable.error";
 import { prisma } from "@/lib/prisma";
-import { productImageMessages } from "@/lib/product-image";
+import { productImageLimitBytes, productImageMessages } from "@/lib/product-image";
 import { readProductForm } from "@/lib/product-input";
 import { getSession } from "@/lib/session";
 import { deleteRemovedProductImages, uploadProductImage } from "@/lib/storage";
@@ -56,14 +56,6 @@ export async function saveProduct(
   }
 
   const input = parsed.input;
-  const previousUrls = parsed.id
-    ? (
-        await prisma.productImage.findMany({
-          where: { productId: parsed.id },
-          select: { url: true },
-        })
-      ).map((image) => image.url)
-    : [];
   const category = await prisma.category.findUnique({
     where: { id: input.categoryId },
     select: { id: true },
@@ -90,8 +82,19 @@ export async function saveProduct(
     };
   }
 
+  let previousUrls: string[] = [];
+
   try {
     await prisma.$transaction(async (tx) => {
+      if (parsed.id) {
+        previousUrls = (
+          await tx.productImage.findMany({
+            where: { productId: parsed.id },
+            select: { url: true },
+          })
+        ).map((image) => image.url);
+      }
+
       const data = {
         sku: input.sku,
         name: input.name,
@@ -154,6 +157,8 @@ export async function saveProduct(
     throw error;
   }
 
+  // O arquivo só sai depois do commit. Uma gravação no mesmo instante pode
+  // deixar órfão; `npm run images:cleanup` apaga o que ninguém mais usa.
   await deleteRemovedProductImages(
     previousUrls,
     input.images.map((image) => image.url),
@@ -169,6 +174,8 @@ export async function uploadProductImageAction(
 
   const file = formData.get("file");
   if (!(file instanceof File)) return { error: "Envie uma imagem." };
+  if (file.size === 0) return { error: productImageMessages.empty };
+  if (file.size > productImageLimitBytes) return { error: productImageMessages.tooLarge };
 
   try {
     const uploaded = await uploadProductImage(new Uint8Array(await file.arrayBuffer()));

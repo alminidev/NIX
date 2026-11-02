@@ -127,6 +127,22 @@ export function isProductImageUrl(url: string, supabaseUrl?: string) {
   return productImageObjectPath(url, supabaseUrl) !== null;
 }
 
+/** `plain` é URL antiga de fora do bucket: o next/image não otimiza esse host. */
+export type ProductImagePreview = "optimized" | "plain" | "hidden";
+
+export function productImagePreview(url: string, supabaseUrl?: string): ProductImagePreview {
+  const value = url.trim();
+  if (isProductImageUrl(value, supabaseUrl)) return "optimized";
+  if (
+    value.startsWith("https://") ||
+    value.startsWith("http://") ||
+    (value.startsWith("/") && !value.startsWith("//"))
+  ) {
+    return "plain";
+  }
+  return "hidden";
+}
+
 export function removedProductImageUrls(previous: string[], next: string[]) {
   const kept = new Set(next);
   return previous.filter((url) => !kept.has(url));

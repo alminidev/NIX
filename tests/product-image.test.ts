@@ -8,6 +8,7 @@ import {
   productImageMessages,
   productImageObjectPath,
   productImagePathsToDelete,
+  productImagePreview,
   productImagePublicUrl,
   storeProductImage,
   validateProductImageBytes,
@@ -152,6 +153,17 @@ describe("troca e exclusão", () => {
       return { error: null };
     });
     assert.equal(called, false);
+  });
+});
+
+describe("prévia no formulário", () => {
+  const bucketUrl = productImagePublicUrl(origin, "catalog/hero-showroom.jpg");
+
+  it("otimiza caminho do site e URL do bucket, e deixa URL externa sem o otimizador", () => {
+    assert.equal(productImagePreview("/images/dry-box-12.jpg", origin), "optimized");
+    assert.equal(productImagePreview(bucketUrl, origin), "optimized");
+    assert.equal(productImagePreview("https://exemplo.com/antiga.jpg", origin), "plain");
+    assert.equal(productImagePreview("nota", origin), "hidden");
   });
 });
 

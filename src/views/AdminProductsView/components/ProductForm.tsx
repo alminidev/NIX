@@ -4,7 +4,10 @@ import {
   saveProduct,
   uploadProductImageAction,
 } from "@/app/admin/products/actions";
-import { productImageLimitBytes } from "@/lib/product-image";
+import {
+  productImageLimitBytes,
+  productImagePreview,
+} from "@/lib/product-image";
 import {
   formatDimensionInput,
   formatDimensions,
@@ -49,13 +52,8 @@ function controlClass(invalid: boolean) {
   return invalid ? `${fieldClass} border-[#9b1c1c]` : fieldClass;
 }
 
-function canPreview(url: string) {
-  const value = url.trim();
-  return (
-    value.startsWith("/") ||
-    value.startsWith("https://") ||
-    value.startsWith("http://")
-  );
+function previewOf(url: string) {
+  return productImagePreview(url, process.env.NEXT_PUBLIC_SUPABASE_URL);
 }
 
 export default function ProductForm({
@@ -645,7 +643,7 @@ export default function ProductForm({
           >
             <div className="grid gap-4 min-[760px]:grid-cols-2">
               {images.map((image, index) => {
-                const preview = canPreview(image.url);
+                const preview = previewOf(image.url);
                 return (
                   <article
                     key={image.key}
@@ -656,11 +654,12 @@ export default function ProductForm({
                     }
                   >
                     <div className="relative grid aspect-4/3 place-items-center overflow-hidden bg-[linear-gradient(180deg,#f7f8fa,white)]">
-                      {preview ? (
+                      {preview !== "hidden" ? (
                         <Image
                           src={image.url.trim()}
                           alt=""
                           fill
+                          unoptimized={preview === "plain"}
                           sizes="(max-width: 759px) 100vw, 40vw"
                           className="object-contain p-4"
                         />
@@ -925,7 +924,7 @@ function Preview({
   featured: boolean;
   specifications: string[];
 }) {
-  const preview = canPreview(image);
+  const preview = previewOf(image);
 
   return (
     <section
@@ -960,11 +959,12 @@ function Preview({
         </div>
 
         <div className="relative mb-4 grid aspect-square place-items-center overflow-hidden rounded-input border border-black/4 bg-white">
-          {preview ? (
+          {preview !== "hidden" ? (
             <Image
               src={image.trim()}
               alt=""
               fill
+              unoptimized={preview === "plain"}
               sizes="340px"
               className="object-contain p-6"
             />

@@ -78,7 +78,8 @@ npm run db:seed
 
 | Variável | Onde usar |
 | --- | --- |
-| `DATABASE_URL` | Postgres local, porta **54322**, banco `postgres`. Em produção, a string do **pooler** (porta 6543, com `?pgbouncer=true`) para o app. |
+| `DATABASE_URL` | Postgres local, porta **54322**, banco `postgres`, com `sslmode=disable`. Em produção, a string do **pooler** (porta 6543) para o app, com `sslmode=require`. Sem `?pgbouncer=true`: o `@prisma/adapter-pg` ignora esse parâmetro. |
+| `DIRECT_URL` ou `MIGRATE_DATABASE_URL` | Só as migrations (`prisma migrate deploy` e `migrate dev`). Conexão de sessão do pooler (porta 5432) ou a direta, com `sslmode=require`. Se nenhuma das duas existir, o Prisma CLI usa `DATABASE_URL`. |
 | `SHADOW_DATABASE_URL` | Banco `nix_shadow` na mesma instância. O `db:up` cria esse banco. Só o `prisma migrate dev` precisa dele. |
 | `NEXT_PUBLIC_SUPABASE_URL` | URL da API (`http://127.0.0.1:54321` no local). |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Chave anônima. Pode ir para o navegador. O upload de hoje não a usa. |
@@ -86,7 +87,7 @@ npm run db:seed
 
 O Studio abre em [http://127.0.0.1:54323](http://127.0.0.1:54323). `npm run db:down` executa `supabase stop`.
 
-O admin envia cada foto assim que o arquivo é escolhido (JPEG, PNG ou WebP, até **4 MB**). A URL pública do bucket `produtos` fica em `ProductImage.url`. Caminhos `/images/...` do site continuam válidos. Qualquer outra URL é recusada. Trocar, remover ou excluir o produto apaga o arquivo do bucket depois de gravar o banco. Se o Storage falhar nessa hora, o produto fica salvo e a falha vai para o log.
+O admin envia cada foto assim que o arquivo é escolhido (JPEG, PNG ou WebP, até **4 MB**). A URL pública do bucket `produtos` fica em `ProductImage.url`. Caminhos `/images/...` do site continuam válidos. Qualquer outra URL é recusada. Trocar, remover ou excluir o produto apaga o arquivo do bucket depois de gravar o banco, somente quando nenhum outro `ProductImage` ainda aponta para essa URL. Uma foto do catálogo, como `catalog/hero-showroom.jpg`, pode estar em vários produtos e permanece no bucket. Se o Storage falhar nessa hora, o produto fica salvo e a falha vai para o log.
 
 Um upload que nunca é salvo vira arquivo órfão. A limpeza é manual:
 
@@ -99,11 +100,11 @@ O seed publica as seis fotos do catálogo no bucket e **não troca** a foto de u
 
 `supabase db reset` recria o banco só com `supabase/migrations`. As tabelas do Prisma somem. Em seguida rode `npm run db:migrate` e `npm run db:seed`. O bucket `produtos` volta da migration, sem passo manual.
 
-**Produção.** Ainda não há banco de produção com pedidos. O projeto cloud (região `sa-east-1`, Postgres **17**, a mesma `major_version` do `supabase/config.toml`) fica a cargo de quem é dono da conta. A CLI 3 do repositório não sobe Postgres 16. A ordem, quando o projeto existir:
+**Produção.** Ainda não há banco de produção com pedidos. O projeto cloud (região `sa-east-1`, Postgres **17**, a mesma `major_version` do `supabase/config.toml`) fica a cargo de quem é dono da conta. A CLI 3 do repositório só aceita Postgres 17 e recusa 15 e 16, então o projeto na nuvem tem de estar na 17. A ordem, quando o projeto existir:
 
-1. `prisma migrate deploy` com a conexão de **sessão** do pooler (porta 5432). A conexão direta é IPv6 e pode não funcionar no ambiente de deploy.
+1. Defina `DIRECT_URL` ou `MIGRATE_DATABASE_URL` com a conexão de **sessão** do pooler (porta 5432 e `sslmode=require`). O `prisma migrate deploy` lê essa URL, e não a `DATABASE_URL` do pooler. A conexão direta (`db.<ref>.supabase.co`) é IPv6 e pode não funcionar no ambiente de deploy.
 2. `supabase link` e `supabase db push`, para criar o bucket e as regras de acesso.
-3. Cadastrar na hospedagem a `DATABASE_URL` do pooler (porta 6543) e as três variáveis do Supabase. A `service_role` sem `NEXT_PUBLIC_`.
+3. Cadastrar na hospedagem a `DATABASE_URL` do pooler (porta 6543, `sslmode=require`, sem `pgbouncer`) e as três variáveis do Supabase. A `service_role` sem `NEXT_PUBLIC_`.
 4. Publicar o app.
 
 Se alguma `ProductImage.url` antiga apontar para `/images/...`, o script abaixo sobe o arquivo e troca a URL. URLs de fora do site ele não baixa.
@@ -357,7 +358,7 @@ Use um intervalo menor ou igual a `ORDER_EXPIRATION_MINUTES` para que o estoque 
 npm test
 ```
 
-Executa os testes de `tests/` (Node test runner) sobre as regras do carrinho, CEP e ViaCEP, dimensões, leitura dos formulários, fotos de produto (tipo, tamanho e URL), criação de pedidos, checkout da InfinitePay (API simulada), lista e página de pedidos do painel (incluindo a mudança de status) e métricas do dashboard. Com `DATABASE_URL`, também confere se toda tabela do `public` está com RLS ligado. Os arquivos rodam um de cada vez (`--test-concurrency=1`) porque compartilham o banco. Os testes de pedido usam o banco de `DATABASE_URL` (lido do `.env`): criam produtos próprios e removem tudo no final. Sem `DATABASE_URL` eles são ignorados.
+Executa os testes de `tests/` (Node test runner) sobre as regras do carrinho, CEP e ViaCEP, dimensões, leitura dos formulários, fotos de produto (tipo, tamanho, URL, upload só por admin e foto compartilhada entre produtos), criação de pedidos, checkout da InfinitePay (API simulada), lista e página de pedidos do painel (incluindo a mudança de status) e métricas do dashboard. Com `DATABASE_URL`, também confere se toda tabela do `public` está com RLS ligado. Os arquivos rodam um de cada vez (`--test-concurrency=1`) porque compartilham o banco. Os testes de pedido e de foto compartilhada usam o banco de `DATABASE_URL` (lido do `.env`): criam produtos próprios e removem tudo no final. Sem `DATABASE_URL` eles são ignorados.
 
 ---
 
@@ -441,37 +442,7 @@ O componente **`src/components/ProductLightbox.tsx`** é responsável pela exper
 
 1. Crie uma conta em [vercel.com](https://vercel.com) e importe o repositório.
 2. Defina o **Root Directory** como `nix-nextjs`.
-3. Adicione as variáveis de ambiente do `.env.example` (banco do pooler, as três variáveis do Supabase, InfinitePay, Melhor Envio e `NEXT_PUBLIC_SITE_URL`) nas configurações do projeto. A `SUPABASE_SERVICE_ROLE_KEY` fica sem o prefixo `NEXT_PUBLIC_`. Antes do deploy: `prisma migrate deploy` (conexão de sessão) e `supabase db push`. O corpo de cada Server Action aceita 4,5 MB, dentro do limite de 4,5 MB das funções da Vercel, para uma foto de 4 MB.
-4. Clique em **Deploy**. A Vercel executará `npm run build` e configurará CDN global e SSL automaticamente.
-
-### Opção B: Netlify
-
-1. Conecte o repositório no painel da [Netlify](https://netlify.com).
-2. Configure o Base Directory: `nix-nextjs`, Build command: `npm run build`, Publish directory: `.next`.
-3. Instale o plugin oficial `@netlify/plugin-nextjs`.
-
-### Opção C: Cloudflare Pages / Servidor Node.js Próprio (VPS / Docker)
-
-Caso opte por hospedar em VPS Linux própria (Ubuntu / Debian com Docker ou PM2):
-
-```bash
-npm run build
-npm run start
-```
-
-\*Desempenho (Zero Layout Shift):\*\* A foto ampliada é renderizada sob demanda (lazy) via Portal React diretamente no `document.body`, não alterando a geometria dos cards.
-
----
-
-## 🚢 8. Deploy e Hospedagem (A Definir)
-
-> **Status:** O método de publicação final pode ser definido de acordo com a preferência da equipe e do cliente. Abaixo estão as opções recomendadas prontas para uso:
-
-### Opção A: Vercel (Recomendada pela infraestrutura Next.js)
-
-1. Crie uma conta em [vercel.com](https://vercel.com) e importe o repositório.
-2. Defina o **Root Directory** como `nix-nextjs`.
-3. Adicione as variáveis de ambiente do `.env.example` (banco do pooler, as três variáveis do Supabase, InfinitePay, Melhor Envio e `NEXT_PUBLIC_SITE_URL`) nas configurações do projeto. A `SUPABASE_SERVICE_ROLE_KEY` fica sem o prefixo `NEXT_PUBLIC_`. Antes do deploy: `prisma migrate deploy` (conexão de sessão) e `supabase db push`. O corpo de cada Server Action aceita 4,5 MB, dentro do limite de 4,5 MB das funções da Vercel, para uma foto de 4 MB.
+3. Adicione as variáveis de ambiente do `.env.example` (banco do pooler, as três variáveis do Supabase, InfinitePay, Melhor Envio e `NEXT_PUBLIC_SITE_URL`) nas configurações do projeto. A `SUPABASE_SERVICE_ROLE_KEY` fica sem o prefixo `NEXT_PUBLIC_`. Antes do deploy: `prisma migrate deploy` com `DIRECT_URL` ou `MIGRATE_DATABASE_URL` (sessão do pooler, porta 5432, `sslmode=require`) e `supabase db push`. O corpo de cada Server Action aceita 4,5 MB, dentro do limite de 4,5 MB das funções da Vercel, para uma foto de 4 MB.
 4. Clique em **Deploy**. A Vercel executará `npm run build` e configurará CDN global e SSL automaticamente.
 
 ### Opção B: Netlify
