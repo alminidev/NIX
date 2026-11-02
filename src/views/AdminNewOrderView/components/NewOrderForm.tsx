@@ -32,6 +32,7 @@ import { orderSourceLabels } from "@/views/AdminOrdersView/components/order-disp
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
+import { toast } from "sonner";
 
 interface INewOrderFormProps {
   customers: IAdminCustomerOption[];
@@ -113,9 +114,16 @@ export default function NewOrderForm({ customers, products }: INewOrderFormProps
   const [paymentMethod, setPaymentMethod] = useState<"pix" | "credit_card">("pix");
   const [paidOn, setPaidOn] = useState(todayInBrazil);
   const lookupId = useRef(0);
+  const reportedState = useRef(state);
   const errors = state.fieldErrors;
   const items = toCartItems(lines, products);
   const itemsKey = JSON.stringify(items);
+
+  useEffect(() => {
+    if (reportedState.current === state) return;
+    reportedState.current = state;
+    if (state.status === "error" && state.message) toast.error(state.message);
+  }, [state]);
 
   useEffect(() => {
     lookupId.current += 1;
@@ -359,15 +367,6 @@ export default function NewOrderForm({ customers, products }: INewOrderFormProps
           O endereço é obrigatório. O frete é cotado como no checkout do cliente.
         </p>
       </header>
-
-      {state.status === "error" && state.message ? (
-        <p
-          className="rounded-card border border-[#f0c7c7] bg-[#fff1f1] px-5 py-4 text-[0.9375rem] text-[#9b1c1c]"
-          role="alert"
-        >
-          {state.message}
-        </p>
-      ) : null}
 
       <section className="rounded-card border border-border-hairline bg-surface-card p-5 min-[640px]:p-6">
         <h2 className="text-lg font-semibold text-ink-primary">Cliente</h2>

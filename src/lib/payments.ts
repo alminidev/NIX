@@ -496,7 +496,10 @@ export async function startCheckout(orderId: number) {
   try {
     const order = await loadCheckoutOrder(orderId);
     if (!order) {
-      return { ok: false as const, message: checkoutMessages.unavailable };
+      return {
+        ok: false as const,
+        message: "O pedido não está mais aguardando pagamento.",
+      };
     }
 
     const checkoutUrl = await createCheckoutLink(order);
@@ -507,7 +510,10 @@ export async function startCheckout(orderId: number) {
 
     if (saved.count !== 1) {
       await cancelOrder(orderId);
-      return { ok: false as const, message: checkoutMessages.unavailable };
+      return {
+        ok: false as const,
+        message: "O pedido mudou antes de gravar o link de pagamento.",
+      };
     }
 
     return { ok: true as const, checkoutUrl };

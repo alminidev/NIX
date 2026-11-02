@@ -24,6 +24,14 @@ const apiOrigin = "https://api.checkout.infinitepay.io";
 export const checkoutMessages = {
   unavailable: "Não foi possível abrir o pagamento. Tente novamente.",
   timeout: "O pagamento demorou demais. Tente novamente.",
+  notConfigured:
+    "A InfinitePay não está configurada. Confira a chave e o identificador da loja.",
+  network: "Não foi possível falar com a InfinitePay. Tente novamente.",
+  noUrl: "A InfinitePay respondeu sem o link de pagamento.",
+  total: "O total do pedido não fecha com os itens enviados à InfinitePay.",
+  rejectedKey: "A InfinitePay recusou a chave de acesso.",
+  rejectedData: "A InfinitePay recusou os dados do pedido.",
+  down: "A InfinitePay está fora do ar.",
 } as const;
 
 export class CheckoutLinkError extends Error {
@@ -187,6 +195,46 @@ function webhookRejected(body: unknown) {
   return typeof message === "string" && /webhook/i.test(message);
 }
 
+/** Texto curto da API, só se não parecer segredo (chave, token). */
+function safeCheckoutDetail(value: unknown) {
+  if (typeof value !== "string") return null;
+
+  const detail = value.replace(/\s+/g, " ").trim();
+  if (detail.length < 3 || detail.length > 160) return null;
+  if (!detail.includes(" ")) return null;
+  if (/[A-Za-z0-9+/=_-]{20,}/.test(detail)) return null;
+  if (!/[A-Za-zÀ-ÿ]/.test(detail)) return null;
+  return /[.!?]$/.test(detail) ? detail : `${detail}.`;
+}
+
+function readCheckoutDetail(body: unknown) {
+  if (typeof body !== "object" || body === null) return null;
+  const row = body as Record<string, unknown>;
+  const nested =
+    Array.isArray(row.errors) && row.errors[0] && typeof row.errors[0] === "object"
+      ? (row.errors[0] as { message?: unknown }).message
+      : null;
+
+  return safeCheckoutDetail(row.message) ?? safeCheckoutDetail(row.error) ?? safeCheckoutDetail(nested);
+}
+
+function withDetail(base: string, detail: string | null) {
+  return detail ? `${base} ${detail}` : base;
+}
+
+/** Mensagem que pode ir para o admin e para o cliente, sem corpo cru da API. */
+export function checkoutHttpMessage(status: number, body: unknown) {
+  if (status === 401 || status === 403) return checkoutMessages.rejectedKey;
+  if (status >= 500) return `${checkoutMessages.down} (${status}).`;
+  if (status === 400 || status === 422) {
+    return withDetail(checkoutMessages.rejectedData, readCheckoutDetail(body));
+  }
+  return withDetail(
+    `A InfinitePay recusou o link (${status}).`,
+    readCheckoutDetail(body),
+  );
+}
+
 async function postInfinitePay(
   path: string,
   apiKey: string,
@@ -210,7 +258,7 @@ async function postInfinitePay(
     if (isTimeout(error)) {
       throw new CheckoutLinkError(checkoutMessages.timeout);
     }
-    throw new CheckoutLinkError(checkoutMessages.unavailable);
+    throw new CheckoutLinkError(checkoutMessages.network);
   }
 
   const text = await response.text();
@@ -244,7 +292,7 @@ function buildLinkPayload(order: ICheckoutOrder, config: IInfinitePayConfig) {
 
   const sum = items.reduce((total, item) => total + item.price * item.quantity, 0);
   if (sum !== toCents(order.total) || items.length === 0) {
-    throw new CheckoutLinkError(checkoutMessages.unavailable);
+    throw new CheckoutLinkError(checkoutMessages.total);
   }
 
   // A API só aceita desconto percentual no link inteiro. O percentual
@@ -317,7 +365,7 @@ export async function createCheckoutLink(
   const config = readConfig(env);
   if (!config) {
     console.error("Checkout InfinitePay não configurado.");
-    throw new CheckoutLinkError(checkoutMessages.unavailable);
+    throw new CheckoutLinkError(checkoutMessages.notConfigured);
   }
 
   const payload = buildLinkPayload(order, config);
@@ -355,14 +403,15 @@ export async function createCheckoutLink(
   }
 
   if (!result.ok) {
+    const message = checkoutHttpMessage(result.status, result.body);
     console.error(`Checkout InfinitePay falhou (${result.status}).`);
-    throw new CheckoutLinkError(checkoutMessages.unavailable);
+    throw new CheckoutLinkError(message);
   }
 
   const checkoutUrl = readCheckoutUrl(result.body);
   if (!checkoutUrl) {
     console.error("Checkout InfinitePay respondeu sem URL.");
-    throw new CheckoutLinkError(checkoutMessages.unavailable);
+    throw new CheckoutLinkError(checkoutMessages.noUrl);
   }
 
   return checkoutUrl;

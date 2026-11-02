@@ -198,17 +198,36 @@ describe("createCheckoutLink", () => {
   });
 
   it("fails on 4xx, 5xx, timeout and a response without a checkout url", async () => {
-    for (const status of [400, 502]) {
-      mock.method(globalThis, "fetch", async () =>
-        jsonResponse({ message: apiKey }, status),
+    mock.method(globalThis, "fetch", async () =>
+      jsonResponse({ message: apiKey }, 400),
+    );
+    await assert.rejects(createCheckoutLink(order), (error: Error) => {
+      assert.equal(error.message, checkoutMessages.rejectedData);
+      assert.equal(error.message.includes(apiKey), false);
+      return true;
+    });
+    mock.restoreAll();
+
+    mock.method(globalThis, "fetch", async () =>
+      jsonResponse({ message: "Handle inválido" }, 422),
+    );
+    await assert.rejects(createCheckoutLink(order), (error: Error) => {
+      assert.equal(
+        error.message,
+        `${checkoutMessages.rejectedData} Handle inválido.`,
       );
-      await assert.rejects(createCheckoutLink(order), (error: Error) => {
-        assert.equal(error.message, checkoutMessages.unavailable);
-        assert.equal(error.message.includes(apiKey), false);
-        return true;
-      });
-      mock.restoreAll();
-    }
+      assert.equal(error.message.includes(apiKey), false);
+      return true;
+    });
+    mock.restoreAll();
+
+    mock.method(globalThis, "fetch", async () => jsonResponse({ message: "down" }, 502));
+    await assert.rejects(createCheckoutLink(order), (error: Error) => {
+      assert.equal(error.message, `${checkoutMessages.down} (502).`);
+      assert.equal(error.message.includes(apiKey), false);
+      return true;
+    });
+    mock.restoreAll();
 
     mock.method(globalThis, "fetch", async () => {
       throw new DOMException("The operation was aborted", "TimeoutError");
@@ -219,12 +238,21 @@ describe("createCheckoutLink", () => {
     );
     mock.restoreAll();
 
+    mock.method(globalThis, "fetch", async () => {
+      throw new TypeError("fetch failed");
+    });
+    await assert.rejects(
+      createCheckoutLink(order),
+      (error: Error) => error.message === checkoutMessages.network,
+    );
+    mock.restoreAll();
+
     mock.method(globalThis, "fetch", async () =>
       jsonResponse({ checkout_url: "https://evil.example/pay" }),
     );
     await assert.rejects(
       createCheckoutLink(order),
-      (error: Error) => error.message === checkoutMessages.unavailable,
+      (error: Error) => error.message === checkoutMessages.noUrl,
     );
   });
 
@@ -236,7 +264,7 @@ describe("createCheckoutLink", () => {
 
     await assert.rejects(
       createCheckoutLink(order),
-      (error: Error) => error.message === checkoutMessages.unavailable,
+      (error: Error) => error.message === checkoutMessages.notConfigured,
     );
     assert.equal(fetchMock.mock.callCount(), 0);
   });
