@@ -7,7 +7,6 @@ import {
   LayoutDashboard,
   LogOut,
   Package,
-  Plus,
   type LucideIcon,
 } from "lucide-react";
 import Image from "next/image";
@@ -25,24 +24,20 @@ interface IAdminShellProps {
   children: React.ReactNode;
 }
 
-const navItems: {
+interface INavItem {
   href: string;
   label: string;
   icon: LucideIcon;
   exact: boolean;
-}[] = [
+}
+
+const navItems: INavItem[] = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   {
     href: "/admin/orders",
     label: "Pedidos",
     icon: ClipboardList,
     exact: false,
-  },
-  {
-    href: "/admin/orders/new",
-    label: "Novo pedido",
-    icon: Plus,
-    exact: true,
   },
   { href: "/admin/products", label: "Produtos", icon: Package, exact: false },
   { href: "/admin/stock", label: "Estoque", icon: Boxes, exact: true },
