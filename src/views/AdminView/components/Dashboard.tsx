@@ -1,5 +1,7 @@
-import { IDashboardMetrics } from "@/types/dashboard";
+import { buildDashboardOrdersHref } from "@/lib/dashboard-month";
+import { IDashboardMetrics, IDashboardPeriod } from "@/types/dashboard";
 import Attention from "@/views/AdminView/components/Attention";
+import MonthFilter from "@/views/AdminView/components/MonthFilter";
 import OrdersByStatus from "@/views/AdminView/components/OrdersByStatus";
 import {
   BookOpen,
@@ -27,6 +29,10 @@ function formatarMoeda(valor: number | null) {
   return moeda.format(valor);
 }
 
+function emMes(label: string) {
+  return label.charAt(0).toLocaleLowerCase("pt-BR") + label.slice(1);
+}
+
 interface IMetricCard {
   label: string;
   value: string;
@@ -47,6 +53,7 @@ interface IMetricCard {
 
 interface IDashboardProps {
   metrics: IDashboardMetrics;
+  period: IDashboardPeriod;
 }
 
 interface IMetricProps {
@@ -74,7 +81,7 @@ function Icon({ name }: IMetricIconProps) {
   return <Glyph size={20} aria-hidden />;
 }
 
-export default function Dashboard({ metrics }: IDashboardProps) {
+export default function Dashboard({ metrics, period }: IDashboardProps) {
   const comercial: IMetricCard[] = [
     {
       label: "Receita",
@@ -98,7 +105,9 @@ export default function Dashboard({ metrics }: IDashboardProps) {
     {
       label: "Vendas",
       value: String(metrics.orders),
-      hint: "Pedidos registrados, de qualquer status",
+      hint: period.month
+        ? "Pedidos criados neste mês"
+        : "Pedidos registrados, de qualquer status",
       icon: "sales",
     },
   ];
@@ -141,30 +150,35 @@ export default function Dashboard({ metrics }: IDashboardProps) {
             Dashboard
           </h1>
           <p className="mt-2 max-w-140 text-[0.9375rem] text-ink-secondary">
-            Movimento comercial e posição atual do catálogo NIX.
+            {period.label
+              ? `Pedidos de ${emMes(period.label)}. Catálogo e alertas seguem na posição atual.`
+              : "Pedidos de todos os meses. Catálogo e alertas seguem na posição atual."}
           </p>
         </div>
-        <div className="flex flex-wrap gap-3">
-          <Link
-            href="/admin/orders"
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-pill border border-border-hairline bg-surface-card px-5 text-sm font-semibold text-ink-primary transition-[border-color,background-color,color] duration-200 ease-nix hover:border-[rgba(23,107,255,0.35)] hover:bg-brand-blue-subtle hover:text-brand-blue-hover"
-          >
-            Ver pedidos
-          </Link>
-          <Link
-            href="/admin/orders/new"
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-pill bg-brand-blue px-5 text-sm font-semibold text-ink-inverse transition-[background-color] duration-200 ease-nix hover:bg-brand-blue-hover"
-          >
-            <Plus size={16} aria-hidden />
-            Novo pedido
-          </Link>
-          <Link
-            href="/admin/products/new"
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-pill border border-border-hairline bg-surface-card px-5 text-sm font-semibold text-ink-primary transition-[border-color,background-color,color] duration-200 ease-nix hover:border-[rgba(23,107,255,0.35)] hover:bg-brand-blue-subtle hover:text-brand-blue-hover"
-          >
-            <Plus size={16} aria-hidden />
-            Novo produto
-          </Link>
+        <div className="flex flex-col gap-3">
+          <MonthFilter period={period} />
+          <div className="flex flex-wrap gap-3 min-[1081px]:justify-end">
+            <Link
+              href={buildDashboardOrdersHref(period.month)}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-pill border border-border-hairline bg-surface-card px-5 text-sm font-semibold text-ink-primary transition-[border-color,background-color,color] duration-200 ease-nix hover:border-[rgba(23,107,255,0.35)] hover:bg-brand-blue-subtle hover:text-brand-blue-hover"
+            >
+              Ver pedidos
+            </Link>
+            <Link
+              href="/admin/orders/new"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-pill bg-brand-blue px-5 text-sm font-semibold text-ink-inverse transition-[background-color] duration-200 ease-nix hover:bg-brand-blue-hover"
+            >
+              <Plus size={16} aria-hidden />
+              Novo pedido
+            </Link>
+            <Link
+              href="/admin/products/new"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-pill border border-border-hairline bg-surface-card px-5 text-sm font-semibold text-ink-primary transition-[border-color,background-color,color] duration-200 ease-nix hover:border-[rgba(23,107,255,0.35)] hover:bg-brand-blue-subtle hover:text-brand-blue-hover"
+            >
+              <Plus size={16} aria-hidden />
+              Novo produto
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -187,12 +201,13 @@ export default function Dashboard({ metrics }: IDashboardProps) {
               Comercial
             </h2>
             <p className="mt-2 max-w-140 text-[0.9375rem] text-ink-secondary">
-              Pedidos feitos no site. Cancelados, expirados e ainda não pagos
-              ficam fora da receita.
+              {period.label
+                ? `Pedidos criados em ${emMes(period.label)}. Cancelados, expirados e ainda não pagos ficam fora da receita.`
+                : "Pedidos feitos no site. Cancelados, expirados e ainda não pagos ficam fora da receita."}
             </p>
           </div>
           <Link
-            href="/admin/orders"
+            href={buildDashboardOrdersHref(period.month)}
             className="inline-flex min-h-10 shrink-0 items-center text-sm font-semibold text-brand-blue-hover transition-colors hover:text-brand-blue"
           >
             Ver todos os pedidos
@@ -206,6 +221,7 @@ export default function Dashboard({ metrics }: IDashboardProps) {
         <OrdersByStatus
           orders={metrics.orders}
           ordersByStatus={metrics.ordersByStatus}
+          month={period.month}
         />
       </section>
 

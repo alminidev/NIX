@@ -1,9 +1,20 @@
 import "server-only";
+import { getDashboardMonthRange } from "@/lib/dashboard-month";
 import { orderStatuses, paidOrderStatuses } from "@/lib/order-status";
 import { prisma } from "@/lib/prisma";
 import type { IDashboardMetrics } from "@/types/dashboard";
 
-export async function getDashboardMetrics(): Promise<IDashboardMetrics> {
+/**
+ * Métricas do painel. `month` (YYYY-MM) limita pedidos criados naquele mês
+ * em Brasília. Alertas (aguardando pagamento e revisão) e o catálogo ficam
+ * na posição atual, sem recorte.
+ */
+export async function getDashboardMetrics(
+  month: string | null = null,
+): Promise<IDashboardMetrics> {
+  const range = month ? getDashboardMonthRange(month) : null;
+  const createdAt = range ? { gte: range.gte, lt: range.lt } : null;
+
   const [
     activeProducts,
     categories,
@@ -12,6 +23,7 @@ export async function getDashboardMetrics(): Promise<IDashboardMetrics> {
     featuredProducts,
     outOfStock,
     orderGroups,
+    awaitingPayment,
     paymentReviews,
   ] = await Promise.all([
     prisma.product.count({ where: { active: true } }),
@@ -44,9 +56,11 @@ export async function getDashboardMetrics(): Promise<IDashboardMetrics> {
     }),
     prisma.order.groupBy({
       by: ["status"],
+      where: createdAt ? { createdAt } : undefined,
       _count: { _all: true },
       _sum: { total: true, discount: true },
     }),
+    prisma.order.count({ where: { status: "AWAITING_PAYMENT" } }),
     prisma.order.count({ where: { paymentReview: true } }),
   ]);
 
@@ -73,9 +87,7 @@ export async function getDashboardMetrics(): Promise<IDashboardMetrics> {
   return {
     orders: ordersByStatus.reduce((sum, item) => sum + item.count, 0),
     ordersByStatus,
-    awaitingPayment:
-      ordersByStatus.find((item) => item.status === "AWAITING_PAYMENT")
-        ?.count ?? 0,
+    awaitingPayment,
     paymentReviews,
     paidOrders,
     revenue: revenueCents / 100,

@@ -26,7 +26,11 @@ describe(
     let productId: number;
     let counter = 0;
 
-    async function createOrder(status: OrderStatus, total: number) {
+    async function createOrder(
+      status: OrderStatus,
+      total: number,
+      createdAt?: Date,
+    ) {
       counter += 1;
       return prisma.order.create({
         data: {
@@ -42,6 +46,7 @@ describe(
           neighborhood: "Bela Vista",
           city: "São Paulo",
           state: "SP",
+          ...(createdAt ? { createdAt } : {}),
           items: { create: [{ quantity: 1, unitPrice: total, productId }] },
         },
       });
@@ -133,6 +138,50 @@ describe(
         metrics.orders,
         metrics.ordersByStatus.reduce((sum, item) => sum + item.count, 0),
       );
+    });
+
+    it("limits order metrics to the selected month and keeps open payments global", async () => {
+      const allBefore = await getDashboardMetrics();
+      const octoberBefore = await getDashboardMetrics("2020-10");
+      const novemberBefore = await getDashboardMetrics("2020-11");
+
+      // 31/10 23:30 em Brasília ainda é outubro; 00:00 de 01/11 já é novembro.
+      await createOrder(
+        "PAID",
+        150,
+        new Date("2020-10-15T15:00:00-03:00"),
+      );
+      await createOrder(
+        "SHIPPED",
+        10,
+        new Date("2020-11-01T02:30:00.000Z"),
+      );
+      await createOrder(
+        "AWAITING_PAYMENT",
+        80,
+        new Date("2020-11-02T12:00:00-03:00"),
+      );
+      await createOrder("PAID", 40, new Date("2020-11-01T03:00:00.000Z"));
+
+      const october = await getDashboardMetrics("2020-10");
+      const november = await getDashboardMetrics("2020-11");
+      const allAfter = await getDashboardMetrics();
+
+      assert.equal(october.orders - octoberBefore.orders, 2);
+      assert.equal(october.paidOrders - octoberBefore.paidOrders, 2);
+      assert.equal(
+        Math.round((october.revenue - octoberBefore.revenue) * 100),
+        16000,
+      );
+      assert.equal(november.orders - novemberBefore.orders, 2);
+      assert.equal(november.paidOrders - novemberBefore.paidOrders, 1);
+      assert.equal(
+        Math.round((november.revenue - novemberBefore.revenue) * 100),
+        4000,
+      );
+      assert.equal(allAfter.orders - allBefore.orders, 4);
+      assert.equal(october.awaitingPayment - octoberBefore.awaitingPayment, 1);
+      assert.equal(november.awaitingPayment, october.awaitingPayment);
     });
 
     it("derives the average ticket from revenue and paid orders", async () => {

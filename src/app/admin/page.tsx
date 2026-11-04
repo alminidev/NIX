@@ -1,3 +1,4 @@
+import { parseDashboardMonth } from "@/lib/dashboard-month";
 import { getDashboardMetrics } from "@/lib/dashboard";
 import { getSession } from "@/lib/session";
 import { AdminView } from "@/views/AdminView";
@@ -11,19 +12,24 @@ export const metadata: Metadata = {
 
 export const instant = false;
 
-async function Admin() {
+interface IAdminPageProps {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}
+
+async function Admin({ searchParams }: IAdminPageProps) {
   const session = await getSession();
 
   if (session?.user.role !== "admin") {
     return null;
   }
 
-  const metrics = await getDashboardMetrics();
+  const period = parseDashboardMonth(await searchParams);
+  const metrics = await getDashboardMetrics(period.month);
 
-  return <AdminView metrics={metrics} />;
+  return <AdminView metrics={metrics} period={period} />;
 }
 
-export default async function AdminWrapper() {
+export default function AdminWrapper({ searchParams }: IAdminPageProps) {
   return (
     <Suspense
       fallback={
@@ -32,7 +38,7 @@ export default async function AdminWrapper() {
         </p>
       }
     >
-      <Admin />
+      <Admin searchParams={searchParams} />
     </Suspense>
   );
 }

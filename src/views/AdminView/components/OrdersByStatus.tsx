@@ -1,3 +1,4 @@
+import { buildDashboardOrdersHref } from "@/lib/dashboard-month";
 import { orderStatusLabels } from "@/lib/order-status";
 import type { IDashboardMetrics } from "@/types/dashboard";
 import { statusDotClasses } from "@/views/AdminView/components/status-colors";
@@ -6,6 +7,8 @@ import Link from "next/link";
 interface IOrdersByStatusProps {
   orders: IDashboardMetrics["orders"];
   ordersByStatus: IDashboardMetrics["ordersByStatus"];
+  /** YYYY-MM do filtro; null mostra todos os meses */
+  month: string | null;
 }
 
 function formatShare(count: number, total: number) {
@@ -19,6 +22,7 @@ function formatShare(count: number, total: number) {
 export default function OrdersByStatus({
   orders,
   ordersByStatus,
+  month,
 }: IOrdersByStatusProps) {
   const summary = ordersByStatus
     .filter((item) => item.count > 0)
@@ -60,7 +64,7 @@ export default function OrdersByStatus({
         {ordersByStatus.map((item) => (
           <li key={item.status}>
             <Link
-              href={`/admin/orders?status=${item.status}`}
+              href={buildDashboardOrdersHref(month, { status: item.status })}
               aria-label={`${orderStatusLabels[item.status]}: ${item.count} ${item.count === 1 ? "pedido" : "pedidos"}. Ver na lista`}
               className="flex h-full min-h-14 items-center gap-3 rounded-input border border-border-hairline px-3.5 py-2.5 transition-[border-color,background-color] duration-200 ease-nix hover:border-[rgba(23,107,255,0.35)] hover:bg-brand-blue-subtle focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-border-focus"
             >
@@ -86,7 +90,9 @@ export default function OrdersByStatus({
 
       {orders === 0 ? (
         <p className="mt-4 text-[0.8125rem] text-ink-muted">
-          Nenhum pedido ainda. Os pedidos do site aparecem aqui.
+          {month
+            ? "Nenhum pedido neste mês."
+            : "Nenhum pedido ainda. Os pedidos do site aparecem aqui."}
         </p>
       ) : null}
     </div>

@@ -24,6 +24,16 @@ export interface IOrdersByStatus {
   count: number;
 }
 
+/** Recorte mensal da dashboard. `month` null mostra todos os meses. */
+export interface IDashboardPeriod {
+  /** YYYY-MM, ou null para todos os meses */
+  month: string | null;
+  /** "Novembro de 2026"; null quando não há mês */
+  label: string | null;
+  /** YYYY-MM de agora em Brasília; teto do seletor */
+  currentMonth: string;
+}
+
 export interface IDashboardMetrics {
   /** Todos os pedidos, de qualquer status */
   orders: number;
