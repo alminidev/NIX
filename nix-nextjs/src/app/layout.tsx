@@ -65,8 +65,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    site: '@nix_impressoes3d',
-    creator: '@nix_impressoes3d',
+    site: '@nix3d_',
+    creator: '@nix3d_',
     title: 'NIX 3D — Mobiliário Técnico e Dry Box para Impressão 3D',
     description:
       'Móveis técnicos e estufas Dry Box com controle térmico ativo (< 20% UR) para filamentos de impressora 3D.',

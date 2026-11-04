@@ -1,4 +1,4 @@
-/* ==========================================================================
+﻿/* ==========================================================================
    NIX — DESIGN SYSTEM & VISUAL BLUEPRINT
    Implementação estrita de 04-design/design-system.md
    Stack: Next.js + React + TypeScript (migrado de HTML5 / CSS3 Puro)
@@ -320,6 +320,55 @@ h3 {
 
 .btn-cart:active {
   opacity: 0.5;
+}
+
+/* Botão Menu Hambúrguer (Desktop: oculto) */
+.btn-hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 40px;
+  height: 40px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-button, 6px);
+  cursor: pointer;
+  padding: 8px;
+  color: var(--color-ink-primary);
+  transition: background-color var(--transition-fast);
+}
+
+.btn-hamburger:hover {
+  background-color: var(--color-surface-canvas-fog);
+}
+
+.hamburger-bar {
+  display: block;
+  width: 20px;
+  height: 2px;
+  background-color: currentColor;
+  border-radius: 2px;
+  transition: transform 0.22s ease, opacity 0.2s ease;
+}
+
+.btn-hamburger.active .hamburger-bar:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.btn-hamburger.active .hamburger-bar:nth-child(2) {
+  opacity: 0;
+  transform: scaleX(0);
+}
+
+.btn-hamburger.active .hamburger-bar:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+/* Menu Mobile Dropdown (Desktop: oculto) */
+.mobile-nav {
+  display: none;
 }
 
 .btn-cart img,
@@ -741,15 +790,22 @@ h3 {
 }
 
 .logistics-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   gap: 24px;
+  width: 100%;
 }
 
 .logistics-card {
   display: flex;
-  align-items: flex-start;
-  gap: 16px;
+  flex-direction: column;
+  flex: 0 1 auto;
+  max-width: 270px;
+}
+
+.logistics-card:last-child {
+  text-align: right;
 }
 
 .logistics-icon {
@@ -1017,6 +1073,17 @@ h3 {
   max-width: 360px;
 }
 
+.footer-brand-logo {
+  display: block;
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-ink-inverse);
+  margin-bottom: 16px;
+  line-height: 1;
+}
+
 .footer-brand img {
   height: 28px;
   margin-bottom: 16px;
@@ -1069,6 +1136,16 @@ h3 {
   color: rgba(255, 255, 255, 0.8);
 }
 
+.footer-bottom a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.footer-bottom a:hover {
+  color: var(--color-ink-inverse);
+}
+
 /* --- 11. RESPONSIVIDADE (MEDIA QUERIES) --- */
 
 /* Tablets & Telas Médias */
@@ -1079,7 +1156,104 @@ h3 {
 
   .nav-links {
     display: none;
-    /* Simplificado no mobile/tablet para manter foco */
+  }
+
+  /* Menu Hambúrguer & Dropdown Mobile */
+  .btn-hamburger {
+    display: flex;
+  }
+
+  .mobile-nav {
+    display: block;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background-color: #ffffff;
+    border-bottom: 1px solid var(--color-border-hairline);
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.1);
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    pointer-events: none;
+    transition: max-height 0.32s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+    z-index: 99;
+  }
+
+  .mobile-nav.open {
+    max-height: 240px;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .mobile-nav-container {
+    padding: 20px var(--container-padding);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .mobile-nav-links {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+  }
+
+  .mobile-nav-link {
+    font-size: 1.0625rem;
+    font-weight: 600;
+    color: var(--color-ink-primary);
+    padding: 8px 0;
+    display: block;
+    text-decoration: none;
+    transition: color var(--transition-fast);
+  }
+
+  .mobile-nav-link:hover,
+  .mobile-nav-link:active {
+    color: var(--color-brand-blue);
+  }
+
+  .mobile-nav-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-top: 16px;
+    border-top: 1px solid var(--color-border-hairline);
+  }
+
+  .btn-mobile-contact {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 44px;
+    background-color: var(--color-brand-blue);
+    color: #ffffff;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border-radius: var(--radius-button, 6px);
+    text-decoration: none;
+    transition: background-color var(--transition-fast);
+  }
+
+  .btn-mobile-contact:hover {
+    background-color: var(--color-brand-blue-hover);
+  }
+
+  .link-mobile-social {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--color-ink-secondary);
+    text-align: center;
+    text-decoration: none;
+  }
+
+  .link-mobile-social:hover {
+    color: var(--color-brand-blue);
+    text-decoration: underline;
   }
 
   .products-subgrid.grid-3-cols,
@@ -1095,8 +1269,62 @@ h3 {
   }
 
   .logistics-grid {
+    display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 20px;
+  }
+
+  .logistics-card,
+  .logistics-card:last-child {
+    max-width: none;
+    text-align: left;
+  }
+}
+
+/* --- HERO ADAPTADA PARA MOBILE (IMAGEM ORIGINAL COMPLETA E PROPORCIONAL) --- */
+@media (max-width: 768px) {
+  .hero-stage {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    min-height: unset;
+    height: auto;
+    max-height: none;
+    background: transparent;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    overflow: hidden;
+    padding: 0;
+  }
+
+  .hero-media-wrapper {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    z-index: 1;
+  }
+
+  .hero-media-wrapper img {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    object-fit: contain;
+    object-position: center bottom;
+    display: block;
+    bottom: auto;
+    left: auto;
+  }
+
+  /* Texto da Hero ocultado exclusivamente na versão mobile */
+  .hero-stage .hero-container {
+    display: none;
   }
 }
 
@@ -1112,11 +1340,7 @@ h3 {
   }
 
   .hero-stage {
-    min-height: 400px;
-  }
-
-  .hero-stage .hero-container {
-    padding-top: 14px;
+    min-height: unset;
   }
 
   .products-subgrid.grid-3-cols,

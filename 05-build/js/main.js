@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
   inicializarCabecalho();
   configurarBotoesCheckout();
   inicializarScrollSpy();
+  inicializarMenuMobile();
 });
 
 /**
@@ -38,8 +39,8 @@ function renderizarProdutos() {
          </ul>`
       : '';
 
-    const badgeDestaqueHtml = produto.destaque 
-      ? `<span class="tag-featured">Mais Escolhido</span>` 
+    const badgeDestaqueHtml = produto.destaque
+      ? `<span class="tag-featured">Mais Escolhido</span>`
       : '';
 
     return `
@@ -127,9 +128,9 @@ function renderizarProdutos() {
     <!-- Grupo 1: Armários Dry Box -->
     <div class="catalog-group">
       <div class="catalog-group-header">
-        <span class="catalog-group-kicker">Armazenamento Ativo</span>
-        <h3 class="catalog-group-title">Armários de Filamentos Dry Box</h3>
-        <p class="catalog-group-desc">Estufas estanques com desumidificação ativa permanente para 12, 24 ou 48 filamentos.</p>
+        <span class="catalog-group-kicker">CONHEÇA NOSSAS SOLUÇÕES</span>
+        <h3 class="catalog-group-title">DRY BOX</h3>
+        <p class="catalog-group-desc">Seus filamentos protegidos da umidade, seu setup mais organizado e sua impressão 3D em outro nível.</p>
       </div>
       <div class="products-subgrid grid-3-cols">
         ${armariosDryBox.map(gerarCardHtml).join('')}
@@ -143,8 +144,8 @@ function renderizarProdutos() {
     <div class="catalog-group">
       <div class="catalog-group-header">
         <span class="catalog-group-kicker">Estações Integradas</span>
-        <h3 class="catalog-group-title">Dry Box Station Combos</h3>
-        <p class="catalog-group-desc">Soluções completas com bancada integrada antivibração e armazenamento climatizado para Bambu Lab.</p>
+        <h3 class="catalog-group-title">DRY BOX STATION</h3>
+        <p class="catalog-group-desc">AMS integrado, filamentos protegidos e mais capacidade de armazenamento. Tudo em uma única estação, projetada para elevar seu setup Bambu Lab.</p>
       </div>
       <div class="products-subgrid grid-2-cols">
         ${estacoesSetupLab.map(gerarCardHtml).join('')}
@@ -153,7 +154,7 @@ function renderizarProdutos() {
 
     <!-- Aviso Oficial de Ilustração -->
     <div class="catalog-disclaimer" role="note">
-      <p><strong>Observação Importante:</strong> Imagens ilustrativas. A impressora e os filamentos não acompanham o produto.</p>
+      <p><strong>Observação Importante:</strong> Imagens ilustrativas. A impressora, o AMS e os filamentos não acompanham o produto.</p>
     </div>
   `;
 }
@@ -249,4 +250,49 @@ function inicializarScrollSpy() {
       }
     }, { passive: true });
   }
+}
+
+/**
+ * Gerencia abertura, fechamento e acessibilidade do menu mobile hambúrguer
+ */
+function inicializarMenuMobile() {
+  const btnToggle = document.getElementById('btn-mobile-menu');
+  const menuNav = document.getElementById('mobile-nav');
+  if (!btnToggle || !menuNav) return;
+
+  const toggleMenu = (open) => {
+    const isOpen = open !== undefined ? open : !menuNav.classList.contains('open');
+    menuNav.classList.toggle('open', isOpen);
+    btnToggle.classList.toggle('active', isOpen);
+    btnToggle.setAttribute('aria-expanded', String(isOpen));
+    if (isOpen) {
+      menuNav.removeAttribute('aria-hidden');
+    } else {
+      menuNav.setAttribute('aria-hidden', 'true');
+    }
+  };
+
+  btnToggle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleMenu();
+  });
+
+  menuNav.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', () => {
+      toggleMenu(false);
+    });
+  });
+
+  document.addEventListener('click', (e) => {
+    if (menuNav.classList.contains('open') && !menuNav.contains(e.target) && !btnToggle.contains(e.target)) {
+      toggleMenu(false);
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && menuNav.classList.contains('open')) {
+      toggleMenu(false);
+      btnToggle.focus();
+    }
+  });
 }

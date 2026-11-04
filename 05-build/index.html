@@ -55,8 +55,8 @@
 
   <!-- Twitter / X Card -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:site" content="@nix_impressoes3d">
-  <meta name="twitter:creator" content="@nix_impressoes3d">
+  <meta name="twitter:site" content="@nix3d_">
+  <meta name="twitter:creator" content="@nix3d_">
   <meta name="twitter:title" content="NIX 3D — Mobiliário Técnico e Dry Box para Impressão 3D">
   <meta name="twitter:description"
     content="Móveis técnicos e estufas Dry Box com controle térmico ativo (&lt; 20% UR) para filamentos de impressora 3D. Elimine umidade e organize seu setup com precisão industrial.">
@@ -104,7 +104,7 @@
         },
         "image": "https://nix3d.com.br/images/hero-showroom-oficial.png",
         "description": "Fabricação de móveis técnicos e estufas Dry Box com controle térmico ativo para armazenamento seguro de filamentos de impressão 3D e setups Bambu Lab.",
-        "telephone": "+5511992922119",
+        "telephone": "+5511941692023",
         "email": "contato@nix3d.com.br",
         "priceRange": "R$ 1.190,00 - R$ 2.600,00",
         "currenciesAccepted": "BRL",
@@ -125,7 +125,7 @@
           "name": "Brasil"
         },
         "sameAs": [
-          "https://instagram.com/nix_impressoes3d",
+          "https://www.instagram.com/nix3d_",
           "https://checkout.infinitepay.io/nix3d"
         ]
       },
@@ -291,18 +291,18 @@
         "mainEntity": [
           {
             "@type": "Question",
-            "name": "Como funciona a entrega por transportadora?",
+            "name": "Quais filamentos posso armazenar na Dry Box?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Nossos móveis e estufas são despachados em embalagens técnicas de alta proteção com transportadoras especializadas em cargas sensíveis. Ao clicar em 'Comprar', você será direcionado para o checkout onde o frete é calculado de acordo com seu CEP. Enviamos para todo o Brasil."
+              "text": "A Dry Box foi desenvolvida para armazenar diferentes tipos de filamentos utilizados na impressão 3D, incluindo PLA, ABS, PETG, TPU e Nylon."
             }
           },
           {
             "@type": "Question",
-            "name": "Quais tipos e marcas de filamentos cabem nas Dry Boxes?",
+            "name": "Quais as marcas de filamentos que cabem na Dry Box?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Todos os modelos comportam bobinas padrão universais de 1kg (diâmetro de 200mm) para filamentos de qualquer marca (Bambu Lab, Polymaker, eSun, Creality, 3D Prime). Os modelos de alta capacidade (Dry Box 48) também acomodam bobinas industriais de 2,5kg e 3kg de filamentos."
+              "text": "Todos os modelos comportam bobinas de padrão universal de 1kg (diâmetro de 200mm) para filamentos de qualquer marca (Bambu Lab, Polymaker, eSun, Creality, 3D Prime). Os modelos de alta capacidade (Dry Box 48 ou 64) também acomodam bobinas industriais de 2,5kg e 3kg de filamentos."
             }
           },
           {
@@ -310,15 +310,39 @@
             "name": "Qual é o consumo elétrico do sistema de controle térmico?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "O consumo é ultraeficiente. Uma vez atingida a temperatura e umidade programadas (< 20% UR), o isolamento térmico do armário retém o calor e o sistema atua em regime de manutenção, com consumo médio comparável a uma lâmpada LED comum (bivolt automático 110V/220V)."
+              "text": "É utilizado o sistema de aquecimento por PTC, uma tecnologia de última geração que proporciona aquecimento eficiente com baixo consumo de energia. Em testes com funcionamento contínuo de 24 horas, o consumo mensal estimado foi de aproximadamente 40 kWh."
             }
           },
           {
             "@type": "Question",
-            "name": "Como é feito o pagamento e a segurança da compra?",
+            "name": "A Dry Box Station é compatível com quais impressoras?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "A transação é processada diretamente pelo gateway seguro da InfinitePay, com criptografia de ponta a ponta e suporte a Pix e cartão de crédito em até 3x sem juros."
+              "text": "A Dry Box Station foi desenvolvida especialmente para as impressoras Bambu Lab A1 e A2L, permitindo integrar o AMS ao interior da estufa e ampliar a capacidade de armazenamento de filamentos. Porém, nada impede a utilização de outros modelos ou marcas de impressoras compatíveis com o tamanho da mesa."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Quais são as formas de pagamento?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "O pagamento é processado pela InfinitePay, em ambiente seguro. Aceitamos Pix e cartão de crédito em até 3x sem juros."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Os produtos possuem garantia?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Sim! Nossos produtos possuem garantia de 90 dias contra defeitos de fabricação, conforme as condições descritas no manual de instruções. Também possuímos equipamentos de substituição caso necessário."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Posso solicitar suporte após a compra?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Claro! Nossa equipe está disponível para auxiliar com dúvidas sobre instalação, configuração e utilização dos produtos. Entre em contato pelo nosso canal de atendimento."
             }
           }
         ]
@@ -355,8 +379,27 @@
           rel="noopener noreferrer" aria-label="Ir para o carrinho de compras seguro" title="Carrinho de Compras">
           <img src="images/carrinho_vetorizado.svg" alt="Carrinho de compras" width="21" height="17">
         </a>
+
+        <!-- Botão Menu Hambúrguer (Mobile) -->
+        <button id="btn-mobile-menu" class="btn-hamburger" type="button" aria-label="Abrir menu de navegação"
+          aria-expanded="false" aria-controls="mobile-nav">
+          <span class="hamburger-bar"></span>
+          <span class="hamburger-bar"></span>
+          <span class="hamburger-bar"></span>
+        </button>
       </div>
     </div>
+
+    <!-- Gaveta / Dropdown Menu Mobile -->
+    <nav id="mobile-nav" class="mobile-nav" aria-label="Navegação Mobile">
+      <div class="container mobile-nav-container">
+        <ul class="mobile-nav-links">
+          <li><a href="#produtos" class="mobile-nav-link">Produtos</a></li>
+          <li><a href="#diferenciais" class="mobile-nav-link">Diferenciais</a></li>
+          <li><a href="#faq" class="mobile-nav-link">Dúvidas Frequentes</a></li>
+        </ul>
+      </div>
+    </nav>
   </header>
 
   <!-- ==========================================
@@ -386,10 +429,10 @@
       <div class="container">
         <header class="section-header">
           <span class="kicker">Catálogo Oficial</span>
-          <h2>Linha NIX Dry Box & Setup Lab</h2>
+          <h2>Linha Dry Box & Dry Box Station</h2>
           <p>
-            Engenharia de precisão para armazenar e imprimir direto da estufa. Escolha a capacidade sob medida para o
-            seu volume de produção.
+            A NIX transforma o armazenamento de filamentos em uma experiência mais prática, funcional e eficiente.
+            Descubra a Dry Box ideal para o seu setup.
           </p>
         </header>
 
@@ -454,29 +497,13 @@
         <div class="logistics-grid">
 
           <div class="logistics-card">
-            <div class="logistics-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round">
-                <rect x="1" y="3" width="15" height="13"></rect>
-                <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
-                <circle cx="5.5" cy="18.5" r="2.5"></circle>
-                <circle cx="18.5" cy="18.5" r="2.5"></circle>
-              </svg>
-            </div>
             <div class="logistics-content">
               <h3>Envio para Todo o Brasil</h3>
-              <p>Enviamos para todo o Brasil (Frete a consultar no checkout).</p>
+              <p>Enviamos para todo o Brasil (Frete a consultar).</p>
             </div>
           </div>
 
           <div class="logistics-card">
-            <div class="logistics-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round">
-                <rect x="2" y="5" width="20" height="14" rx="2"></rect>
-                <line x1="2" y1="10" x2="22" y2="10"></line>
-              </svg>
-            </div>
             <div class="logistics-content">
               <h3>Até 3x Sem Juros</h3>
               <p>Pagamento facilitado em até 3x sem juros no cartão de crédito.</p>
@@ -484,13 +511,6 @@
           </div>
 
           <div class="logistics-card">
-            <div class="logistics-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round">
-                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                <circle cx="12" cy="10" r="3"></circle>
-              </svg>
-            </div>
             <div class="logistics-content">
               <h3>Retirada no Local</h3>
               <p>Disponível para retirada no local em São Paulo.</p>
@@ -498,19 +518,11 @@
           </div>
 
           <div class="logistics-card">
-            <div class="logistics-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round">
-                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-              </svg>
-            </div>
             <div class="logistics-content">
               <h3>Instagram & Contato</h3>
-              <p><a href="https://instagram.com/nix_impressoes3d" target="_blank" rel="noopener noreferrer"
-                  class="link-social">@nix_impressoes3d</a> • <a
-                  href="https://wa.me/5511992922119?text=Ol%C3%A1!%20Gostaria%20de%20informa%C3%A7%C3%B5es%20sobre%20as%20Dry%20Boxes%20da%20NIX%203D"
+              <p><a href="https://www.instagram.com/nix3d_" target="_blank" rel="noopener noreferrer"
+                  class="link-social">@nix3d_</a> • <a
+                  href="https://wa.me/5511941692023?text=Ol%C3%A1!%20Gostaria%20de%20informa%C3%A7%C3%B5es%20sobre%20as%20Dry%20Boxes%20da%20NIX%203D"
                   target="_blank" rel="noopener noreferrer" class="link-social"
                   aria-label="Fale conosco via WhatsApp">Fale com a Nix</a></p>
             </div>
@@ -526,66 +538,42 @@
         <div class="features-grid">
 
           <div class="features-intro">
-            <span class="kicker">Engenharia & Precisão</span>
-            <h2>Desenvolvido para eliminar falhas antes que elas aconteçam.</h2>
+            <span class="kicker">TECNOLOGIA & PROTEÇÃO</span>
+            <h2>Mais cuidado com seus filamentos. Mais qualidade para suas impressões.</h2>
             <p>
-              Filamentos de engenharia como Nylon, TPU e PETG absorvem umidade do ar em poucas horas. A NIX criou a
-              primeira solução completa que une climatização hermética e estabilidade física em um único móvel.
+              Filamentos como Nylon, TPU e PETG são sensíveis à umidade. A NIX desenvolveu a primeira solução completa
+              que reúne controle de temperatura e umidade otimizando o armazenamento em um só equipamento, ajudando a
+              preservar seus materiais e a qualidade das impressões 3D.
             </p>
             <div class="features-badge-box">
               <strong>Padrão Estúdio Maker</strong>
-              <span>Compatível com sistemas Bambu Lab (AMS), Creality e impressoras CoreXY.</span>
+              <span>Dry Box para diferentes setups de impressão 3D. Dry Box Station com integração exclusiva para Bambu
+                Lab A1 e A2L.</span>
             </div>
           </div>
 
           <div class="features-items">
 
             <div class="feature-box">
-              <div class="feature-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24">
-                  <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"></path>
-                </svg>
-              </div>
-              <h3>Controle Térmico Ativo (&lt; 20% UR)</h3>
-              <p>Display digital com leitura contínua de temperatura e umidade. Desumidificação uniforme sem risco
-                de degradar filamentos.</p>
+              <h3>Controle inteligente</h3>
+              <p>Monitoramento digital com controlador STC-3028 e ajustes independentes para temperatura e umidade.</p>
             </div>
 
             <div class="feature-box">
-              <div class="feature-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                </svg>
-              </div>
-              <h3>Vedação Estanque Automotiva</h3>
-              <p>Perfis vedados com guarnições de alta durabilidade e portas com fecho magnético que isolam o interior
-                do ar ambiente.</p>
+              <h3>Estrutura robusta e sofisticada</h3>
+              <p>Construída em MDF texturizado, com excelente resistência e estabilidade para auxiliar na redução de
+                vibrações. Porta em vidro lapidado de 6 mm, unindo um acabamento perfeito.</p>
             </div>
 
             <div class="feature-box">
-              <div class="feature-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24">
-                  <path d="M12 2v20"></path>
-                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-                </svg>
-              </div>
-              <h3>Alimentação Direta sem Atrito</h3>
-              <p>Conectores pneumáticos para tubos PTFE no topo e laterais: imprima direto do móvel sem expor o
-                filamento à atmosfera.</p>
+              <h3>Sistema de Circulação de Ar</h3>
+              <p>Circulação de ar integrada para favorecer a distribuição da temperatura no interior da estufa.</p>
             </div>
 
             <div class="feature-box">
-              <div class="feature-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24">
-                  <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-                  <polyline points="2 17 12 22 22 17"></polyline>
-                  <polyline points="2 12 12 17 22 12"></polyline>
-                </svg>
-              </div>
-              <h3>Estrutura Rígida em Alumínio</h3>
-              <p>Projetado para absorver acelerações mecânicas de até 20.000 mm/s² das máquinas modernas sem oscilações
-                ou ruídos.</p>
+              <h3>Desumidificação ativa</h3>
+              <p>Sistema elétrico de desumidificação que auxilia no controle da umidade interna, contribuindo para a
+                conservação dos seus filamentos.</p>
             </div>
 
           </div>
@@ -606,29 +594,25 @@
 
           <details class="faq-item">
             <summary class="faq-summary">
-              <span>Como funciona a entrega por transportadora?</span>
+              <span>Quais filamentos posso armazenar na Dry Box?</span>
               <svg class="faq-chevron" viewBox="0 0 24 24" aria-hidden="true">
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
             </summary>
             <div class="faq-content">
-              Nossos móveis e estufas são despachados em embalagens técnicas de alta proteção com transportadoras
-              especializadas em cargas sensíveis. Ao clicar em "Comprar", você será direcionado para o checkout onde o
-              frete é calculado de acordo com seu CEP.
+              A Dry Box foi desenvolvida para armazenar diferentes tipos de filamentos utilizados na impressão 3D, incluindo PLA, ABS, PETG, TPU e Nylon.
             </div>
           </details>
 
           <details class="faq-item">
             <summary class="faq-summary">
-              <span>Quais tipos e marcas de filamentos cabem nas Dry Boxes?</span>
+              <span>Quais as marcas de filamentos que cabem na Dry Box?</span>
               <svg class="faq-chevron" viewBox="0 0 24 24" aria-hidden="true">
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
             </summary>
             <div class="faq-content">
-              Todos os modelos comportam bobinas padrão universais de 1kg (diâmetro de 200mm) para filamentos de
-              qualquer marca (Bambu Lab, Polymaker, eSun, Creality, 3D Prime). Os modelos de alta capacidade (Dry Box
-              48) também acomodam bobinas industriais de 2,5kg e 3kg de filamentos.
+              Todos os modelos comportam bobinas de padrão universal de 1kg (diâmetro de 200mm) para filamentos de qualquer marca (Bambu Lab, Polymaker, eSun, Creality, 3D Prime). Os modelos de alta capacidade (Dry Box 48 ou 64) também acomodam bobinas industriais de 2,5kg e 3kg de filamentos.
             </div>
           </details>
 
@@ -640,22 +624,55 @@
               </svg>
             </summary>
             <div class="faq-content">
-              O consumo é ultraeficiente. Uma vez atingida a temperatura e umidade programadas, o isolamento térmico do
-              armário retém o calor e o sistema atua em regime de manutenção, com consumo médio comparável a uma lâmpada
-              LED comum (bivolt automático 110V/220V).
+              É utilizado o sistema de aquecimento por PTC, uma tecnologia de última geração que proporciona aquecimento eficiente com baixo consumo de energia. Em testes com funcionamento contínuo de 24 horas, o consumo mensal estimado foi de aproximadamente 40 kWh.
             </div>
           </details>
 
           <details class="faq-item">
             <summary class="faq-summary">
-              <span>Como é feito o pagamento e a segurança da compra?</span>
+              <span>A Dry Box Station é compatível com quais impressoras?</span>
               <svg class="faq-chevron" viewBox="0 0 24 24" aria-hidden="true">
                 <polyline points="6 9 12 15 18 9"></polyline>
               </svg>
             </summary>
             <div class="faq-content">
-              A transação é processada diretamente pelo gateway seguro da InfinitePay, com criptografia de ponta a ponta
-              e suporte a Pix e cartão de crédito em até 3x sem juros.
+              A Dry Box Station foi desenvolvida especialmente para as impressoras Bambu Lab A1 e A2L, permitindo integrar o AMS ao interior da estufa e ampliar a capacidade de armazenamento de filamentos. Porém, nada impede a utilização de outros modelos ou marcas de impressoras compatíveis com o tamanho da mesa.
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-summary">
+              <span>Quais são as formas de pagamento?</span>
+              <svg class="faq-chevron" viewBox="0 0 24 24" aria-hidden="true">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </summary>
+            <div class="faq-content">
+              O pagamento é processado pela InfinitePay, em ambiente seguro. Aceitamos Pix e cartão de crédito em até 3x sem juros.
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-summary">
+              <span>Os produtos possuem garantia?</span>
+              <svg class="faq-chevron" viewBox="0 0 24 24" aria-hidden="true">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </summary>
+            <div class="faq-content">
+              Sim! Nossos produtos possuem garantia de 90 dias contra defeitos de fabricação, conforme as condições descritas no manual de instruções. Também possuímos equipamentos de substituição caso necessário.
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-summary">
+              <span>Posso solicitar suporte após a compra?</span>
+              <svg class="faq-chevron" viewBox="0 0 24 24" aria-hidden="true">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </summary>
+            <div class="faq-content">
+              Claro! Nossa equipe está disponível para auxiliar com dúvidas sobre instalação, configuração e utilização dos produtos. Entre em contato pelo nosso canal de atendimento.
             </div>
           </details>
 
@@ -669,7 +686,7 @@
         <div class="cta-final-box">
           <h2>Pronto para elevar o nível do seu estúdio 3D?</h2>
           <p>
-            Elimine as falhas por umidade e organize suas máquinas com o padrão que seu trabalho merece.
+            Elimine as falhas por umidade e organize seus filamentos com o padrão que seu trabalho merece.
           </p>
           <a href="#produtos" class="btn-primary">
             Escolher Meu Modelo
@@ -692,14 +709,12 @@
     <div class="container">
       <div class="footer-top">
         <div class="footer-brand">
-          <img src="images/logo-nix.png" alt="Logotipo NIX 3D" width="100" height="30">
+          <strong class="footer-brand-logo">NIX</strong>
           <p>
-            Mobiliário técnico e soluções inteligentes com controle térmico para a comunidade de manufatura aditiva e
-            impressão 3D.
+            Soluções inteligentes para armazenamento, conservação e organização de filamentos, desenvolvidos para elevar a experiência de impressão 3D.
           </p>
           <div class="footer-disclaimer-note">
-            <strong>Observação Importante:</strong> Imagens ilustrativas. A impressora e os filamentos não acompanham
-            o produto.
+            <strong>Aviso:</strong> Imagens ilustrativas. Impressora e filamentos não inclusos no produto.
           </div>
         </div>
 
@@ -718,10 +733,10 @@
             <h4>Atendimento & Social</h4>
             <ul>
               <li><a
-                  href="https://wa.me/5511992922119?text=Ol%C3%A1!%20Gostaria%20de%20informa%C3%A7%C3%B5es%20sobre%20as%20Dry%20Boxes%20da%20NIX%203D"
+                  href="https://wa.me/5511941692023?text=Ol%C3%A1!%20Gostaria%20de%20informa%C3%A7%C3%B5es%20sobre%20as%20Dry%20Boxes%20da%20NIX%203D"
                   target="_blank" rel="noopener noreferrer">Fale com a Nix (WhatsApp)</a></li>
-              <li><a href="https://instagram.com/nix_impressoes3d" target="_blank" rel="noopener noreferrer">Instagram
-                  @nix_impressoes3d</a></li>
+              <li><a href="https://www.instagram.com/nix3d_" target="_blank" rel="noopener noreferrer">Instagram
+                  @nix3d_</a></li>
               <li><span>Retirada no local em São Paulo</span></li>
             </ul>
           </div>
@@ -739,8 +754,9 @@
       </div>
 
       <div class="footer-bottom">
-        <p>© 2026 <strong>NIX 3D</strong>. Todos os direitos reservados. nix3d.</p>
+        <p>© 2026 <strong>NIX 3D</strong>. Todos os direitos reservados.</p>
         <p>Frete a consultar no checkout de acordo com o CEP de destino. Retirada disponível no local em São Paulo.</p>
+        <p class="footer-credits">DESIGN &amp; CODE BY <a href="https://www.alministudio.com.br/almini" target="_blank" rel="noopener noreferrer">ALEXANDRE POLETTINI</a></p>
       </div>
     </div>
   </footer>

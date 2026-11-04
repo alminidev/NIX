@@ -4,22 +4,20 @@
  */
 export default function Footer() {
   const whatsappUrl =
-    'https://wa.me/5511999999999?text=Ol%C3%A1!%20Gostaria%20de%20informa%C3%A7%C3%B5es%20sobre%20as%20Dry%20Boxes%20da%20NIX%203D';
+    'https://wa.me/5511941692023?text=Ol%C3%A1!%20Gostaria%20de%20informa%C3%A7%C3%B5es%20sobre%20as%20Dry%20Boxes%20da%20NIX%203D';
 
   return (
     <footer id="site-footer" className="site-footer">
       <div className="container">
         <div className="footer-top">
           <div className="footer-brand">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/images/logo-nix.png" alt="Logotipo NIX" width={100} height={30} />
+
+            <strong className="footer-brand-logo">NIX</strong>
             <p>
-              Mobiliário técnico e soluções inteligentes com controle térmico para a comunidade de
-              manufatura aditiva e impressão 3D.
+              Soluções inteligentes para armazenamento, conservação e organização de filamentos, desenvolvidos para elevar a experiência de impressão 3D.
             </p>
             <div className="footer-disclaimer-note">
-              <strong>Observação Importante:</strong> Imagens ilustrativas. A impressora e os
-              filamentos não acompanham o produto.
+              <strong>Aviso:</strong> Imagens ilustrativas. Impressora e filamentos não inclusos no produto.
             </div>
           </div>
 
@@ -44,11 +42,11 @@ export default function Footer() {
                 </li>
                 <li>
                   <a
-                    href="https://instagram.com/nix_impressoes3d"
+                    href="https://www.instagram.com/nix3d_"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    Instagram @nix_impressoes3d
+                    Instagram @nix3d_
                   </a>
                 </li>
                 <li><span>Retirada no local em São Paulo</span></li>
@@ -69,11 +67,21 @@ export default function Footer() {
 
         <div className="footer-bottom">
           <p>
-            © 2026 <strong>NIX 3D</strong>. Todos os direitos reservados. nix3d.
+            © 2026 <strong>NIX 3D</strong>. Todos os direitos reservados.
           </p>
           <p>
             Frete a consultar no checkout de acordo com o CEP de destino. Retirada disponível no
             local em São Paulo.
+          </p>
+          <p className="footer-credits">
+            DESIGN &amp; CODE BY{' '}
+            <a
+              href="https://www.alministudio.com.br/almini"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              ALEXANDRE POLETTINI
+            </a>
           </p>
         </div>
       </div>

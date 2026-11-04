@@ -31,10 +31,10 @@ export default function ProductGrid() {
       <div className="container">
         <header className="section-header">
           <span className="kicker">Catálogo Oficial</span>
-          <h2>Linha NIX Dry Box &amp; Setup Lab</h2>
+          <h2>Linha Dry Box &amp; Dry Box Station</h2>
           <p>
-            Engenharia de precisão para armazenar e imprimir direto da estufa. Escolha a capacidade
-            sob medida para o seu volume de produção.
+            A NIX transforma o armazenamento de filamentos em uma experiência mais prática, funcional e eficiente. Descubra a Dry Box ideal para o seu setup.
+
           </p>
         </header>
 
@@ -42,10 +42,10 @@ export default function ProductGrid() {
           {/* Grupo 1: Armários Dry Box */}
           <div className="catalog-group">
             <div className="catalog-group-header">
-              <span className="catalog-group-kicker">Armazenamento Ativo</span>
-              <h3 className="catalog-group-title">Armários de Filamentos Dry Box</h3>
+              <span className="catalog-group-kicker">CONHEÇA NOSSAS SOLUÇÕES</span>
+              <h3 className="catalog-group-title">DRY BOX</h3>
               <p className="catalog-group-desc">
-                Estufas estanques com desumidificação ativa permanente para 12, 24 ou 48 filamentos.
+                Seus filamentos protegidos da umidade, seu setup mais organizado e sua impressão 3D em outro nível.
               </p>
             </div>
             <div className="products-subgrid grid-3-cols">
@@ -67,10 +67,10 @@ export default function ProductGrid() {
           <div className="catalog-group">
             <div className="catalog-group-header">
               <span className="catalog-group-kicker">Estações Integradas</span>
-              <h3 className="catalog-group-title">Dry Box Station Combos</h3>
+              <h3 className="catalog-group-title">DRY BOX STATION</h3>
               <p className="catalog-group-desc">
-                Soluções completas com bancada integrada antivibração e armazenamento climatizado
-                para Bambu Lab.
+                AMS integrado, filamentos protegidos e mais capacidade de armazenamento. Tudo em uma única estação, projetada para elevar seu setup Bambu Lab.
+
               </p>
             </div>
             <div className="products-subgrid grid-2-cols">
@@ -88,8 +88,7 @@ export default function ProductGrid() {
           {/* Aviso Oficial de Ilustração */}
           <div className="catalog-disclaimer" role="note">
             <p>
-              <strong>Observação Importante:</strong> Imagens ilustrativas. A impressora e os
-              filamentos não acompanham o produto.
+              <strong>Observação Importante:</strong> Imagens ilustrativas. A impressora, o AMS e os filamentos não acompanham o produto.
             </p>
           </div>
         </div>

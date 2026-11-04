@@ -9,7 +9,7 @@ export default function CtaFinal() {
         <div className="cta-final-box">
           <h2>Pronto para elevar o nível do seu estúdio 3D?</h2>
           <p>
-            Elimine as falhas por umidade e organize suas máquinas com o padrão que seu trabalho
+            Elimine as falhas por umidade e organize seus filamentos com o padrão que seu trabalho
             merece.
           </p>
           <a href="#produtos" className="btn-primary">

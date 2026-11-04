@@ -1,44 +1,48 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { CART_URL } from '@/data/produtos';
 
 /**
- * Header — Cabeçalho fixo (sticky) da NIX 3D.
+ * Header — Cabeçalho fixo (sticky) da NIX 3D com navegação desktop e menu hambúrguer mobile.
  *
- * Comportamentos migrados do JS vanilla:
- * 1. inicializarCabecalho(): adiciona classe "scrolled" quando scrollY > 20
- *    → useEffect + useState + window.scroll (passive listener)
- * 2. inicializarScrollSpy(): destaca o nav-link da seção visível
- *    → useEffect + IntersectionObserver com os mesmos parâmetros do original
- *    rootMargin: '-20% 0px -65% 0px'
- *
- * URL do carrinho:
- *    Centralizada em @/data/produtos (lê process.env.NEXT_PUBLIC_CART_URL).
- *
- * PONTO DE INTEGRAÇÃO (programador back-end):
- *    Contador do ícone do carrinho — veja o comentário TODO abaixo.
+ * Comportamentos:
+ * 1. Elevação ao rolar (scrolled)
+ * 2. ScrollSpy via IntersectionObserver
+ * 3. Menu hambúrguer acessível para mobile/tablet
  */
 export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState<string>('');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // URL de checkout centralizada — altere em @/data/produtos ou .env.local
   const cartUrl = CART_URL;
   const whatsappUrl =
-    'https://wa.me/5511999999999?text=Ol%C3%A1!%20Gostaria%20de%20informa%C3%A7%C3%B5es%20sobre%20as%20Dry%20Boxes%20da%20NIX%203D';
+    'https://wa.me/5511941692023?text=Ol%C3%A1!%20Gostaria%20de%20informa%C3%A7%C3%B5es%20sobre%20as%20Dry%20Boxes%20da%20NIX%203D';
 
-  // Elevação do header ao rolar (equivalente a inicializarCabecalho())
+  // Elevação do header ao rolar
   useEffect(() => {
     const onScroll = () => {
       setScrolled(window.scrollY > 20);
     };
     window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll(); // executa imediatamente para estado inicial correto
+    onScroll();
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // ScrollSpy via IntersectionObserver (equivalente a inicializarScrollSpy())
+  // Fechar menu mobile com tecla Escape
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMobileMenuOpen(false);
+    };
+    if (mobileMenuOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [mobileMenuOpen]);
+
+  // ScrollSpy via IntersectionObserver
   useEffect(() => {
     const secoes = document.querySelectorAll<HTMLElement>('section[id]');
     if (!secoes.length) return;
@@ -79,7 +83,7 @@ export default function Header() {
         <nav className="nav-desktop" aria-label="Navegação Principal">
           <ul className="nav-links">
             {navItems.map(({ href, label }) => {
-              const sectionId = href.slice(1); // remove o '#'
+              const sectionId = href.slice(1);
               return (
                 <li key={href}>
                   <a
@@ -106,8 +110,47 @@ export default function Header() {
           >
             <img src="/images/carrinho_vetorizado.svg" alt="Carrinho de compras" width={21} height={17} />
           </a>
+
+          {/* Botão Menu Hambúrguer (Mobile) */}
+          <button
+            id="btn-mobile-menu"
+            className={`btn-hamburger${mobileMenuOpen ? ' active' : ''}`}
+            type="button"
+            aria-label={mobileMenuOpen ? 'Fechar menu de navegação' : 'Abrir menu de navegação'}
+            aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-nav"
+            onClick={() => setMobileMenuOpen((prev) => !prev)}
+          >
+            <span className="hamburger-bar" />
+            <span className="hamburger-bar" />
+            <span className="hamburger-bar" />
+          </button>
         </div>
       </div>
+
+      {/* Gaveta / Dropdown Menu Mobile */}
+      <nav
+        id="mobile-nav"
+        className={`mobile-nav${mobileMenuOpen ? ' open' : ''}`}
+        aria-label="Navegação Mobile"
+        aria-hidden={!mobileMenuOpen}
+      >
+        <div className="container mobile-nav-container">
+          <ul className="mobile-nav-links">
+            {navItems.map(({ href, label }) => (
+              <li key={href}>
+                <a
+                  href={href}
+                  className="mobile-nav-link"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {label}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </nav>
     </header>
   );
 }

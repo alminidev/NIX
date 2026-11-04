@@ -6,24 +6,39 @@
 export default function FAQ() {
   const items = [
     {
-      pergunta: 'Como funciona a entrega por transportadora?',
+      pergunta: 'Quais filamentos posso armazenar na Dry Box?',
       resposta:
-        'Nossos móveis e estufas são despachados em embalagens técnicas de alta proteção com transportadoras especializadas em cargas sensíveis. Ao clicar em "Comprar", você será direcionado para o checkout onde o frete é calculado de acordo com seu CEP.',
+        'A Dry Box foi desenvolvida para armazenar diferentes tipos de filamentos utilizados na impressão 3D, incluindo PLA, ABS, PETG, TPU e Nylon.',
     },
     {
-      pergunta: 'Quais tipos e marcas de filamentos cabem nas Dry Boxes?',
+      pergunta: 'Quais as marcas de filamentos que cabem na Dry Box?',
       resposta:
-        'Todos os modelos comportam bobinas padrão universais de 1kg (diâmetro de 200mm) para filamentos de qualquer marca (Bambu Lab, Polymaker, eSun, Creality, 3D Prime). Os modelos de alta capacidade (Dry Box 48) também acomodam bobinas industriais de 2,5kg e 3kg de filamentos.',
+        'Todos os modelos comportam bobinas de padrão universal de 1kg (diâmetro de 200mm) para filamentos de qualquer marca (Bambu Lab, Polymaker, eSun, Creality, 3D Prime). Os modelos de alta capacidade (Dry Box 48 ou 64) também acomodam bobinas industriais de 2,5kg e 3kg de filamentos.',
     },
     {
       pergunta: 'Qual é o consumo elétrico do sistema de controle térmico?',
       resposta:
-        'O consumo é ultraeficiente. Uma vez atingida a temperatura e umidade programadas, o isolamento térmico do armário retém o calor e o sistema atua em regime de manutenção, com consumo médio comparável a uma lâmpada LED comum (bivolt automático 110V/220V).',
+        'É utilizado o sistema de aquecimento por PTC, uma tecnologia de última geração que proporciona aquecimento eficiente com baixo consumo de energia. Em testes com funcionamento contínuo de 24 horas, o consumo mensal estimado foi de aproximadamente 40 kWh.',
     },
     {
-      pergunta: 'Como é feito o pagamento e a segurança da compra?',
+      pergunta: 'A Dry Box Station é compatível com quais impressoras?',
       resposta:
-        'A transação é processada diretamente pelo gateway seguro da InfinitePay, com criptografia de ponta a ponta e suporte a Pix e cartão de crédito em até 3x sem juros.',
+        'A Dry Box Station foi desenvolvida especialmente para as impressoras Bambu Lab A1 e A2L, permitindo integrar o AMS ao interior da estufa e ampliar a capacidade de armazenamento de filamentos. Porém, nada impede a utilização de outros modelos ou marcas de impressoras compatíveis com o tamanho da mesa.',
+    },
+    {
+      pergunta: 'Quais são as formas de pagamento?',
+      resposta:
+        'O pagamento é processado pela InfinitePay, em ambiente seguro. Aceitamos Pix e cartão de crédito em até 3x sem juros.',
+    },
+    {
+      pergunta: 'Os produtos possuem garantia?',
+      resposta:
+        'Sim! Nossos produtos possuem garantia de 90 dias contra defeitos de fabricação, conforme as condições descritas no manual de instruções. Também possuímos equipamentos de substituição caso necessário.',
+    },
+    {
+      pergunta: 'Posso solicitar suporte após a compra?',
+      resposta:
+        'Claro! Nossa equipe está disponível para auxiliar com dúvidas sobre instalação, configuração e utilização dos produtos. Entre em contato pelo nosso canal de atendimento.',
     },
   ];
 
