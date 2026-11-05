@@ -122,7 +122,7 @@ export default function ProductGrid({ products }: IProductGridProps) {
           role="note"
         >
           <p className="text-[0.8125rem] text-ink-secondary">
-            ⚠️ <strong>Observação Importante:</strong> Imagens ilustrativas. A
+            <strong>Observação Importante:</strong> Imagens ilustrativas. A
             impressora e os filamentos não acompanham o produto.
           </p>
         </div>

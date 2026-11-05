@@ -28,6 +28,7 @@
   --radius-pill: 9999px;
   --radius-card: 8px;
   --radius-input: 6px;
+  --radius-button: 6px;
 
   --shadow-sticky-nav: 0 1px 3px rgba(0, 0, 0, 0.05);
   --shadow-card-hover: 0 12px 32px rgba(0, 0, 0, 0.06);

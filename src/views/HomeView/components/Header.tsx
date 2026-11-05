@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { MessageCircle, ShoppingCart } from 'lucide-react';
 import { useCartContext } from '@/contexts/CartContext';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -27,8 +26,6 @@ export default function Header({ homePath = '' }: { homePath?: string }) {
   const [activeSection, setActiveSection] = useState<string>('');
 
   const { itemCount, isReady } = useCartContext();
-  const whatsappUrl =
-    'https://wa.me/5511999999999?text=Ol%C3%A1!%20Gostaria%20de%20informa%C3%A7%C3%B5es%20sobre%20as%20Dry%20Boxes%20da%20NIX%203D';
 
   // Elevação do header ao rolar (equivalente a inicializarCabecalho())
   useEffect(() => {
@@ -107,29 +104,24 @@ export default function Header({ homePath = '' }: { homePath?: string }) {
         </nav>
 
         <div className="flex items-center gap-2 min-[640px]:gap-4">
-          <a
-            href={whatsappUrl}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-pill border border-border-hairline bg-transparent px-3 py-2.5 text-sm font-medium text-ink-secondary transition-all duration-200 ease-nix hover:-translate-y-px hover:border-brand-blue hover:text-brand-blue min-[640px]:px-4"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Fale com a Nix pelo WhatsApp"
-          >
-            <MessageCircle size={16} aria-hidden />
-            <span className="hidden min-[640px]:inline">Fale com a Nix</span>
-          </a>
-
           <Link
             id="btn-header-cart"
             href="/cart"
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-pill border border-[rgba(23,107,255,0.2)] bg-brand-blue-subtle px-[18px] py-2.5 text-sm font-semibold text-brand-blue-hover transition-all duration-200 ease-nix hover:-translate-y-px hover:bg-brand-blue hover:text-ink-inverse"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center gap-1.5 bg-transparent p-1.5 transition-opacity duration-200 ease-nix hover:opacity-70 active:opacity-50"
+            title="Carrinho de Compras"
             aria-label={
               isReady && itemCount > 0
                 ? `Ir para o carrinho de compras, ${itemCount} ${itemCount === 1 ? 'item' : 'itens'}`
                 : 'Ir para o carrinho de compras'
             }
           >
-            <ShoppingCart size={18} aria-hidden />
-            <span>Carrinho</span>
+            <Image
+              src="/images/carrinho_vetorizado.svg"
+              alt=""
+              width={21}
+              height={17}
+              className="block h-[17px] w-[21px] object-contain"
+            />
             {isReady && itemCount > 0 ? (
               <span className="rounded-pill bg-brand-blue px-1.5 text-xs text-white">
                 {itemCount}

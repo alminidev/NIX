@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>404 — Página Não Encontrada | NIX 3D</title>
+  <meta name="description" content="A página solicitada não foi encontrada. Retorne à vitrine técnica oficial da NIX 3D.">
+  <link rel="icon" type="image/png" href="images/logo-nix.png">
+
+  <!-- Tipografia Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .page-404-wrapper {
+      min-height: 80vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      background-color: var(--color-surface-hero-void);
+      color: var(--color-ink-inverse);
+      padding: 80px 24px;
+    }
+    .code-404 {
+      font-size: clamp(4rem, 10vw, 7rem);
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      color: var(--color-brand-blue);
+      margin-bottom: 16px;
+    }
+    .title-404 {
+      font-size: clamp(1.5rem, 3vw, 2.25rem);
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: var(--color-ink-inverse);
+    }
+    .desc-404 {
+      font-size: 1.125rem;
+      color: rgba(255, 255, 255, 0.75);
+      max-width: 520px;
+      margin: 0 auto 36px auto;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Cabeçalho Simplificado -->
+  <header class="site-header">
+    <div class="container header-container">
+      <a href="index.html" class="brand-logo" aria-label="NIX 3D — Página Inicial">
+        <img src="images/logo-nix.png" alt="Logotipo NIX" width="110" height="32">
+      </a>
+      <div class="header-actions">
+        <a href="index.html" class="btn-whatsapp">
+          <span>Voltar ao Início</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Conteúdo 404 -->
+  <main class="page-404-wrapper">
+    <div class="container">
+      <div class="code-404">404</div>
+      <h1 class="title-404">Coordenada Não Encontrada</h1>
+      <p class="desc-404">
+        A rota solicitada não existe ou foi realocada. Acesse nosso catálogo completo de móveis e estufas com controle térmico para impressão 3D.
+      </p>
+      <a href="index.html" class="btn-primary">
+        Ir para a Página Inicial
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M5 12h14"></path>
+          <path d="M12 5l7 7-7 7"></path>
+        </svg>
+      </a>
+    </div>
+  </main>
+
+  <!-- Rodapé -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-bottom">
+        <p>© 2026 <strong>NIX 3D</strong>. Todos os direitos reservados.</p>
+        <p><a href="index.html">Retornar à Vitrine Oficial</a></p>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
