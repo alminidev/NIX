@@ -31,6 +31,8 @@ const customer = {
   name: "Maria da Silva",
   email: "maria@example.com",
   phone: "11912345678",
+  kind: "PERSON" as const,
+  document: "11144477735",
 };
 const address = {
   postalCode: "01310100",

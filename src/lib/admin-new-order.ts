@@ -14,6 +14,7 @@ import {
   isLocalPickup,
   localPickupOption,
 } from "@/lib/shipping-display";
+import { isCustomerKind, type TCustomerKind } from "@/lib/tax-id";
 import { checkAddressPostalCode } from "@/lib/viacep";
 import type {
   IAdminCustomerOption,
@@ -82,6 +83,8 @@ export async function getAdminNewOrderOptions(): Promise<IAdminNewOrderOptions> 
         customerName: true,
         customerEmail: true,
         customerPhone: true,
+        customerKind: true,
+        customerDocument: true,
       },
     }),
     prisma.product.findMany({
@@ -93,16 +96,27 @@ export async function getAdminNewOrderOptions(): Promise<IAdminNewOrderOptions> 
 
   const latestByEmail = new Map<
     string,
-    { name: string; email: string; phone: string }
+    {
+      name: string;
+      email: string;
+      phone: string;
+      kind: TCustomerKind | null;
+      document: string;
+    }
   >();
 
   for (const order of recentOrders) {
     const email = order.customerEmail.trim().toLowerCase();
     if (!email || latestByEmail.has(email)) continue;
+    const kind = order.customerKind && isCustomerKind(order.customerKind)
+      ? order.customerKind
+      : null;
     latestByEmail.set(email, {
       name: order.customerName,
       email: order.customerEmail,
       phone: order.customerPhone,
+      kind,
+      document: kind ? (order.customerDocument ?? "") : "",
     });
   }
 
@@ -113,11 +127,14 @@ export async function getAdminNewOrderOptions(): Promise<IAdminNewOrderOptions> 
     const email = user.email.trim().toLowerCase();
     if (!email || seen.has(email)) continue;
     seen.add(email);
+    const latest = latestByEmail.get(email);
     customers.push({
       id: user.id,
       name: user.name,
       email: user.email,
-      phone: latestByEmail.get(email)?.phone ?? "",
+      phone: latest?.phone ?? "",
+      kind: latest?.kind ?? null,
+      document: latest?.document ?? "",
     });
   }
 
@@ -129,6 +146,8 @@ export async function getAdminNewOrderOptions(): Promise<IAdminNewOrderOptions> 
       name: customer.name,
       email: customer.email,
       phone: customer.phone,
+      kind: customer.kind,
+      document: customer.document,
     });
   }
 

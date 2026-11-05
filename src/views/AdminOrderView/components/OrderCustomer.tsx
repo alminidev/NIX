@@ -1,3 +1,4 @@
+import { formatDocument } from "@/lib/tax-id";
 import type { IAdminOrderDetail } from "@/types/admin-order";
 import { formatPhone } from "@/views/AdminOrdersView/components/order-display";
 import OrderCard from "@/views/AdminOrderView/components/OrderCard";
@@ -16,6 +17,20 @@ export default function OrderCustomer({ customer }: IOrderCustomerProps) {
         {customer.name}
       </p>
       <dl className="mt-3 flex flex-col gap-2.5 text-[0.9375rem]">
+        <div>
+          <dt className="text-xs font-semibold tracking-[0.04em] text-ink-muted uppercase">
+            {customer.kind === "COMPANY"
+              ? "CNPJ"
+              : customer.kind === "PERSON"
+                ? "CPF"
+                : "CPF/CNPJ"}
+          </dt>
+          <dd className="mt-0.5 text-ink-primary">
+            {customer.kind && customer.document
+              ? formatDocument(customer.kind, customer.document)
+              : "Não informado"}
+          </dd>
+        </div>
         <div>
           <dt className="text-xs font-semibold tracking-[0.04em] text-ink-muted uppercase">
             E-mail

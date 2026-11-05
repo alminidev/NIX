@@ -1,4 +1,9 @@
 import { parseCartItems, parsePostalCode } from "@/lib/cart-input";
+import {
+  isCustomerKind,
+  parseDocument,
+  type TCustomerKind,
+} from "@/lib/tax-id";
 import type {
   ICheckoutFieldErrors,
   IOrderAddress,
@@ -89,15 +94,61 @@ function readItems(formData: FormData) {
   }
 }
 
+function readCustomerKind(formData: FormData, fieldErrors: ICheckoutFieldErrors) {
+  const value = readString(formData, "customerKind");
+  if (isCustomerKind(value)) return value;
+
+  fieldErrors.customerKind = "Informe se é pessoa física ou empresa.";
+  return null;
+}
+
+function readDocument(
+  formData: FormData,
+  kind: TCustomerKind | null,
+  fieldErrors: ICheckoutFieldErrors,
+) {
+  const raw = readString(formData, "document");
+
+  if (!kind) {
+    fieldErrors.document = "Informe o CPF ou o CNPJ.";
+    return "";
+  }
+
+  const label = kind === "COMPANY" ? "CNPJ" : "CPF";
+  const document = parseDocument(kind, raw);
+  if (!document) {
+    fieldErrors.document = raw
+      ? `Informe um ${label} válido.`
+      : `Informe o ${label}.`;
+    return "";
+  }
+
+  return document;
+}
+
 /**
- * Lê e valida o formulário de entrega do carrinho. Só pede o necessário para
- * entregar e contatar a pessoa: nome, e-mail, telefone e endereço.
+ * Lê e valida o formulário de entrega do carrinho. Pede o necessário para
+ * entregar e contatar: nome ou razão social, CPF ou CNPJ, e-mail, telefone
+ * e endereço.
  */
 export function readCheckoutForm(formData: FormData): IParsedCheckoutForm {
   const fieldErrors: ICheckoutFieldErrors = {};
 
-  const name = readRequired(formData, "name", "o nome", fieldErrors);
-  if (name && name.length < 2) fieldErrors.name = "Informe o nome completo.";
+  const kind = readCustomerKind(formData, fieldErrors);
+  const document = readDocument(formData, kind, fieldErrors);
+
+  const name = readRequired(
+    formData,
+    "name",
+    kind === "COMPANY" ? "a razão social" : "o nome",
+    fieldErrors,
+  );
+  if (name && name.length < 2) {
+    fieldErrors.name =
+      kind === "COMPANY"
+        ? "Informe a razão social."
+        : "Informe o nome completo.";
+  }
 
   const email = readRequired(
     formData,
@@ -146,14 +197,20 @@ export function readCheckoutForm(formData: FormData): IParsedCheckoutForm {
     fieldErrors.items = "Seu carrinho está vazio.";
   }
 
-  if (Object.keys(fieldErrors).length > 0 || !postalCode || !items) {
+  if (
+    Object.keys(fieldErrors).length > 0 ||
+    !postalCode ||
+    !items ||
+    !kind ||
+    !document
+  ) {
     return { input: null, fieldErrors };
   }
 
   return {
     input: {
       items,
-      customer: { name, email, phone },
+      customer: { name, email, phone, kind, document },
       address: {
         postalCode,
         street,

@@ -5,6 +5,7 @@
  */
 
 import type { OrderSource } from "@/generated/prisma/enums";
+import type { TCustomerKind } from "@/lib/tax-id";
 import type { ICartItem } from "@/types/cart";
 
 export interface IOrderCustomer {
@@ -12,6 +13,9 @@ export interface IOrderCustomer {
   email: string;
   /** Só dígitos, com DDD */
   phone: string;
+  kind: TCustomerKind;
+  /** CPF (11 dígitos) ou CNPJ (14 caracteres, sem pontuação) */
+  document: string;
 }
 
 export interface IOrderAddress {
@@ -58,6 +62,8 @@ export interface ICheckoutFieldErrors {
   name?: string;
   email?: string;
   phone?: string;
+  customerKind?: string;
+  document?: string;
   postalCode?: string;
   street?: string;
   number?: string;

@@ -93,6 +93,8 @@ export async function createOrder(input: IOrderInput): Promise<IOrderCreated> {
         customerName: input.customer.name,
         customerEmail: input.customer.email,
         customerPhone: input.customer.phone,
+        customerKind: input.customer.kind,
+        customerDocument: input.customer.document,
         postalCode: input.address.postalCode,
         street: input.address.street,
         number: input.address.number,

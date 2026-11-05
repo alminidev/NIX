@@ -135,6 +135,8 @@ export async function getAdminOrder(
       name: order.customerName,
       email: order.customerEmail,
       phone: order.customerPhone,
+      kind: order.customerKind,
+      document: order.customerDocument,
     },
     address: {
       postalCode: order.postalCode,

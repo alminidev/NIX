@@ -28,6 +28,8 @@ function orderInput(
       name: "Maria da Silva",
       email: `maria@${emailDomain}`,
       phone: "11912345678",
+      kind: "PERSON" as const,
+      document: "11144477735",
     },
     address: {
       postalCode: "01310100",
@@ -157,6 +159,8 @@ describe(
           name: "Maria da Silva",
           email: `maria@${emailDomain}`,
           phone: "11912345678",
+          kind: "PERSON",
+          document: "11144477735",
         });
         assert.deepEqual(order.address, {
           postalCode: "01310100",

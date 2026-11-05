@@ -17,6 +17,8 @@ const customer = {
   name: "Maria da Silva",
   email: "maria@example.com",
   phone: "11912345678",
+  kind: "PERSON" as const,
+  document: "11144477735",
 };
 const address = {
   postalCode: "01310100",
@@ -157,6 +159,8 @@ describe(
       assert.equal(order.deliveryDays, 4);
       assert.equal(Number(order.total), 2526);
       assert.equal(order.customerEmail, "maria@example.com");
+      assert.equal(order.customerKind, "PERSON");
+      assert.equal(order.customerDocument, "11144477735");
       assert.equal(order.postalCode, "01310100");
       assert.equal(order.complement, null);
       assert.deepEqual(

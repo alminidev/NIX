@@ -161,6 +161,13 @@ enum OrderSource {
   @@map("order_source")
 }
 
+enum CustomerKind {
+  PERSON
+  COMPANY
+
+  @@map("customer_kind")
+}
+
 model Order {
   id            Int         @id @default(autoincrement())
   status        OrderStatus @default(AWAITING_PAYMENT)
@@ -176,6 +183,10 @@ model Order {
   customerName  String
   customerEmail String
   customerPhone String
+  // pessoa física (CPF) ou empresa (CNPJ); null nos pedidos anteriores ao campo
+  customerKind     CustomerKind?
+  // CPF com 11 dígitos ou CNPJ com 14 caracteres; null nos pedidos anteriores ao campo
+  customerDocument String?
   postalCode    String
   street        String
   number        String

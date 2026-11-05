@@ -4,6 +4,8 @@ import { readCheckoutForm } from "../src/lib/order-input";
 
 function checkoutForm(overrides: Record<string, string> = {}) {
   const values: Record<string, string> = {
+    customerKind: "PERSON",
+    document: "111.444.777-35",
     name: "Maria da Silva",
     email: "Maria@Example.com",
     phone: "(11) 91234-5678",
@@ -35,6 +37,8 @@ describe("readCheckoutForm", () => {
         name: "Maria da Silva",
         email: "maria@example.com",
         phone: "11912345678",
+        kind: "PERSON",
+        document: "11144477735",
       },
       address: {
         postalCode: "01310100",
@@ -54,6 +58,8 @@ describe("readCheckoutForm", () => {
     assert.equal(input, null);
     assert.deepEqual(Object.keys(fieldErrors).sort(), [
       "city",
+      "customerKind",
+      "document",
       "email",
       "items",
       "name",
@@ -64,6 +70,52 @@ describe("readCheckoutForm", () => {
       "state",
       "street",
     ]);
+  });
+
+  it("accepts a company CNPJ and asks for the legal name", () => {
+    const { input, fieldErrors } = readCheckoutForm(
+      checkoutForm({
+        customerKind: "COMPANY",
+        document: "11.222.333/0001-81",
+        name: "NIX",
+      }),
+    );
+
+    assert.deepEqual(fieldErrors, {});
+    assert.equal(input?.customer.kind, "COMPANY");
+    assert.equal(input?.customer.document, "11222333000181");
+    assert.equal(input?.customer.name, "NIX");
+  });
+
+  it("accepts an alphanumeric CNPJ", () => {
+    const { input, fieldErrors } = readCheckoutForm(
+      checkoutForm({
+        customerKind: "COMPANY",
+        document: "12.ABC.345/01DE-35",
+        name: "NIX Industria",
+      }),
+    );
+
+    assert.deepEqual(fieldErrors, {});
+    assert.equal(input?.customer.document, "12ABC34501DE35");
+  });
+
+  it("rejects a document that does not match the customer kind", () => {
+    const person = readCheckoutForm(
+      checkoutForm({ document: "11222333000181" }),
+    );
+    const company = readCheckoutForm(
+      checkoutForm({
+        customerKind: "COMPANY",
+        document: "111.444.777-35",
+        name: "NIX Industria",
+      }),
+    );
+
+    assert.equal(person.input, null);
+    assert.equal(person.fieldErrors.document, "Informe um CPF válido.");
+    assert.equal(company.input, null);
+    assert.equal(company.fieldErrors.document, "Informe um CNPJ válido.");
   });
 
   it("rejects invalid e-mail, phone, postal code and state", () => {

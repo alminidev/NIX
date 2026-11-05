@@ -2,6 +2,9 @@
 
 import { createAdminOrder } from "@/app/admin/orders/actions";
 import { lookupAddress, quoteShipping } from "@/app/cart/actions";
+import CustomerDocumentFields, {
+  customerNameLabel,
+} from "@/components/CustomerDocumentFields";
 import {
   externalPaymentMethodLabels,
   externalPaymentMethods,
@@ -21,6 +24,7 @@ import {
   isLocalPickup,
   shippingChoiceLabel,
 } from "@/lib/shipping-display";
+import { maskDocument, type TCustomerKind } from "@/lib/tax-id";
 import {
   adminOrderFormInitialState,
   type IAdminCustomerOption,
@@ -45,7 +49,16 @@ interface IProductLine {
   quantity: string;
 }
 
-type TField = Exclude<keyof IAdminOrderFieldErrors, "items" | "source" | "payment" | "paymentMethod" | "paidAt">;
+type TField = Exclude<
+  keyof IAdminOrderFieldErrors,
+  | "items"
+  | "source"
+  | "payment"
+  | "paymentMethod"
+  | "paidAt"
+  | "customerKind"
+  | "document"
+>;
 
 const fieldClass =
   "min-h-11 w-full min-w-0 rounded-input border bg-white px-3 text-[0.9375rem] text-ink-primary placeholder:text-ink-muted disabled:opacity-60";
@@ -97,6 +110,8 @@ export default function NewOrderForm({ customers, products }: INewOrderFormProps
     city: "",
     state: "",
   });
+  const [customerKind, setCustomerKind] = useState<"" | TCustomerKind>("");
+  const [document, setDocument] = useState("");
   const [source, setSource] = useState("");
   const [lines, setLines] = useState<IProductLine[]>([
     { key: "line-1", productId: "", quantity: "1" },
@@ -147,6 +162,15 @@ export default function NewOrderForm({ customers, products }: INewOrderFormProps
       email: customer.email,
       phone: customer.phone,
     }));
+    setCustomerKind(customer.kind ?? "");
+    setDocument(
+      customer.kind ? maskDocument(customer.kind, customer.document) : "",
+    );
+  }
+
+  function changeCustomerKind(kind: TCustomerKind) {
+    setCustomerKind(kind);
+    setDocument((current) => maskDocument(kind, current));
   }
 
   function changePostalCode(value: string) {
@@ -392,11 +416,22 @@ export default function NewOrderForm({ customers, products }: INewOrderFormProps
               ))}
             </select>
           </div>
-          {renderText("name", "Nome completo", {
-            autoComplete: "name",
-            maxLength: orderFieldLimits.name,
-            wide: true,
-          })}
+          <CustomerDocumentFields
+            idPrefix="order"
+            kind={customerKind}
+            document={document}
+            kindError={errors.customerKind}
+            documentError={errors.document}
+            disabled={pending}
+            onKindChange={changeCustomerKind}
+            onDocumentChange={setDocument}
+          >
+            {renderText("name", customerNameLabel(customerKind), {
+              autoComplete: customerKind === "COMPANY" ? "organization" : "name",
+              maxLength: orderFieldLimits.name,
+              wide: true,
+            })}
+          </CustomerDocumentFields>
           {renderText("email", "E-mail", {
             type: "email",
             inputMode: "email",

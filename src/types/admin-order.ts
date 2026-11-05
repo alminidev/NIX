@@ -6,6 +6,7 @@
  */
 
 import type { OrderSource, OrderStatus } from "@/generated/prisma/enums";
+import type { TCustomerKind } from "@/lib/tax-id";
 import type { ICheckoutFieldErrors } from "@/types/order";
 
 export interface IAdminOrder {
@@ -74,6 +75,10 @@ export interface IAdminOrderDetail {
     email: string;
     /** Só dígitos, com DDD */
     phone: string;
+    /** Null nos pedidos anteriores ao campo */
+    kind: TCustomerKind | null;
+    /** CPF ou CNPJ sem pontuação; null nos pedidos anteriores ao campo */
+    document: string | null;
   };
   address: {
     /** CEP, só dígitos (8) */
@@ -142,6 +147,10 @@ export interface IAdminCustomerOption {
   email: string;
   /** Só dígitos, com DDD; vazio quando o cliente ainda não tem pedido */
   phone: string;
+  /** Null quando o cliente ainda não tem documento num pedido */
+  kind: TCustomerKind | null;
+  /** CPF ou CNPJ sem pontuação; vazio quando ainda não há documento */
+  document: string;
 }
 
 /** Produto ativo que pode entrar num pedido criado no painel. */

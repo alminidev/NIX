@@ -136,6 +136,8 @@ describe(
     }) {
       const body = new FormData();
       const fields: Record<string, string> = {
+        customerKind: "PERSON",
+        document: "111.444.777-35",
         name: "Maria da Silva",
         email: options.email ?? `maria-${runId}@example.com`,
         phone: "11912345678",

@@ -1,7 +1,11 @@
 import { lookupAddress, quoteShipping } from "@/app/cart/actions";
+import CustomerDocumentFields, {
+  customerNameLabel,
+} from "@/components/CustomerDocumentFields";
 import PaymentTerms from "@/components/PaymentTerms";
 import { maskPostalCode } from "@/lib/cart-input";
 import { brazilianStates, orderFieldLimits } from "@/lib/order-input";
+import { maskDocument, type TCustomerKind } from "@/lib/tax-id";
 import {
   formatDeliveryDays,
   formatShippingAmount,
@@ -14,7 +18,10 @@ import { useEffect, useRef, useState, useTransition } from "react";
 
 export const CHECKOUT_FORM_ID = "checkout-form";
 
-type TCheckoutField = Exclude<keyof ICheckoutFieldErrors, "items">;
+type TCheckoutField = Exclude<
+  keyof ICheckoutFieldErrors,
+  "items" | "customerKind" | "document"
+>;
 
 interface ICheckoutFormProps {
   items: ICartItem[];
@@ -117,10 +124,11 @@ function fieldBorder(invalid: boolean) {
 }
 
 /**
- * CheckoutForm — Dados de contato e endereço de entrega do pedido. O endereço
- * só é liberado depois que o CEP é consultado (botão Calcular), que também
- * cota o frete. Os itens seguem como estão no carrinho e são conferidos de
- * novo no servidor ao criar o pedido.
+ * CheckoutForm — Dados de contato e endereço de entrega do pedido. Pessoa
+ * física informa CPF; empresa informa CNPJ. O endereço só é liberado depois
+ * que o CEP é consultado (botão Calcular), que também cota o frete. Os itens
+ * seguem como estão no carrinho e são conferidos de novo no servidor ao criar
+ * o pedido.
  */
 export default function CheckoutForm({
   items,
@@ -145,6 +153,8 @@ export default function CheckoutForm({
     city: "",
     state: "",
   });
+  const [customerKind, setCustomerKind] = useState<"" | TCustomerKind>("");
+  const [document, setDocument] = useState("");
 
   const [, startTransition] = useTransition();
 
@@ -259,8 +269,19 @@ export default function CheckoutForm({
   const statusIsError =
     Boolean(errors.postalCode) || (postalMessage?.error ?? false);
 
+  function changeCustomerKind(kind: TCustomerKind) {
+    setCustomerKind(kind);
+    setDocument((current) => maskDocument(kind, current));
+  }
+
   function renderField(field: ITextField) {
     const error = errors[field.name];
+    const label =
+      field.name === "name" ? customerNameLabel(customerKind) : field.label;
+    const autoComplete =
+      field.name === "name" && customerKind === "COMPANY"
+        ? "organization"
+        : field.autoComplete;
 
     return (
       <div key={field.name} className={field.wide ? "sm:col-span-2" : ""}>
@@ -268,7 +289,7 @@ export default function CheckoutForm({
           htmlFor={`checkout-${field.name}`}
           className="mb-1.5 block text-[0.8125rem] font-semibold text-ink-secondary"
         >
-          {field.label}
+          {label}
           {field.optional ? (
             <span className="font-normal text-ink-muted"> (opcional)</span>
           ) : null}
@@ -284,7 +305,7 @@ export default function CheckoutForm({
               [field.name]: event.target.value,
             }))
           }
-          autoComplete={field.autoComplete}
+          autoComplete={autoComplete}
           inputMode={field.inputMode}
           maxLength={field.maxLength}
           disabled={disabled || (field.locked && !addressFound)}
@@ -319,7 +340,19 @@ export default function CheckoutForm({
       <PaymentTerms className="mt-2 mb-5" />
 
       <div className="grid gap-4 sm:grid-cols-2">
-        {personalFields.map(renderField)}
+        <CustomerDocumentFields
+          idPrefix="checkout"
+          kind={customerKind}
+          document={document}
+          kindError={errors.customerKind}
+          documentError={errors.document}
+          disabled={disabled}
+          onKindChange={changeCustomerKind}
+          onDocumentChange={setDocument}
+        >
+          {renderField(personalFields[0])}
+        </CustomerDocumentFields>
+        {personalFields.slice(1).map(renderField)}
 
         <div className="sm:col-span-2">
           <label
