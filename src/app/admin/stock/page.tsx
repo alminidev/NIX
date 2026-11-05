@@ -1,3 +1,4 @@
+import FreshNavigation from "@/components/FreshNavigation";
 import { getStockProducts } from "@/lib/admin-stock";
 import { getSession } from "@/lib/session";
 import { AdminStockView } from "@/views/AdminStockView";
@@ -24,12 +25,14 @@ async function Stock() {
 
 export default function StockPage() {
   return (
-    <Suspense
-      fallback={
-        <p className="text-[0.9375rem] text-ink-muted">Carregando estoque…</p>
-      }
-    >
-      <Stock />
-    </Suspense>
+    <FreshNavigation>
+      <Suspense
+        fallback={
+          <p className="text-[0.9375rem] text-ink-muted">Carregando estoque…</p>
+        }
+      >
+        <Stock />
+      </Suspense>
+    </FreshNavigation>
   );
 }

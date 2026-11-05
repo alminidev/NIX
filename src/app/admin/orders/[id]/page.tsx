@@ -1,3 +1,4 @@
+import FreshNavigation from "@/components/FreshNavigation";
 import { getAdminOrder } from "@/lib/admin-orders";
 import { getSession } from "@/lib/session";
 import { AdminOrderView } from "@/views/AdminOrderView";
@@ -38,12 +39,14 @@ async function Order({ params }: IOrderPageProps) {
 
 export default function OrderPage({ params }: IOrderPageProps) {
   return (
-    <Suspense
-      fallback={
-        <p className="text-[0.9375rem] text-ink-muted">Carregando pedido…</p>
-      }
-    >
-      <Order params={params} />
-    </Suspense>
+    <FreshNavigation>
+      <Suspense
+        fallback={
+          <p className="text-[0.9375rem] text-ink-muted">Carregando pedido…</p>
+        }
+      >
+        <Order params={params} />
+      </Suspense>
+    </FreshNavigation>
   );
 }

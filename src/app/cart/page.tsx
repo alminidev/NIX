@@ -1,3 +1,4 @@
+import FreshNavigation from "@/components/FreshNavigation";
 import { CartView } from "@/views/CartView";
 import type { Metadata } from "next";
 
@@ -7,5 +8,9 @@ export const metadata: Metadata = {
 };
 
 export default function CartPage() {
-  return <CartView />;
+  return (
+    <FreshNavigation>
+      <CartView />
+    </FreshNavigation>
+  );
 }

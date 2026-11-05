@@ -39,6 +39,7 @@ export function ProductEditor({
 
   return (
     <ProductForm
+      key={JSON.stringify({ product, categories, nextSortOrder })}
       categories={categories}
       product={product}
       nextSortOrder={nextSortOrder}

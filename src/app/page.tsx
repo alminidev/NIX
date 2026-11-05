@@ -1,3 +1,4 @@
+import FreshNavigation from "@/components/FreshNavigation";
 import { HomeView } from "@/views/HomeView";
 
 /**
@@ -5,5 +6,9 @@ import { HomeView } from "@/views/HomeView";
  * Estrutura 1:1 idêntica ao HTML original (05-build/index.html).
  */
 export default function HomePage() {
-  return <HomeView />;
+  return (
+    <FreshNavigation>
+      <HomeView />
+    </FreshNavigation>
+  );
 }

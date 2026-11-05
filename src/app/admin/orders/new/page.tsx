@@ -1,3 +1,4 @@
+import FreshNavigation from "@/components/FreshNavigation";
 import { getAdminNewOrderOptions } from "@/lib/admin-new-order";
 import { getSession } from "@/lib/session";
 import { AdminNewOrderView } from "@/views/AdminNewOrderView";
@@ -25,14 +26,16 @@ async function NewOrder() {
 
 export default function NewOrderPage() {
   return (
-    <Suspense
-      fallback={
-        <p className="text-[0.9375rem] text-ink-muted">
-          Carregando formulário…
-        </p>
-      }
-    >
-      <NewOrder />
-    </Suspense>
+    <FreshNavigation>
+      <Suspense
+        fallback={
+          <p className="text-[0.9375rem] text-ink-muted">
+            Carregando formulário…
+          </p>
+        }
+      >
+        <NewOrder />
+      </Suspense>
+    </FreshNavigation>
   );
 }

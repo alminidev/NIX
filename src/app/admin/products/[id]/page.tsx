@@ -1,3 +1,4 @@
+import FreshNavigation from "@/components/FreshNavigation";
 import { getAdminCategories, getAdminProduct } from "@/lib/admin-products";
 import { getSession } from "@/lib/session";
 import { ProductEditor } from "@/views/AdminProductsView/components/ProductEditor";
@@ -45,12 +46,14 @@ async function EditProduct({ params }: IEditProductPageProps) {
 
 export default function EditProductPage({ params }: IEditProductPageProps) {
   return (
-    <Suspense
-      fallback={
-        <p className="text-[0.9375rem] text-ink-muted">Carregando produto…</p>
-      }
-    >
-      <EditProduct params={params} />
-    </Suspense>
+    <FreshNavigation>
+      <Suspense
+        fallback={
+          <p className="text-[0.9375rem] text-ink-muted">Carregando produto…</p>
+        }
+      >
+        <EditProduct params={params} />
+      </Suspense>
+    </FreshNavigation>
   );
 }

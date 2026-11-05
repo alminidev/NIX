@@ -1,3 +1,4 @@
+import FreshNavigation from "@/components/FreshNavigation";
 import {
   getAdminProducts,
 } from "@/lib/admin-products";
@@ -26,12 +27,14 @@ async function Products() {
 
 export default function ProductsPage() {
   return (
-    <Suspense
-      fallback={
-        <p className="text-[0.9375rem] text-ink-muted">Carregando produtos…</p>
-      }
-    >
-      <Products />
-    </Suspense>
+    <FreshNavigation>
+      <Suspense
+        fallback={
+          <p className="text-[0.9375rem] text-ink-muted">Carregando produtos…</p>
+        }
+      >
+        <Products />
+      </Suspense>
+    </FreshNavigation>
   );
 }

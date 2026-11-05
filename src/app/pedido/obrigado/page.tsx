@@ -1,3 +1,4 @@
+import FreshNavigation from "@/components/FreshNavigation";
 import { readThankYou } from "@/lib/payments";
 import { ThankYouView } from "@/views/ThankYouView";
 import type { Metadata } from "next";
@@ -18,5 +19,9 @@ export default async function ThankYouPage({ searchParams }: IThankYouPageProps)
   const state = await readThankYou(await searchParams);
   if (state.stockChanged) revalidateTag("products", { expire: 0 });
 
-  return <ThankYouView state={state} />;
+  return (
+    <FreshNavigation>
+      <ThankYouView state={state} />
+    </FreshNavigation>
+  );
 }

@@ -1,3 +1,4 @@
+import FreshNavigation from "@/components/FreshNavigation";
 import { parseDashboardMonth } from "@/lib/dashboard-month";
 import { getDashboardMetrics } from "@/lib/dashboard";
 import { getSession } from "@/lib/session";
@@ -31,14 +32,16 @@ async function Admin({ searchParams }: IAdminPageProps) {
 
 export default function AdminWrapper({ searchParams }: IAdminPageProps) {
   return (
-    <Suspense
-      fallback={
-        <p className="grid min-h-screen place-items-center bg-surface-canvas-fog text-[0.9375rem] text-ink-muted">
-          Carregando dados…
-        </p>
-      }
-    >
-      <Admin searchParams={searchParams} />
-    </Suspense>
+    <FreshNavigation>
+      <Suspense
+        fallback={
+          <p className="grid min-h-screen place-items-center bg-surface-canvas-fog text-[0.9375rem] text-ink-muted">
+            Carregando dados…
+          </p>
+        }
+      >
+        <Admin searchParams={searchParams} />
+      </Suspense>
+    </FreshNavigation>
   );
 }

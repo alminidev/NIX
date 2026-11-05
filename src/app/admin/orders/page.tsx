@@ -1,3 +1,4 @@
+import FreshNavigation from "@/components/FreshNavigation";
 import { parseOrderFilters } from "@/lib/admin-order-filters";
 import { getAdminOrders } from "@/lib/admin-orders";
 import { getSession } from "@/lib/session";
@@ -31,12 +32,14 @@ async function Orders({ searchParams }: IOrdersPageProps) {
 
 export default function OrdersPage({ searchParams }: IOrdersPageProps) {
   return (
-    <Suspense
-      fallback={
-        <p className="text-[0.9375rem] text-ink-muted">Carregando pedidos…</p>
-      }
-    >
-      <Orders searchParams={searchParams} />
-    </Suspense>
+    <FreshNavigation>
+      <Suspense
+        fallback={
+          <p className="text-[0.9375rem] text-ink-muted">Carregando pedidos…</p>
+        }
+      >
+        <Orders searchParams={searchParams} />
+      </Suspense>
+    </FreshNavigation>
   );
 }
