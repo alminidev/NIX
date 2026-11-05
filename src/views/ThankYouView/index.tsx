@@ -77,7 +77,7 @@ export function ThankYouView({ state }: IThankYouViewProps) {
                   href={state.receiptUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex min-h-12 items-center justify-center rounded-pill bg-brand-blue px-8 py-3 text-[0.9375rem] font-semibold text-ink-inverse transition-all duration-200 ease-nix hover:-translate-y-px hover:bg-brand-blue-hover"
+                  className="inline-flex min-h-12 items-center justify-center rounded-button bg-brand-blue px-8 py-3 text-[0.9375rem] font-semibold text-ink-inverse transition-all duration-200 ease-nix hover:-translate-y-px hover:bg-brand-blue-hover"
                 >
                   Ver comprovante
                 </a>

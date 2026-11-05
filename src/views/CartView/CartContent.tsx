@@ -169,7 +169,7 @@ export default function CartContent() {
             </p>
             <Link
               href="/#produtos"
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-pill bg-brand-blue px-8 py-3 text-[0.9375rem] font-semibold text-ink-inverse transition-all duration-200 ease-nix hover:-translate-y-px hover:bg-brand-blue-hover"
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-button bg-brand-blue px-8 py-3 text-[0.9375rem] font-semibold text-ink-inverse transition-all duration-200 ease-nix hover:-translate-y-px hover:bg-brand-blue-hover"
             >
               Ver produtos
             </Link>

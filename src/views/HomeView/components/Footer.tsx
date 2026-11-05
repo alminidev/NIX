@@ -32,7 +32,7 @@ export default function Footer() {
               para a comunidade de manufatura aditiva e impressão 3D.
             </p>
             <div className="mt-4 text-xs leading-[1.4] text-white/60">
-              ⚠️ <strong>Observação Importante:</strong> Imagens ilustrativas. A
+              <strong>Observação Importante:</strong> Imagens ilustrativas. A
               impressora e os filamentos não acompanham o produto.
             </div>
           </div>

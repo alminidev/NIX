@@ -128,7 +128,7 @@ export default function ProductCard({
             type="button"
             onClick={handleAdd}
             disabled={!product.inStock || adding}
-            className="inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-pill bg-brand-blue px-6 py-3 text-[0.9375rem] font-semibold text-ink-inverse transition-all duration-200 ease-nix hover:-translate-y-px hover:bg-brand-blue-hover disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-button bg-brand-blue px-6 py-3 text-[0.9375rem] font-semibold text-ink-inverse transition-all duration-200 ease-nix hover:-translate-y-px hover:bg-brand-blue-hover disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
             data-sku={product.sku}
             data-id={product.id}
             aria-label={

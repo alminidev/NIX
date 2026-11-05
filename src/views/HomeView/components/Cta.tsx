@@ -17,7 +17,7 @@ export default function CTA() {
           </p>
           <a
             href="#produtos"
-            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-pill bg-brand-blue px-8 py-[14px] text-[0.9375rem] font-medium whitespace-nowrap text-ink-inverse transition-[background-color,translate] duration-200 ease-nix hover:-translate-y-px hover:bg-brand-blue-hover active:translate-y-0"
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-button bg-brand-blue px-8 py-[14px] text-[0.9375rem] font-medium whitespace-nowrap text-ink-inverse transition-[background-color,translate] duration-200 ease-nix hover:-translate-y-px hover:bg-brand-blue-hover active:translate-y-0"
           >
             Escolher Meu Modelo
             <ArrowRight size={16} aria-hidden />

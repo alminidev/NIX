@@ -387,7 +387,7 @@ export default function CheckoutForm({
               type="button"
               onClick={handleLookup}
               disabled={disabled || looking}
-              className="inline-flex min-h-11 shrink-0 cursor-pointer items-center justify-center rounded-pill border border-[rgba(23,107,255,0.2)] bg-brand-blue-subtle px-4 text-sm font-semibold text-brand-blue-hover transition-colors hover:bg-brand-blue hover:text-ink-inverse disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex min-h-11 shrink-0 cursor-pointer items-center justify-center rounded-button border border-[rgba(23,107,255,0.2)] bg-brand-blue-subtle px-4 text-sm font-semibold text-brand-blue-hover transition-colors hover:bg-brand-blue hover:text-ink-inverse disabled:cursor-not-allowed disabled:opacity-60"
             >
               {looking ? "Calculando…" : "Calcular"}
             </button>

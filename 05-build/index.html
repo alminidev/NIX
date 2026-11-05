@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NIX 3D — Mobiliário Técnico e Dry Box para Impressão 3D</title>
+  <meta name="description"
+    content="Móveis técnicos e estufas Dry Box com controle térmico ativo para filamentos de impressora 3D. Elimine umidade e organize seu setup com precisão industrial.">
+
+  <!-- Favicon Oficial -->
+  <link rel="icon" type="image/x-icon" href="images/nix-RS-MONO-ICO.ico">
+
+  <!-- Open Graph / Social Sharing (WhatsApp, Facebook, LinkedIn) -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="NIX 3D — Mobiliário Técnico e Dry Box para Impressão 3D">
+  <meta property="og:description"
+    content="Móveis técnicos e estufas Dry Box com controle térmico ativo para filamentos de impressora 3D. Elimine umidade e organize seu setup com precisão industrial.">
+  <meta property="og:image" content="images/hero-showroom.jpg">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="NIX 3D — Mobiliário Técnico e Dry Box para Impressão 3D">
+  <meta name="twitter:description"
+    content="Móveis técnicos e estufas Dry Box com controle térmico ativo para filamentos de impressora 3D.">
+  <meta name="twitter:image" content="images/hero-showroom.jpg">
+
+  <!-- Tipografia Inter (Google Fonts) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Folha de Estilos Principal (Vanilla CSS) -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+  <!-- Link de Acessibilidade -->
+  <a href="#main-content" class="skip-link">Pular para o conteúdo principal</a>
+
+  <!-- ==========================================
+       CABEÇALHO FIXO (STICKY HEADER)
+       ========================================== -->
+  <header id="site-header" class="site-header">
+    <div class="container header-container">
+      <a href="#hero" class="brand-logo" aria-label="NIX 3D — Página Inicial">
+        <img src="images/logo-nix.png" alt="Logotipo NIX" width="110" height="32">
+      </a>
+
+      <nav class="nav-desktop" aria-label="Navegação Principal">
+        <ul class="nav-links">
+          <li><a href="#produtos" class="nav-link">Produtos</a></li>
+          <li><a href="#diferenciais" class="nav-link">Diferenciais</a></li>
+          <li><a href="#faq" class="nav-link">Dúvidas</a></li>
+        </ul>
+      </nav>
+
+      <div class="header-actions">
+        <a id="btn-header-cart" href="https://checkout.infinitepay.io/nix3d" class="btn-cart" target="_blank"
+          rel="noopener noreferrer" aria-label="Ir para o carrinho de compras seguro" title="Carrinho de Compras">
+          <img src="images/carrinho_vetorizado.svg" alt="Carrinho de compras" width="21" height="17">
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==========================================
+       CONTEÚDO PRINCIPAL
+       ========================================== -->
+  <main id="main-content">
+
+    <!-- 1. HERO STAGE (SHOWROOM NIX) -->
+    <section id="hero" class="hero-stage">
+      <div class="hero-media-wrapper">
+        <img src="images/hero-showroom-oficial.png" alt="Linha completa NIX em estúdio showroom" width="1920"
+          height="1080" loading="eager">
+      </div>
+
+      <div class="container hero-container">
+        <div class="hero-content">
+          <h1 class="hero-title">
+            A <b>evolução</b> definitiva do seu<br>setup de impressão 3D.
+          </h1>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. VITRINE DE PRODUTOS -->
+    <section id="produtos" class="section-products">
+      <div class="container">
+        <header class="section-header">
+          <span class="kicker">Catálogo Oficial</span>
+          <h2>Linha NIX Dry Box & Setup Lab</h2>
+          <p>
+            Engenharia de precisão para armazenar e imprimir direto da estufa. Escolha a capacidade sob medida para o
+            seu volume de produção.
+          </p>
+        </header>
+
+        <!-- Grade com os 5 produtos gerados dinamicamente via js/produtos.js -->
+        <div id="products-grid" class="products-grid">
+          <!-- Fallback semântico caso o JS esteja desativado -->
+          <noscript>
+            <p>Por favor, ative o JavaScript para visualizar o catálogo completo com preços atualizados.</p>
+          </noscript>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2.1 INFORMAÇÕES COMERCIAIS E LOGÍSTICAS -->
+    <section class="section-logistics" aria-label="Informações Comerciais e Logísticas">
+      <div class="container">
+        <div class="logistics-grid">
+
+          <div class="logistics-card">
+            <div class="logistics-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <rect x="1" y="3" width="15" height="13"></rect>
+                <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+                <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                <circle cx="18.5" cy="18.5" r="2.5"></circle>
+              </svg>
+            </div>
+            <div class="logistics-content">
+              <h3>Envio para Todo o Brasil</h3>
+              <p>Enviamos para todo o Brasil (Frete a consultar no checkout).</p>
+            </div>
+          </div>
+
+          <div class="logistics-card">
+            <div class="logistics-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="5" width="20" height="14" rx="2"></rect>
+                <line x1="2" y1="10" x2="22" y2="10"></line>
+              </svg>
+            </div>
+            <div class="logistics-content">
+              <h3>Até 3x Sem Juros</h3>
+              <p>Pagamento facilitado em até 3x sem juros no cartão de crédito.</p>
+            </div>
+          </div>
+
+          <div class="logistics-card">
+            <div class="logistics-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+            </div>
+            <div class="logistics-content">
+              <h3>Retirada no Local</h3>
+              <p>Disponível para retirada no local em São Paulo.</p>
+            </div>
+          </div>
+
+          <div class="logistics-card">
+            <div class="logistics-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+              </svg>
+            </div>
+            <div class="logistics-content">
+              <h3>Instagram & Contato</h3>
+              <p><a href="https://instagram.com/nix_impressoes3d" target="_blank" rel="noopener noreferrer"
+                  class="link-social">@nix_impressoes3d</a> • <a
+                  href="https://wa.me/5511999999999?text=Ol%C3%A1!%20Gostaria%20de%20informa%C3%A7%C3%B5es%20sobre%20as%20Dry%20Boxes%20da%20NIX%203D"
+                  target="_blank" rel="noopener noreferrer" class="link-social">Fale com a Nix</a></p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. DIFERENCIAIS & ENGENHARIA -->
+    <section id="diferenciais" class="section-features">
+      <div class="container">
+        <div class="features-grid">
+
+          <div class="features-intro">
+            <span class="kicker">Engenharia & Precisão</span>
+            <h2>Desenvolvido para eliminar falhas antes que elas aconteçam.</h2>
+            <p>
+              Filamentos de engenharia como Nylon, TPU e PETG absorvem umidade do ar em poucas horas. A NIX criou a
+              primeira solução completa que une climatização hermética e estabilidade física em um único móvel.
+            </p>
+            <div class="features-badge-box">
+              <strong>Padrão Estúdio Maker</strong>
+              <span>Compatível com sistemas Bambu Lab (AMS), Creality e impressoras CoreXY.</span>
+            </div>
+          </div>
+
+          <div class="features-items">
+
+            <div class="feature-box">
+              <div class="feature-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"></path>
+                </svg>
+              </div>
+              <h3>Controle Térmico Ativo (< 20% UR)</h3>
+                  <p>Display digital com leitura contínua de temperatura e umidade. Desumidificação uniforme sem risco
+                    de degradar filamentos.</p>
+            </div>
+
+            <div class="feature-box">
+              <div class="feature-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+              </div>
+              <h3>Vedação Estanque Automotiva</h3>
+              <p>Perfis vedados com guarnições de alta durabilidade e portas com fecho magnético que isolam o interior
+                do ar ambiente.</p>
+            </div>
+
+            <div class="feature-box">
+              <div class="feature-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <path d="M12 2v20"></path>
+                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                </svg>
+              </div>
+              <h3>Alimentação Direta sem Atrito</h3>
+              <p>Conectores pneumáticos para tubos PTFE no topo e laterais: imprima direto do móvel sem expor o
+                filamento à atmosfera.</p>
+            </div>
+
+            <div class="feature-box">
+              <div class="feature-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                  <polyline points="2 17 12 22 22 17"></polyline>
+                  <polyline points="2 12 12 17 22 12"></polyline>
+                </svg>
+              </div>
+              <h3>Estrutura Rígida em Alumínio</h3>
+              <p>Projetado para absorver acelerações mecânicas de até 20.000 mm/s² das máquinas modernas sem oscilações
+                ou ruídos.</p>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. PERGUNTAS FREQUENTES (FAQ) -->
+    <section id="faq" class="section-faq">
+      <div class="container">
+        <header class="section-header">
+          <span class="kicker">Dúvidas Frequentes</span>
+          <h2>Tudo o que você precisa saber antes de pedir o seu.</h2>
+          <p>Transparência total em entrega, dimensões e funcionamento.</p>
+        </header>
+
+        <div class="faq-wrapper">
+
+          <details class="faq-item">
+            <summary class="faq-summary">
+              <span>Como funciona a entrega por transportadora?</span>
+              <svg class="faq-chevron" viewBox="0 0 24 24" aria-hidden="true">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </summary>
+            <div class="faq-content">
+              Nossos móveis e estufas são despachados em embalagens técnicas de alta proteção com transportadoras
+              especializadas em cargas sensíveis. Ao clicar em "Comprar", você será direcionado para o checkout onde o
+              frete é calculado de acordo com seu CEP.
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-summary">
+              <span>Quais tipos e marcas de filamentos cabem nas Dry Boxes?</span>
+              <svg class="faq-chevron" viewBox="0 0 24 24" aria-hidden="true">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </summary>
+            <div class="faq-content">
+              Todos os modelos comportam bobinas padrão universais de 1kg (diâmetro de 200mm) para filamentos de
+              qualquer marca (Bambu Lab, Polymaker, eSun, Creality, 3D Prime). Os modelos de alta capacidade (Dry Box
+              48) também acomodam bobinas industriais de 2,5kg e 3kg de filamentos.
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-summary">
+              <span>Qual é o consumo elétrico do sistema de controle térmico?</span>
+              <svg class="faq-chevron" viewBox="0 0 24 24" aria-hidden="true">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </summary>
+            <div class="faq-content">
+              O consumo é ultraeficiente. Uma vez atingida a temperatura e umidade programadas, o isolamento térmico do
+              armário retém o calor e o sistema atua em regime de manutenção, com consumo médio comparável a uma lâmpada
+              LED comum (bivolt automático 110V/220V).
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-summary">
+              <span>Como é feito o pagamento e a segurança da compra?</span>
+              <svg class="faq-chevron" viewBox="0 0 24 24" aria-hidden="true">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </summary>
+            <div class="faq-content">
+              A transação é processada diretamente pelo gateway seguro da InfinitePay, com criptografia de ponta a ponta
+              e suporte a Pix e cartão de crédito em até 3x sem juros.
+            </div>
+          </details>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. CTA FINAL -->
+    <section class="section-cta-final">
+      <div class="container">
+        <div class="cta-final-box">
+          <h2>Pronto para elevar o nível do seu estúdio 3D?</h2>
+          <p>
+            Elimine as falhas por umidade e organize suas máquinas com o padrão que seu trabalho merece.
+          </p>
+          <a href="#produtos" class="btn-primary">
+            Escolher Meu Modelo
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M5 12h14"></path>
+              <path d="M12 5l7 7-7 7"></path>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==========================================
+       RODAPÉ (FOOTER)
+       ========================================== -->
+  <footer id="site-footer" class="site-footer">
+    <div class="container">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <img src="images/logo-nix.png" alt="Logotipo NIX" width="100" height="30">
+          <p>
+            Mobiliário técnico e soluções inteligentes com controle térmico para a comunidade de manufatura aditiva e
+            impressão 3D.
+          </p>
+          <div class="footer-disclaimer-note">
+            <strong>Observação Importante:</strong> Imagens ilustrativas. A impressora e os filamentos não acompanham
+            o produto.
+          </div>
+        </div>
+
+        <div class="footer-nav">
+          <div class="footer-col">
+            <h4>Navegação</h4>
+            <ul>
+              <li><a href="#hero">Início</a></li>
+              <li><a href="#produtos">Produtos</a></li>
+              <li><a href="#diferenciais">Diferenciais</a></li>
+              <li><a href="#faq">Dúvidas Frequentes</a></li>
+            </ul>
+          </div>
+
+          <div class="footer-col">
+            <h4>Atendimento & Social</h4>
+            <ul>
+              <li><a
+                  href="https://wa.me/5511999999999?text=Ol%C3%A1!%20Gostaria%20de%20informa%C3%A7%C3%B5es%20sobre%20as%20Dry%20Boxes%20da%20NIX%203D"
+                  target="_blank" rel="noopener noreferrer">Fale com a Nix (WhatsApp)</a></li>
+              <li><a href="https://instagram.com/nix_impressoes3d" target="_blank" rel="noopener noreferrer">Instagram
+                  @nix_impressoes3d</a></li>
+              <li><span>Retirada no local em São Paulo</span></li>
+            </ul>
+          </div>
+
+          <div class="footer-col">
+            <h4>Condições</h4>
+            <ul>
+              <li><span>Até 3x sem juros</span></li>
+              <li><span>Envio para todo o Brasil</span></li>
+              <li><span>Checkout Seguro InfinitePay</span></li>
+              <li><span>Garantia de Fábrica</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>© 2026 <strong>NIX 3D</strong>. Todos os direitos reservados. nix3d.</p>
+        <p>Frete a consultar no checkout de acordo com o CEP de destino. Retirada disponível no local em São Paulo.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts Vanilla (sem build, sem dependências) -->
+  <script src="js/produtos.js"></script>
+  <script src="js/main.js"></script>
+</body>
+
+</html>
