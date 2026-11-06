@@ -67,10 +67,10 @@ describe("manifest", () => {
 });
 
 describe("robots", () => {
-  it("aplica as mesmas restrições a todos os grupos que liberam o site", () => {
+  it("aplica as mesmas restrições a todos os grupos", () => {
     const rules = robots().rules;
     const list = Array.isArray(rules) ? rules : [rules];
-    for (const rule of list.filter((r) => r.allow === "/")) {
+    for (const rule of list) {
       const disallow = [rule.disallow ?? []].flat();
       assert.ok(disallow.includes("/admin"), String(rule.userAgent));
       assert.ok(disallow.includes("/api"), String(rule.userAgent));
