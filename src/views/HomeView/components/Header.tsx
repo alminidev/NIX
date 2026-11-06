@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useCartContext } from '@/contexts/CartContext';
 import Image from 'next/image';
 import Link from 'next/link';
+import { mobileNavA11y, shouldCloseMobileNav } from './mobile-nav';
 
 /**
  * Header — Cabeçalho fixo (sticky) da NIX 3D.
@@ -24,6 +25,8 @@ export default function Header({ homePath = '' }: { homePath?: string }) {
   const [activeSection, setActiveSection] = useState<string>('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+
   const { itemCount, isReady } = useCartContext();
 
   useEffect(() => {
@@ -37,7 +40,10 @@ export default function Header({ homePath = '' }: { homePath?: string }) {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setMobileMenuOpen(false);
+      if (shouldCloseMobileNav(e.key, true)) {
+        setMobileMenuOpen(false);
+        menuButtonRef.current?.focus();
+      }
     };
     if (mobileMenuOpen) {
       window.addEventListener('keydown', handleKeyDown);
@@ -138,6 +144,7 @@ export default function Header({ homePath = '' }: { homePath?: string }) {
 
           <button
             id="btn-mobile-menu"
+            ref={menuButtonRef}
             className="flex size-10 flex-col items-center justify-center gap-[5px] rounded-button p-2 text-ink-primary transition-colors hover:bg-surface-canvas-fog min-[992px]:hidden"
             type="button"
             aria-label={mobileMenuOpen ? 'Fechar menu de navegação' : 'Abrir menu de navegação'}
@@ -166,7 +173,7 @@ export default function Header({ homePath = '' }: { homePath?: string }) {
             : 'pointer-events-none max-h-0 opacity-0'
         }`}
         aria-label="Navegação Mobile"
-        aria-hidden={!mobileMenuOpen}
+        {...mobileNavA11y(mobileMenuOpen)}
       >
         <div className="flex flex-col gap-5 px-4 py-5 min-[640px]:px-6">
           <ul className="flex flex-col gap-2">

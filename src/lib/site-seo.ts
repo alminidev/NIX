@@ -1,3 +1,5 @@
+import { faqItems } from "@/views/HomeView/copy";
+
 const fallbackSiteUrl = "https://nix3d.com.br";
 
 export function siteOrigin() {
@@ -100,4 +102,29 @@ export function organizationJsonLd(origin = siteOrigin()) {
       },
     ],
   };
+}
+
+type FaqItem = { pergunta: string; resposta: string };
+
+/** FAQPage gerado das mesmas perguntas exibidas na página. */
+export function faqPageJsonLd(origin = siteOrigin(), items: readonly FaqItem[] = faqItems) {
+  return {
+    "@type": "FAQPage",
+    "@id": `${origin}/#faqpage`,
+    mainEntity: items.map((item) => ({
+      "@type": "Question",
+      name: item.pergunta,
+      acceptedAnswer: { "@type": "Answer", text: item.resposta },
+    })),
+  };
+}
+
+/** JSON seguro para <script>: escapa <, > e & para não fechar a tag. */
+export function serializeJsonLd(data: unknown) {
+  return JSON.stringify(data)
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
 }

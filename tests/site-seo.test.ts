@@ -30,12 +30,11 @@ describe("SEO portado da migracao-nextjs", () => {
     ]);
   });
 
-  it("lista a home e as âncoras no sitemap", () => {
+  it("lista só páginas canônicas no sitemap, sem âncoras", () => {
     const origin = siteOrigin();
     const urls = sitemap().map((entry) => entry.url);
-    assert.ok(urls.includes(`${origin}/`));
-    assert.ok(urls.includes(`${origin}/#produtos`));
-    assert.ok(urls.includes(`${origin}/#faq`));
+    assert.deepEqual(urls, [`${origin}/`]);
+    assert.ok(urls.every((url) => !url.includes("#")));
   });
 
   it("monta JSON-LD com telefone e Instagram atualizados, sem preços estáticos", () => {
@@ -64,5 +63,47 @@ describe("manifest", () => {
       return `${side}x${side}`;
     });
     assert.equal(ico.sizes, sizes.join(" "));
+  });
+});
+
+describe("robots", () => {
+  it("aplica as mesmas restrições a todos os grupos que liberam o site", () => {
+    const rules = robots().rules;
+    const list = Array.isArray(rules) ? rules : [rules];
+    for (const rule of list.filter((r) => r.allow === "/")) {
+      const disallow = [rule.disallow ?? []].flat();
+      assert.ok(disallow.includes("/admin"), String(rule.userAgent));
+      assert.ok(disallow.includes("/api"), String(rule.userAgent));
+    }
+    assert.ok(!list.some((r) => r.userAgent === "Bingbot"));
+  });
+});
+
+describe("FAQPage JSON-LD", () => {
+  it("usa as mesmas perguntas e respostas exibidas no FAQ", async () => {
+    const { faqPageJsonLd } = await import("../src/lib/site-seo");
+    const { faqItems } = await import("../src/views/HomeView/copy");
+    const faq = faqPageJsonLd("https://nix3d.com.br");
+    assert.equal(faq["@type"], "FAQPage");
+    assert.equal(faq["@id"], "https://nix3d.com.br/#faqpage");
+    assert.deepEqual(
+      faq.mainEntity.map((q) => [q.name, q.acceptedAnswer.text]),
+      faqItems.map((item) => [item.pergunta, item.resposta]),
+    );
+    const pagamento = faq.mainEntity.find((q) => /pagamento/i.test(q.name));
+    assert.ok(pagamento);
+    assert.equal(
+      pagamento.acceptedAnswer.text,
+      faqItems.find((item) => /pagamento/i.test(item.pergunta))?.resposta,
+    );
+  });
+
+  it("serializa sem permitir fechar a tag script", async () => {
+    const { serializeJsonLd } = await import("../src/lib/site-seo");
+    const out = serializeJsonLd({ text: "</script><b>&\u2028" });
+    assert.ok(!out.includes("<"));
+    assert.ok(!out.includes(">"));
+    assert.ok(!out.includes("&"));
+    assert.deepEqual(JSON.parse(out), { text: "</script><b>&\u2028" });
   });
 });

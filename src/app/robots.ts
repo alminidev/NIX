@@ -13,11 +13,6 @@ export default function robots(): MetadataRoute.Robots {
         userAgent: "Googlebot-Image",
         allow: ["/05-build/images/", "/images/"],
       },
-      {
-        userAgent: "Bingbot",
-        allow: "/",
-        disallow: ["/05-build/Backup/", "/Backup/"],
-      },
     ],
     sitemap: `${siteOrigin()}/sitemap.xml`,
   };
