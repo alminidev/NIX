@@ -1,35 +1,8 @@
-import {
-  cardInstallmentsLabel,
-  interestDisclosure,
-  pixDiscountLabel,
-} from "@/lib/payment-terms";
+import { faqItems } from "@/views/HomeView/copy";
 import { ChevronDown } from "lucide-react";
-
-const items = [
-  {
-    pergunta: "Como funciona a entrega por transportadora?",
-    resposta:
-      'Nossos móveis e estufas são despachados em embalagens técnicas de alta proteção com transportadoras especializadas em cargas sensíveis. Ao clicar em "Comprar", você será direcionado para o checkout onde o frete é calculado de acordo com seu CEP.',
-  },
-  {
-    pergunta: "Quais tipos e marcas de filamentos cabem nas Dry Boxes?",
-    resposta:
-      "Todos os modelos comportam bobinas padrão universais de 1kg (diâmetro de 200mm) para filamentos de qualquer marca (Bambu Lab, Polymaker, eSun, Creality, 3D Prime). Os modelos de alta capacidade (Dry Box 48) também acomodam bobinas industriais de 2,5kg e 3kg de filamentos.",
-  },
-  {
-    pergunta: "Qual é o consumo elétrico do sistema de controle térmico?",
-    resposta:
-      "O consumo é ultraeficiente. Uma vez atingida a temperatura e umidade programadas, o isolamento térmico do armário retém o calor e o sistema atua em regime de manutenção, com consumo médio comparável a uma lâmpada LED comum (bivolt automático 110V/220V).",
-  },
-  {
-    pergunta: "Como é feito o pagamento e a segurança da compra?",
-    resposta: `A transação é processada pelo gateway da InfinitePay, com criptografia de ponta a ponta. ${pixDiscountLabel()} sobre os produtos — o frete não entra nesse desconto — e ${cardInstallmentsLabel()}. ${interestDisclosure()}`,
-  },
-];
 
 /**
  * FAQ — Seção de perguntas frequentes com accordion nativo HTML (<details>/<summary>).
- * Sem estado React necessário — o browser gerencia o accordion nativamente.
  */
 export default function FAQ() {
   return (
@@ -51,7 +24,7 @@ export default function FAQ() {
         </header>
 
         <div className="mx-auto max-w-[780px]">
-          {items.map((item, i) => (
+          {faqItems.map((item, i) => (
             <details
               key={i}
               className="group mb-3 overflow-hidden rounded-card border border-border-hairline bg-surface-card transition-colors duration-200 ease-nix open:border-[rgba(23,107,255,0.3)]"

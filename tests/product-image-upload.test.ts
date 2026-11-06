@@ -20,7 +20,7 @@ let session: { user: { role: string } } | null = null;
 const uploads: Uint8Array[] = [];
 
 mock.module("next/navigation", {
-  exports: {
+  namedExports: {
     redirect() {
       throw new Error("redirect");
     },
@@ -28,19 +28,19 @@ mock.module("next/navigation", {
 });
 
 mock.module("next/cache", {
-  exports: {
+  namedExports: {
     updateTag() {},
   },
 });
 
 mock.module("@/lib/session", {
-  exports: {
+  namedExports: {
     getSession: async () => session,
   },
 });
 
 mock.module("@/lib/storage", {
-  exports: {
+  namedExports: {
     uploadProductImage: async (bytes: Uint8Array) => {
       uploads.push(bytes);
       return {
@@ -58,7 +58,7 @@ class SizedFile extends File {
   reads = 0;
 
   constructor(bytes: Uint8Array, name: string, declaredSize = bytes.byteLength) {
-    super([bytes], name, { type: "image/jpeg" });
+    super([Buffer.from(bytes)], name, { type: "image/jpeg" });
     this.#declaredSize = declaredSize;
   }
 
