@@ -46,3 +46,23 @@ describe("SEO portado da migracao-nextjs", () => {
     assert.doesNotMatch(serialized, /"price":/);
   });
 });
+
+describe("manifest", () => {
+  it("declara os tamanhos reais dos ícones", async () => {
+    const { default: manifest } = await import("../src/app/manifest");
+    const { readFileSync } = await import("node:fs");
+    const icons = manifest().icons ?? [];
+    const png = icons.find((icon) => icon.src.endsWith(".png"));
+    assert.ok(png);
+    const buf = readFileSync(`public${png.src}`);
+    assert.equal(png.sizes, `${buf.readUInt32BE(16)}x${buf.readUInt32BE(20)}`);
+    const ico = icons.find((icon) => icon.src.endsWith(".ico"));
+    assert.ok(ico);
+    const data = readFileSync(`public${ico.src}`);
+    const sizes = Array.from({ length: data.readUInt16LE(4) }, (_, i) => {
+      const side = data[6 + 16 * i] || 256;
+      return `${side}x${side}`;
+    });
+    assert.equal(ico.sizes, sizes.join(" "));
+  });
+});
