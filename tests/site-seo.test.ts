@@ -4,6 +4,7 @@ import robots from "../src/app/robots";
 import sitemap from "../src/app/sitemap";
 import {
   organizationJsonLd,
+  siteOrigin,
   siteSeo,
 } from "../src/lib/site-seo";
 
@@ -18,7 +19,7 @@ describe("SEO portado da migracao-nextjs", () => {
 
   it("gera robots.txt com sitemap e reserva de backup", () => {
     const doc = robots();
-    assert.equal(doc.sitemap, "https://nix3d.com.br/sitemap.xml");
+    assert.equal(doc.sitemap, `${siteOrigin()}/sitemap.xml`);
     const first = Array.isArray(doc.rules) ? doc.rules[0] : doc.rules;
     assert.ok(first);
     assert.deepEqual(first.disallow, [
@@ -30,10 +31,11 @@ describe("SEO portado da migracao-nextjs", () => {
   });
 
   it("lista a home e as âncoras no sitemap", () => {
+    const origin = siteOrigin();
     const urls = sitemap().map((entry) => entry.url);
-    assert.ok(urls.includes("https://nix3d.com.br/"));
-    assert.ok(urls.includes("https://nix3d.com.br/#produtos"));
-    assert.ok(urls.includes("https://nix3d.com.br/#faq"));
+    assert.ok(urls.includes(`${origin}/`));
+    assert.ok(urls.includes(`${origin}/#produtos`));
+    assert.ok(urls.includes(`${origin}/#faq`));
   });
 
   it("monta JSON-LD com telefone e Instagram atualizados, sem preços estáticos", () => {
