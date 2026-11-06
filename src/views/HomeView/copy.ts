@@ -22,7 +22,7 @@ export const catalogSectionCopy: Record<
   { eyebrow: string; title: string; description: string; centered: boolean }
 > = {
   armarios: {
-    eyebrow: "Conheça nossas soluções",
+    eyebrow: "CONHEÇA NOSSAS SOLUÇÕES",
     title: "DRY BOX",
     description:
       "Seus filamentos protegidos da umidade, seu setup mais organizado e sua impressão 3D em outro nível.",

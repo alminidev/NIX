@@ -11,7 +11,7 @@ export default function Features() {
         <div className="grid grid-cols-1 items-start gap-9 min-[992px]:grid-cols-[380px_1fr] min-[992px]:gap-16">
           <div>
             <span className="mb-3 inline-block text-xs leading-[1.4] font-bold tracking-[0.08em] text-brand-blue-hover uppercase">
-              Tecnologia &amp; Proteção
+              TECNOLOGIA &amp; PROTEÇÃO
             </span>
             <h2 className="mb-5 text-[clamp(1.75rem,3vw+0.5rem,2.5rem)] leading-[1.15] font-semibold tracking-[-0.02em] text-ink-primary">
               Mais cuidado com seus filamentos. Mais qualidade para suas
