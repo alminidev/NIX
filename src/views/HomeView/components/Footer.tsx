@@ -2,15 +2,20 @@ import {
   cardInstallmentsLabel,
   pixDiscountLabel,
 } from "@/lib/payment-terms";
-import Image from "next/image";
+import {
+  footerBrandText,
+  footerCreditLabel,
+  footerCreditUrl,
+  footerDisclaimer,
+  INSTAGRAM_HANDLE,
+  INSTAGRAM_URL,
+  WHATSAPP_URL,
+} from "@/views/HomeView/copy";
 
 /**
  * Footer — Rodapé da NIX 3D.
  */
 export default function Footer() {
-  const whatsappUrl =
-    "https://wa.me/5511999999999?text=Ol%C3%A1!%20Gostaria%20de%20informa%C3%A7%C3%B5es%20sobre%20as%20Dry%20Boxes%20da%20NIX%203D";
-
   return (
     <footer
       id="site-footer"
@@ -19,21 +24,12 @@ export default function Footer() {
       <div className="mx-auto w-full max-w-[1200px] px-4 min-[640px]:px-6">
         <div className="mb-12 flex flex-col flex-wrap items-start justify-between gap-8 min-[640px]:flex-row min-[640px]:gap-12">
           <div className="max-w-[360px]">
-            <Image
-              src="/images/logo-nix.png"
-              alt="Logotipo NIX"
-              width={100}
-              height={30}
-              className="mb-4 h-7 w-auto brightness-0 invert"
-              style={{ width: "auto", height: "1.75rem" }}
-            />
-            <p className="leading-[1.6]">
-              Mobiliário técnico e soluções inteligentes com controle térmico
-              para a comunidade de manufatura aditiva e impressão 3D.
-            </p>
+            <strong className="mb-4 block text-[2rem] leading-none font-extrabold tracking-[0.06em] text-ink-inverse uppercase">
+              NIX
+            </strong>
+            <p className="leading-[1.6]">{footerBrandText}</p>
             <div className="mt-4 text-xs leading-[1.4] text-white/60">
-              <strong>Observação Importante:</strong> Imagens ilustrativas. A
-              impressora e os filamentos não acompanham o produto.
+              <strong>Aviso:</strong> {footerDisclaimer}
             </div>
           </div>
 
@@ -65,7 +61,7 @@ export default function Footer() {
               <ul>
                 <li className="mb-2.5">
                   <a
-                    href={whatsappUrl}
+                    href={WHATSAPP_URL}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -74,11 +70,11 @@ export default function Footer() {
                 </li>
                 <li className="mb-2.5">
                   <a
-                    href="https://instagram.com/nix_impressoes3d"
+                    href={INSTAGRAM_URL}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    Instagram @nix_impressoes3d
+                    Instagram {INSTAGRAM_HANDLE}
                   </a>
                 </li>
                 <li className="mb-2.5">
@@ -112,13 +108,19 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="flex flex-col flex-wrap items-start justify-between gap-4 border-t border-border-dark-hairline pt-8 text-xs text-white/70 min-[640px]:flex-row min-[640px]:items-center [&_strong]:text-white/80">
+        <div className="flex flex-col flex-wrap items-start justify-between gap-4 border-t border-border-dark-hairline pt-8 text-xs text-white/70 min-[640px]:flex-row min-[640px]:items-center [&_a]:underline [&_a]:underline-offset-2 hover:[&_a]:text-ink-inverse [&_strong]:text-white/80">
           <p>
-            © 2026 <strong>NIX 3D</strong>. Todos os direitos reservados. nix3d.
+            © 2026 <strong>NIX 3D</strong>. Todos os direitos reservados.
           </p>
           <p>
             Frete a consultar no checkout de acordo com o CEP de destino.
             Retirada disponível no local em São Paulo.
+          </p>
+          <p>
+            DESIGN &amp; CODE BY{" "}
+            <a href={footerCreditUrl} target="_blank" rel="noopener noreferrer">
+              {footerCreditLabel}
+            </a>
           </p>
         </div>
       </div>

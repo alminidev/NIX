@@ -13,7 +13,7 @@ export default function HeroStage() {
       <div className="absolute inset-0 z-[1] size-full overflow-hidden">
         <Image
           src="/images/hero-showroom-oficial.png"
-          alt="Linha completa NIX em estúdio showroom"
+          alt="Linha completa NIX em estúdio showroom com estufas Dry Box e estações de impressão 3D"
           fill
           preload
           sizes="100vw"
