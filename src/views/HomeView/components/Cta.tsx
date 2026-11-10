@@ -1,3 +1,4 @@
+import { ctaDescription } from "@/views/HomeView/copy";
 import { ArrowRight } from "lucide-react";
 
 /**
@@ -12,8 +13,7 @@ export default function CTA() {
             Pronto para elevar o nível do seu estúdio 3D?
           </h2>
           <p className="mb-8 text-lg text-white/75">
-            Elimine as falhas por umidade e organize suas máquinas com o padrão
-            que seu trabalho merece.
+            {ctaDescription}
           </p>
           <a
             href="#produtos"
