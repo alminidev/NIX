@@ -2,8 +2,12 @@ import { config } from "dotenv";
 import { defineConfig } from "prisma/config";
 import { migrateDatabaseUrl } from "./prisma/migrate-url";
 
-config({ path: ".env" });
-config({ path: ".env.local", override: true });
+// Na Vercel as variáveis vêm do painel. Os arquivos .env são só do
+// desenvolvimento e não podem trocar a URL que o build escolheu.
+if (!process.env.VERCEL_ENV) {
+  config({ path: ".env" });
+  config({ path: ".env.local", override: true });
+}
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
