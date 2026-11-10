@@ -1,6 +1,7 @@
 "use client";
 
 import type { IProduct } from "@/types/product";
+import { catalogDisclaimer, catalogSectionCopy } from "@/views/HomeView/copy";
 import { useState } from "react";
 import ProductCard from "../../../components/ProductCard";
 import ProductLightbox from "../../../components/ProductLightbox";
@@ -8,26 +9,6 @@ import ProductLightbox from "../../../components/ProductLightbox";
 interface IProductGridProps {
   products: IProduct[];
 }
-
-const sectionCopy: Record<
-  string,
-  { eyebrow: string; title: string; description: string; centered: boolean }
-> = {
-  armarios: {
-    eyebrow: "Armazenamento Ativo",
-    title: "Armários de Filamentos Dry Box",
-    description:
-      "Estufas estanques com desumidificação ativa permanente para 12, 24 ou 48 filamentos.",
-    centered: false,
-  },
-  stations: {
-    eyebrow: "Estações Integradas",
-    title: "Dry Box Station Combos",
-    description:
-      "Soluções completas com bancada integrada antivibração e armazenamento climatizado para Bambu Lab.",
-    centered: true,
-  },
-};
 
 function groupByCategory(products: IProduct[]) {
   const groups = new Map<
@@ -67,7 +48,7 @@ export default function ProductGrid({ products }: IProductGridProps) {
     <>
       <div id="products-grid" className="w-full">
         {sections.map((section, index) => {
-          const copy = sectionCopy[section.slug] ?? {
+          const copy = catalogSectionCopy[section.slug] ?? {
             eyebrow: "Catálogo",
             title: section.name,
             description: "",
@@ -122,8 +103,7 @@ export default function ProductGrid({ products }: IProductGridProps) {
           role="note"
         >
           <p className="text-[0.8125rem] text-ink-secondary">
-            <strong>Observação Importante:</strong> Imagens ilustrativas. A
-            impressora e os filamentos não acompanham o produto.
+            <strong>Observação Importante:</strong> {catalogDisclaimer}
           </p>
         </div>
       </div>
