@@ -1,108 +1,175 @@
-import type { Produto } from '@/types/produto';
+"use client";
 
-interface ProductCardProps {
-  produto: Produto;
-  cartUrl: string;
-  onOpenLightbox?: (produto: Produto) => void;
+import PaymentTerms from "@/components/PaymentTerms";
+import { useCartContext, type TAddItemResult } from "@/contexts/CartContext";
+import { formatDimensions } from "@/lib/product-dimensions";
+import type { IProduct } from "@/types/product";
+import { Lock, ShoppingCart } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useState } from "react";
+
+interface IProductCardProps {
+  product: IProduct;
+  onOpenLightbox?: (product: IProduct) => void;
+  /** Primeiro card da vitrine, acima da dobra. */
+  preload?: boolean;
 }
 
 /**
  * ProductCard — Card individual de produto.
- * Idêntico ao <article class="product-card"> gerado por gerarCardHtml() no JS original.
  * data-sku e data-id preservados para compatibilidade futura.
- *
- * Usa <img> nativa (não next/image) — mesmas dimensões de renderização do original (320x320 contain via CSS).
  * Ao clicar na imagem, abre o overlay de visualização ampliada (Lightbox).
  */
-export default function ProductCard({ produto, cartUrl, onOpenLightbox }: ProductCardProps) {
-  const urlCompra = `${cartUrl}?sku=${encodeURIComponent(produto.sku)}&id=${encodeURIComponent(produto.id)}`;
+export default function ProductCard({
+  product,
+  onOpenLightbox,
+  preload = false,
+}: IProductCardProps) {
+  const { addItem } = useCartContext();
+  const [adding, setAdding] = useState(false);
+  const [result, setResult] = useState<TAddItemResult | null>(null);
+
+  async function handleAdd() {
+    setAdding(true);
+    setResult(await addItem(product.id));
+    setAdding(false);
+  }
+
+  const feedback: Record<TAddItemResult, string> = {
+    added: "Produto adicionado ao carrinho.",
+    limit: "Você já tem todas as unidades disponíveis no carrinho.",
+    unavailable: "Este produto está indisponível no momento.",
+    error: "Não foi possível adicionar. Tente novamente.",
+  };
 
   return (
-    <article className="product-card" data-sku={produto.sku} data-id={produto.id}>
-      <div className="card-badge-top">
-        <span className="tag-capacity">{produto.capacidade}</span>
-        {produto.destaque && <span className="tag-featured">Mais Escolhido</span>}
+    <article
+      className="group relative flex flex-col rounded-card border border-border-hairline bg-surface-card p-6 transition-[translate,box-shadow,border-color] duration-[250ms] ease-nix hover:-translate-y-[3px] hover:border-[rgba(23,107,255,0.3)] hover:shadow-card-hover"
+      data-sku={product.sku}
+      data-id={product.id}
+    >
+      <div className="mb-4 flex items-center justify-between">
+        <span className="rounded-pill bg-brand-blue-subtle px-2.5 py-1 text-xs font-semibold text-brand-blue-hover">
+          {product.capacity}
+        </span>
+        {product.featured && (
+          <span className="rounded-pill bg-ink-primary px-2 py-1 text-[0.6875rem] font-bold tracking-[0.05em] text-ink-inverse uppercase">
+            Mais Escolhido
+          </span>
+        )}
       </div>
 
-      <div className="card-media">
+      <div className="relative mb-5 aspect-square w-full overflow-hidden rounded-input border border-black/[0.03] bg-white">
         <button
           type="button"
-          className="card-media-btn"
-          onClick={() => onOpenLightbox?.(produto)}
-          aria-label={`Ampliar foto de ${produto.nome}`}
+          className="absolute inset-0 cursor-zoom-in bg-transparent p-0 focus-visible:rounded-input"
+          onClick={() => onOpenLightbox?.(product)}
+          aria-label={`Ampliar foto de ${product.name}`}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={produto.imagem}
-            alt={`${produto.nome} — Armazenamento com controle térmico para filamentos 3D`}
-            loading="lazy"
-            width={320}
-            height={320}
+          <Image
+            src={product.image}
+            alt={`${product.name} — Armazenamento com controle térmico para filamentos 3D`}
+            fill
+            sizes="(max-width: 639px) 100vw, (max-width: 991px) 50vw, 33vw"
+            preload={preload}
+            className="object-contain p-4 transition-[scale] duration-[250ms] ease-nix group-hover:scale-[1.02]"
           />
         </button>
       </div>
 
-      <div className="card-content">
-        <h3 className="card-title">{produto.nome}</h3>
-        <p className="card-desc">{produto.descricao}</p>
+      <div className="flex flex-1 flex-col">
+        <h3 className="mb-2 text-xl leading-[1.25] font-semibold tracking-[-0.01em] text-ink-primary">
+          {product.name}
+        </h3>
+        <p className="mb-4 flex-1 text-[0.9375rem] leading-normal text-ink-secondary">
+          {product.description}
+        </p>
 
-        <div className="card-dimensions-box">
-          <span className="card-dimensions-label">Dimensões (C x L x A)</span>
-          <span className="card-dimensions-val">{produto.dimensoes}</span>
+        <div className="mb-3.5 flex flex-col gap-0.5 rounded-input border border-border-hairline bg-surface-canvas-fog px-3 py-2">
+          <span className="text-[0.6875rem] font-semibold tracking-[0.05em] text-ink-muted uppercase">
+            Dimensões (C x L x A)
+          </span>
+          <span className="text-[0.8125rem] font-semibold text-ink-primary">
+            {formatDimensions(product.dimensions)}
+          </span>
         </div>
 
-        {produto.especificacoes.length > 0 && (
-          <ul className="card-specs">
-            {produto.especificacoes.map((spec, i) => (
-              <li key={i}>{spec}</li>
+        {product.specifications.length > 0 && (
+          <ul className="mb-5 list-none border-t border-border-hairline pt-3.5">
+            {product.specifications.map((spec, i) => (
+              <li
+                key={i}
+                className="mb-1.5 flex items-start gap-2 text-[0.8125rem] leading-[1.4] text-ink-muted before:font-bold before:text-brand-blue before:content-['•']"
+              >
+                {spec}
+              </li>
             ))}
           </ul>
         )}
 
-        <div className="card-footer">
-          <div className="card-price-row">
-            <div className="card-price-col">
-              <span className="card-price-label">Preço à vista</span>
-              <span className="card-price">{produto.precoFormatado}</span>
+        <div className="mt-auto">
+          <div className="mb-3.5 flex items-baseline justify-between gap-2">
+            <div className="flex flex-col">
+              <span className="text-xs font-semibold text-ink-muted uppercase">
+                Preço à vista
+              </span>
+              <span className="text-[1.375rem] font-bold tracking-[-0.02em] text-ink-primary">
+                {product.formattedPrice}
+              </span>
             </div>
-            <span className="card-installment">{produto.parcelamento}</span>
+            <span className="rounded-pill bg-brand-blue-subtle px-2 py-1 text-xs font-semibold whitespace-nowrap text-brand-blue-hover">
+              {product.installments}
+            </span>
           </div>
+          <PaymentTerms className="mb-3.5" />
 
-          <a
-            href={urlCompra}
-            className="btn-buy"
-            data-sku={produto.sku}
-            data-id={produto.id}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={`Comprar ${produto.nome} no checkout seguro`}
+          <button
+            type="button"
+            onClick={handleAdd}
+            disabled={!product.inStock || adding}
+            className="inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-button bg-brand-blue px-6 py-3 text-[0.9375rem] font-semibold text-ink-inverse transition-all duration-200 ease-nix hover:-translate-y-px hover:bg-brand-blue-hover disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+            data-sku={product.sku}
+            data-id={product.id}
+            aria-label={
+              product.inStock
+                ? `Adicionar ${product.name} ao carrinho`
+                : `${product.name} indisponível`
+            }
           >
-            Comprar
-            <svg
-              width={16}
-              height={16}
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M5 12h14" />
-              <path d="M12 5l7 7-7 7" />
-            </svg>
-          </a>
+            {product.inStock ? "Adicionar ao carrinho" : "Indisponível"}
+            <ShoppingCart size={16} aria-hidden />
+          </button>
 
-          <div className="card-security-badge" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width={12} height={12} fill="none" stroke="currentColor" strokeWidth={2}>
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-            </svg>
+          <p
+            className="text-center text-xs font-medium text-ink-secondary empty:hidden [&:not(:empty)]:mt-2"
+            role="status"
+          >
+            {result ? feedback[result] : null}
+            {result === "added" || result === "limit" ? (
+              <>
+                {" "}
+                <Link
+                  href="/cart"
+                  className="font-semibold text-brand-blue-hover underline"
+                >
+                  Ver carrinho
+                </Link>
+              </>
+            ) : null}
+          </p>
+
+          <div
+            className="mt-2.5 flex items-center justify-center gap-1.5 text-[0.6875rem] font-medium text-ink-muted"
+            aria-hidden="true"
+          >
+            <Lock size={12} className="text-brand-blue" aria-hidden />
             <span>Ambiente Seguro InfinitePay</span>
           </div>
 
-          <span className="card-shipping-notice">Enviamos para todo o Brasil • Frete a consultar</span>
+          <span className="mt-1.5 block text-center text-xs font-medium text-ink-muted">
+            Enviamos para todo o Brasil • Frete a consultar
+          </span>
         </div>
       </div>
     </article>

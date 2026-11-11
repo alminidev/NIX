@@ -1,0 +1,93 @@
+/**
+ * Contrato do pedido. createOrder() em lib/orders.ts recebe IOrderInput e
+ * devolve IOrderCreated; readCheckoutForm() em lib/order-input.ts monta o
+ * IOrderInput a partir do formulário do carrinho.
+ */
+
+import type { OrderSource } from "@/generated/prisma/enums";
+import type { TCustomerKind } from "@/lib/tax-id";
+import type { ICartItem } from "@/types/cart";
+
+export interface IOrderCustomer {
+  name: string;
+  email: string;
+  /** Só dígitos, com DDD */
+  phone: string;
+  kind: TCustomerKind;
+  /** CPF (11 dígitos) ou CNPJ (14 caracteres, sem pontuação) */
+  document: string;
+}
+
+export interface IOrderAddress {
+  /** CEP, só dígitos (8) */
+  postalCode: string;
+  street: string;
+  number: string;
+  /** Vazio quando não há complemento */
+  complement: string;
+  neighborhood: string;
+  city: string;
+  /** Sigla da UF (ex: 'SP') */
+  state: string;
+}
+
+export interface IOrderInput {
+  items: ICartItem[];
+  customer: IOrderCustomer;
+  address: IOrderAddress;
+  /** Frete em reais; null enquanto não houver cotação */
+  shipping: number | null;
+  /**
+   * Rótulo opcional do frete. A entrega cotada no site não grava a
+   * transportadora; a retirada no local grava o próprio nome. O prazo da
+   * entrega fica em deliveryDays.
+   */
+  shippingService?: string | null;
+  /** Prazo em dias úteis da opção escolhida; null sem cotação */
+  deliveryDays?: number | null;
+  /** Padrão: SITE */
+  source?: OrderSource;
+}
+
+export interface IOrderCreated {
+  id: number;
+  subtotal: number;
+  shipping: number | null;
+  total: number;
+  /** Prazo para pagar; depois dele o pedido expira */
+  expiresAt: Date;
+}
+
+export interface ICheckoutFieldErrors {
+  name?: string;
+  email?: string;
+  phone?: string;
+  customerKind?: string;
+  document?: string;
+  postalCode?: string;
+  street?: string;
+  number?: string;
+  complement?: string;
+  neighborhood?: string;
+  city?: string;
+  state?: string;
+  items?: string;
+}
+
+export interface ICheckoutFormState {
+  status: "idle" | "error" | "success";
+  message: string;
+  fieldErrors: ICheckoutFieldErrors;
+  /** Número do pedido criado */
+  orderId: number | null;
+  /** Link do checkout da InfinitePay; só existe quando o pedido foi criado */
+  checkoutUrl: string | null;
+}
+
+export const checkoutFormInitialState: ICheckoutFormState = {
+  status: "idle",
+  message: "",
+  fieldErrors: {},
+  orderId: null,
+  checkoutUrl: null,
+};

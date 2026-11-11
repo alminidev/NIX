@@ -5,11 +5,12 @@
 ---
 
 ## 📋 Sumário
+
 1. [Pré-requisitos do Sistema](#-1-pré-requisitos-do-sistema)
 2. [Instalação e Comandos Rápidos](#-2-instalação-e-comandos-rápidos-passo-a-passo-para-iniciantes)
 3. [Estrutura de Pastas e Arquivos](#-3-estrutura-de-pastas-e-arquivos)
 4. [Onde Editar Produtos, Preços e Galeria](#-4-onde-editar-produtos-preços-e-galeria)
-5. [Onde Trocar a URL do Carrinho / Checkout](#-5-onde-trocar-a-url-do-carrinho--checkout)
+5. [Carrinho, Frete e Checkout](#-5-carrinho-frete-e-checkout)
 6. [Guia para o Programador Back-End (Banco de Dados & APIs)](#-6-guia-para-o-programador-back-end-banco-de-dados--apis)
 7. [Fase 2: Componente de Lightbox (Ampliação de Imagens)](#-7-fase-2-componente-de-lightbox-ampliação-de-imagens)
 8. [Deploy e Hospedagem (A Definir)](#-8-deploy-e-hospedagem-a-definir)
@@ -19,11 +20,14 @@
 ## ⚡ 1. Pré-requisitos do Sistema
 
 Antes de iniciar, certifique-se de ter instalado em seu computador:
+
 - **Node.js:** Versão `v18.17+` ou `v20+` (LTS recomendada; testado com sucesso no Node.js v24).
 - **npm:** Versão `v10+` (já acompanha a instalação do Node.js).
 - **Git:** Para controle de versão e download do repositório.
+- **Docker:** o Supabase local sobe Postgres, Storage e Studio por ele. A CLI entra com `npm install` (`supabase` nas dependências de desenvolvimento).
 
 Para verificar se estão instalados, abra o terminal e digite:
+
 ```bash
 node -v
 npm -v
@@ -34,18 +38,23 @@ npm -v
 ## 🚀 2. Instalação e Comandos Rápidos (Passo a Passo para Iniciantes)
 
 ### Passo 1: Entrar na pasta do projeto
+
 ```bash
 cd nix-nextjs
 ```
 
 ### Passo 2: Instalar as dependências
+
 Baixa e configura todos os pacotes necessários listados no `package.json`:
+
 ```bash
 npm install
 ```
 
 ### Passo 3: Configurar o arquivo de ambiente local
+
 Copie o template de exemplo para criar o seu arquivo de ambiente local:
+
 ```bash
 # No Windows (PowerShell):
 Copy-Item .env.example .env.local
@@ -54,14 +63,73 @@ Copy-Item .env.example .env.local
 cp .env.example .env.local
 ```
 
+### Banco local e fotos dos produtos (Supabase)
+
+O Postgres e as fotos dos produtos ficam no Supabase. No desenvolvimento a CLI sobe tudo no Docker. Em produção é o projeto cloud. O código é o mesmo; mudam `DATABASE_URL` e as três variáveis do Supabase. No WSL com Docker Desktop, `db:up` aponta a CLI para `/var/run/docker.sock` quando o contexto do Docker é um named pipe.
+
+```bash
+npm run db:up          # supabase start e cria o banco de sombra nix_shadow
+npm run supabase:status
+npm run db:migrate
+npm run db:seed
+```
+
+`npm run supabase:status` mostra a URL da API, as chaves e a connection string. Copie para o `.env.local`:
+
+| Variável | Onde usar |
+| --- | --- |
+| `DATABASE_URL` | Postgres local, porta **54322**, banco `postgres`, com `sslmode=disable`. Em produção, a string do **pooler** (porta 6543) para o app, com `sslmode=require`. Sem `?pgbouncer=true`: o `@prisma/adapter-pg` ignora esse parâmetro. |
+| `DIRECT_URL` ou `MIGRATE_DATABASE_URL` | Só as migrations (`prisma migrate deploy` e `migrate dev`). Conexão de sessão do pooler (porta 5432) ou a direta, com `sslmode=require`. Se nenhuma das duas existir, o Prisma CLI usa `DATABASE_URL`. |
+| `SHADOW_DATABASE_URL` | Banco `nix_shadow` na mesma instância. O `db:up` cria esse banco. Só o `prisma migrate dev` precisa dele. |
+| `NEXT_PUBLIC_SUPABASE_URL` | URL da API (`http://127.0.0.1:54321` no local). |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Chave anônima. Pode ir para o navegador. O upload de hoje não a usa. |
+| `SUPABASE_SERVICE_ROLE_KEY` | **Só no servidor.** Sem o prefixo `NEXT_PUBLIC_`. Nunca em log, resposta ou cliente. |
+
+O Studio abre em [http://127.0.0.1:54323](http://127.0.0.1:54323). `npm run db:down` executa `supabase stop`.
+
+O admin envia cada foto assim que o arquivo é escolhido (JPEG, PNG ou WebP, até **4 MB**). A URL pública do bucket `produtos` fica em `ProductImage.url`. Caminhos `/images/...` do site continuam válidos. Qualquer outra URL é recusada. Trocar, remover ou excluir o produto apaga o arquivo do bucket depois de gravar o banco, somente quando nenhum outro `ProductImage` ainda aponta para essa URL. Uma foto do catálogo, como `catalog/hero-showroom.jpg`, pode estar em vários produtos e permanece no bucket. Se o Storage falhar nessa hora, o produto fica salvo e a falha vai para o log.
+
+Um upload que nunca é salvo vira arquivo órfão. A limpeza é manual:
+
+```bash
+npm run images:cleanup            # só lista
+npm run images:cleanup -- --apply # apaga o que nenhum produto usa
+```
+
+O seed publica as seis fotos do catálogo no bucket e **não troca** a foto de um produto que já tem imagem. Rodar o seed de novo não desfaz um upload do admin.
+
+`supabase db reset` recria o banco só com `supabase/migrations`. As tabelas do Prisma somem. Em seguida rode `npm run db:migrate` e `npm run db:seed`. O bucket `produtos` volta da migration, sem passo manual.
+
+**Produção.** Ainda não há banco de produção com pedidos. O projeto cloud (região `sa-east-1`, Postgres **17**, a mesma `major_version` do `supabase/config.toml`) fica a cargo de quem é dono da conta. A CLI 3 do repositório só aceita Postgres 17 e recusa 15 e 16, então o projeto na nuvem tem de estar na 17. A ordem, quando o projeto existir:
+
+1. Defina `DIRECT_URL` ou `MIGRATE_DATABASE_URL` com a conexão de **sessão** do pooler (porta 5432 e `sslmode=require`). O `prisma migrate deploy` lê essa URL, e não a `DATABASE_URL` do pooler. A conexão direta (`db.<ref>.supabase.co`) é IPv6 e pode não funcionar no ambiente de deploy. Na Vercel, os builds de Production e Preview rodam as migrations sozinhos ([Migrations no deploy](#migrations-no-deploy)).
+2. `supabase link` e `supabase db push`, para criar o bucket e as regras de acesso.
+3. Cadastrar na hospedagem a `DATABASE_URL` do pooler (porta 6543, `sslmode=require`, sem `pgbouncer`) e as três variáveis do Supabase. A `service_role` sem `NEXT_PUBLIC_`.
+4. Publicar o app.
+
+Se alguma `ProductImage.url` antiga apontar para `/images/...`, o script abaixo sobe o arquivo e troca a URL. URLs de fora do site ele não baixa.
+
+```bash
+npm run images:migrate            # --dry-run, não grava
+npm run images:migrate -- --apply
+```
+
+As fotos passam por `next/image`. Cada tamanho gerado conta na cota de otimização da hospedagem. O cache otimizado fica em 31 dias porque o nome do arquivo muda a cada troca. No `next dev`, o otimizador pode buscar o Storage em `127.0.0.1`; em produção esse acesso a IP local fica desligado.
+
+A API de dados do Supabase enxerga o schema `public`. A migration do Prisma liga RLS em todas as tabelas, sem policies, e revoga o acesso de `anon` e `authenticated`. O Prisma continua pelo papel dono das tabelas. Tabelas novas nascem com a mesma trava.
+
 ### Passo 4: Iniciar o servidor de desenvolvimento
+
 ```bash
 npm run dev
 ```
+
 Abra o navegador no endereço: **[http://localhost:3000](http://localhost:3000)**. O site recarrega automaticamente ao salvar alterações nos arquivos.
 
 ### Passo 5: Gerar o build de produção (para publicar)
+
 Para testar a compilação final otimizada antes do deploy:
+
 ```bash
 # Compila e valida todos os tipos TypeScript
 npm run build
@@ -103,8 +171,6 @@ nix-nextjs/
 │   │   ├── CtaFinal.tsx           # Banner de fechamento e conversão
 │   │   ├── Footer.tsx             # Rodapé institucional completo
 │   │   └── SkipLink.tsx           # Acessibilidade (pular navegação via teclado)
-│   ├── data/
-│   │   └── produtos.ts            # PONTO CENTRAL: catálogo de produtos e URL do carrinho
 │   └── types/
 │       └── produto.ts             # CONTRATO DE DADOS: interface TypeScript Produto
 ├── .env.example                   # Template documentado de variáveis de ambiente
@@ -118,57 +184,186 @@ nix-nextjs/
 
 ## 📦 4. Onde Editar Produtos, Preços e Galeria
 
-Todo o catálogo de produtos está isolado em um único arquivo:  
-👉 **`src/data/produtos.ts`**
+O catálogo inicial é semeado a partir de:  
+👉 **`prisma/catalog.ts`**
 
-### Como alterar um preço ou descrição:
-Abra `src/data/produtos.ts` e localize o produto no array `PRODUTOS_NIX`. Exemplo:
+Depois do seed, preço, texto e fotos mudam no admin (`/admin/products`). A foto sobe para o bucket `produtos` e o seed seguinte não desfaz essa troca. As imagens de logo e do hero continuam em `public/images`.
+
+### Como alterar um preço ou descrição
+
+Abra `prisma/catalog.ts` e localize o produto no array `PRODUCTS`. Exemplo:
+
 ```ts
 {
-  id: 1,
   sku: 'NIX-DB12',
-  nome: 'DRY BOX 12',
-  categoria: 'Armários Dry Box',
-  capacidade: '12 filamentos',
-  dimensoes: '46 x 35 x 60 cm',
-  preco: 1190.00,                      // Valor numérico
-  precoFormatado: 'R$ 1.190,00',        // Valor formatado em tela
-  parcelamento: 'Até 3x sem juros',
-  descricao: 'Compacta e eficiente para o seu dia a dia.',
-  especificacoes: [
+  name: 'DRY BOX 12',
+  categorySlug: 'armarios',
+  capacity: '12 filamentos',
+  dimensions: { length: 46, width: 35, height: 60 }, // cm
+  weight: 18, // kg
+  price: '1190.00',
+  installments: 'Até 3x sem juros',
+  description: 'Compacta e eficiente para o seu dia a dia.',
+  specifications: [
     'Capacidade: 12 filamentos',
     'Dimensões (C x L x A): 46 x 35 x 60 cm',
     'Controle térmico ativo permanente < 20% UR',
     'Display digital de temperatura e umidade',
   ],
-  imagem: '/images/dry-box-12.jpg',    // Foto principal
-  imagens: [                           // Opcional: galeria com mais fotos
-    '/images/dry-box-12.jpg',
-    '/images/hero-showroom.jpg'
-  ],
-  destaque: false,                     // true = badge "Mais Escolhido"
+  images: [{ url: '/images/dry-box-12.jpg', isPrimary: true }], // arquivo em public/; o seed publica no Storage
+  featured: false,
+  sortOrder: 1,
 }
 ```
 
 ---
 
-## 🛒 5. Onde Trocar a URL do Carrinho / Checkout
+## 🛒 5. Carrinho, Frete e Checkout
 
-A URL do checkout da **InfinitePay** é gerenciada de forma centralizada em um **único ponto** da aplicação:
+O carrinho fica em **`/cart`**. O navegador guarda apenas `productId` e `quantity` (`localStorage`, chave `nix-cart`); preço, estoque e totais são sempre lidos do banco pelo servidor.
 
-1. **Via Variável de Ambiente (Recomendado em Produção):**  
-   Edite o arquivo `.env.local` (ou configure no painel da sua hospedagem):
-   ```env
-   NEXT_PUBLIC_CART_URL=https://checkout.infinitepay.io/nix3d
-   ```
-2. **Via Código (Fallback Central):**  
-   Caso nenhuma variável de ambiente seja definida, o endereço padrão fica centralizado em:  
-   👉 **`src/data/produtos.ts`** (linhas 9-10):
-   ```ts
-   export const CART_URL =
-     process.env.NEXT_PUBLIC_CART_URL ?? 'https://checkout.infinitepay.io/nix3d';
-   ```
-Todos os botões *"Comprar"* dos cards, o botão *"Carrinho"* do topo e o botão da Hero utilizam esse mesmo valor automaticamente.
+| Arquivo | Papel |
+| --- | --- |
+| `src/contexts/CartContext/index.tsx` | Estado do carrinho no navegador (adicionar, alterar, remover) |
+| `src/app/cart/actions.ts` | Server actions: `getCartSummary` (valida itens e estoque) e `quoteShipping` (frete) e `lookupAddress` (endereço pelo CEP) |
+| `src/lib/cart.ts` | Lê produtos no banco e monta o resumo |
+| `src/lib/cart-calculation.ts` | Regras puras: limite por estoque, subtotal e total em centavos |
+| `src/lib/cart-input.ts` | Validação da entrada vinda do navegador e do CEP |
+| `src/lib/viacep.ts` | `lookupPostalCode`: consulta o CEP na ViaCEP (nunca lança; devolve `IPostalCodeLookup`) |
+| `src/lib/shipping.ts` | **Ponto de integração do frete** (`calculateShipping`) |
+| `src/lib/checkout-shipping.ts` | Frete gravado no pedido, o mesmo no checkout do cliente e no painel (`quoteOrderShipping`) |
+| `src/lib/orders.ts` | `createOrder` (baixa o estoque) e `markOrderPaid` (confirma o pagamento) |
+| `src/lib/infinitepay.ts` | Cliente do Checkout Integrado (`createCheckoutLink`, `checkPayment`) |
+| `src/lib/payments.ts` | Liga o pedido ao checkout, ao webhook e à página de obrigado |
+| `src/lib/order-input.ts` | Validação do formulário de entrega (nome, e-mail, telefone, endereço) |
+| `src/lib/order-expiration.ts` | Prazo do pedido: `ORDER_EXPIRATION_MINUTES` (padrão 60) |
+| `src/app/api/orders/expire/route.ts` | Rota de cron que expira pedidos vencidos (protegida por `CRON_SECRET`) |
+| `src/app/api/payments/infinitepay/webhook/route.ts` | Webhook da InfinitePay (token na URL; a confirmação é o `payment_check`) |
+| `src/app/pedido/obrigado/page.tsx` | Página de retorno depois do pagamento, sem dados pessoais |
+| `src/lib/admin-orders.ts` | `getAdminOrders` (lista com filtros e paginação) e `getAdminOrder` (um pedido completo) |
+| `src/lib/admin-order-filters.ts` | Leitura dos `searchParams` da lista de pedidos e links de paginação |
+| `src/lib/order-status.ts` | Status do pedido: rótulos, quais contam como receita e as mudanças manuais permitidas |
+| `src/lib/admin-order-input.ts` | Leitura e validação do formulário de mudança de status (status e código de rastreio) |
+| `src/lib/admin-order-form.ts` | Leitura do formulário de novo pedido (cliente, endereço, origem, frete e pagamento) |
+| `src/lib/admin-new-order.ts` | Opções do formulário e `submitAdminOrder` (cria o pedido pelo painel) |
+| `src/app/admin/orders/actions.ts` | Server actions `updateOrderStatus` e `createAdminOrder` (somente admin) |
+| `src/app/admin/orders/new/page.tsx` | Tela de novo pedido, somente admin |
+| `src/types/postal-code.ts` | Tipos da ViaCEP (`IViaCepResponse`, `IPostalCodeAddress`, `IPostalCodeLookup`) |
+| `src/types/order.ts` | Tipos do pedido (`IOrderInput`, `IOrderCreated`, `ICheckoutFormState`) |
+
+- **Estoque:** a quantidade nunca passa do estoque cadastrado nem de 99 por produto. A conferência acontece ao adicionar, ao abrir o carrinho, ao alterar a quantidade e antes de seguir para o checkout.
+- **CEP e endereço:** o CEP é pedido no formulário de entrega (`CheckoutForm`). O botão _"Calcular"_ (ou Enter no campo) chama `lookupAddress` e `quoteShipping`: a primeira consulta `https://viacep.com.br/ws/{cep}/json/` no servidor (timeout de 5 s) e preenche rua, bairro, cidade e UF; a segunda atualiza o frete. Enquanto o CEP não for consultado com sucesso, os campos de endereço e o botão _"Ir para o checkout"_ ficam desabilitados; mudar o CEP desfaz o preenchimento. Os campos continuam editáveis depois da consulta (ex.: CEP geral de cidade pequena, que vem sem rua). Erros tratados: CEP inválido (`invalid`), CEP inexistente (`erro` da ViaCEP, `not-found`) e ViaCEP fora do ar, lenta ou com resposta inesperada (`unavailable`). No servidor, `placeOrder` confere o formato do CEP e os campos obrigatórios e depois consulta a ViaCEP de novo (`checkAddressPostalCode`): CEP inexistente, ou cidade/UF diferentes das do CEP (comparadas sem acento e sem diferença de maiúsculas), recusam o pedido com uma mensagem e destacam o campo. Se a ViaCEP falhar (rede, timeout, resposta inválida) o endereço é aceito como veio, para que uma queda dela não impeça pedidos. Rua e bairro não são comparados, porque o CEP de cidades pequenas não traz rua.
+- **Frete (Melhor Envio):** `calculateShipping` em `src/lib/shipping.ts` é o único ponto que fala com o Melhor Envio. Ela chama `POST /api/v2/me/shipment/calculate` com o CEP de origem (`MELHOR_ENVIO_FROM_POSTAL_CODE`), o CEP de destino e, por item, as dimensões (cm), o peso (kg) e o preço. O token fica só no servidor. Opções que voltam com `error` são ignoradas. A mais barata entra no total; a pessoa pode escolher outra transportadora na lista. O prazo usa `custom_delivery_time` (ou `delivery_time`) e o valor usa `custom_price` (ou `price`). Timeout, token inválido, CEP sem cobertura ou resposta inesperada viram uma mensagem amigável, sem derrubar a página. A etiqueta não é comprada. Variáveis em [Frete (Melhor Envio)](#frete-melhor-envio).
+- **Pedidos:** o botão _"Ir para o checkout"_ envia os dados de entrega e chama a server action `placeOrder`, que confere o carrinho no servidor e grava `Order` e `OrderItem` (status `AWAITING_PAYMENT`, origem `SITE`) numa única transação. Cada item guarda o preço unitário do momento do pedido. O estoque é baixado na mesma transação com `UPDATE ... WHERE stock >= quantidade`, então nunca fica negativo, nem com compras simultâneas; se faltar estoque, nada é gravado e a mensagem diz qual produto. Pedidos feitos pelo WhatsApp ou Instagram usam `OrderSource` (`WHATSAPP`, `INSTAGRAM`). Na hora de gravar, `placeOrder` **cota o frete de novo no servidor** e grava `Order.shipping`, o serviço (`shippingService`, ex.: `Correios · PAC`) e o prazo (`deliveryDays`). O valor enviado pelo navegador não é usado. Sem cotação válida o pedido não é criado e a pessoa vê a mensagem de erro.
+- **Expiração:** todo pedido nasce com `expiresAt` (agora + `ORDER_EXPIRATION_MINUTES`, padrão 60). Passado o prazo sem pagamento, ele vira `EXPIRED` e o estoque volta. `cancelOrder` (pedido aguardando pagamento ou pago, ainda sem produção) também devolve o estoque e deixa o pedido `CANCELLED`. Expirar e cancelar são idempotentes: a troca de status é um `updateMany` condicional na mesma transação da devolução, e só quem de fato mudou o pedido devolve o estoque (chamadas repetidas ou simultâneas não devolvem duas vezes). Variáveis, agendamento e funcionamento estão em [Expiração de pedidos](#expiração-de-pedidos).
+- **Checkout (InfinitePay):** `placeOrder` gera, no servidor, um link do Checkout Integrado com os itens, o frete e o total do pedido, grava `checkoutUrl` e o navegador segue para esse link. Se o link não for gerado, o pedido é cancelado, o estoque volta e a pessoa vê uma mensagem para tentar de novo. O pagamento só vira `PAID` depois do `payment_check`. Detalhes, variáveis e o que a documentação ainda não confirma estão em [Checkout (InfinitePay)](#checkout-infinitepay).
+
+- **Novo pedido (`/admin/orders/new`):** somente admin. O menu tem _Novo pedido_, e o mesmo botão aparece na lista de pedidos e no dashboard. O admin escolhe um cliente já conhecido ou informa um novo, os produtos, as quantidades e a origem (`SITE`, `WHATSAPP` ou `INSTAGRAM`). O endereço continua obrigatório, sem migration. O frete é cotado de novo no servidor por `quoteOrderShipping`, o mesmo caminho do checkout, inclusive a Retirada no local; o valor enviado pelo navegador não entra no pedido. Na finalização dá para gerar o link da InfinitePay (`startCheckout`) ou marcar como pago por fora. Pago por fora grava a forma (`pix` ou `credit_card` em `paymentMethod`) e a data (`paidAt`) nos campos que já existiam, e o pedido fica `PAID`. Não houve migration. A gravação passa por `createOrder`, então a origem, o preço congelado, a baixa de estoque e o `expiresAt` seguem as regras do site. Quem não é admin recebe _"Acesso negado"_ na action e a tela de login na página.
+- **Painel de pedidos:** `/admin/orders` (somente admin, link _"Pedidos"_ no menu) lista os pedidos do mais novo ao mais antigo, 20 por página, com número, status, cliente, data, total e quantidade de itens. O botão _Novo pedido_ fica no topo da lista. Pedidos com pagamento em revisão ganham o selo _Revisão_. Busca e filtros vão nos `searchParams` da página (formulário GET, então os links são compartilháveis): `q` (nome, e-mail ou número do pedido, com ou sem `#`), `status` (um dos status do pedido), `review=1` (só pagamentos em revisão), `from` e `to` (datas `AAAA-MM-DD`, inclusive, no horário de Brasília) e `page`. Valores inválidos são ignorados e uma página acima do fim volta para a última. A leitura dos parâmetros está em `src/lib/admin-order-filters.ts` e a consulta em `getAdminOrders` (`src/lib/admin-orders.ts`).
+- **Pedido (`/admin/orders/[id]`):** cada linha da lista abre a página do pedido (somente admin; id inexistente ou inválido cai na página 404). Ela mostra os itens (foto, nome, SKU, quantidade, preço unitário do momento do pedido e total da linha), subtotal, frete (_"Não cotado"_ quando não houve cotação; com cotação, o valor, o serviço e o prazo em dias úteis) e total, o cliente (e-mail e telefone clicáveis), o endereço de entrega, a origem (`SITE`, `WHATSAPP` ou `INSTAGRAM`), as datas e o cartão _Pagamento_ (método, valores, desconto de Pix, parcelas, transação, fatura, data, comprovante e link de checkout para reenviar). Se `paymentReview` estiver marcado, um aviso no topo explica o motivo. A leitura está em `getAdminOrder` (`src/lib/admin-orders.ts`).
+- **Mudança manual de status:** o cartão _Status_ da página do pedido oferece só as mudanças permitidas para o status atual (`getNextOrderStatuses` em `src/lib/order-status.ts`): aguardando pagamento → pago → em produção → pronto → enviado, cada passo com volta para corrigir um clique errado. Cancelar só vale em aguardando pagamento ou pago, passa por `cancelOrder` e devolve o estoque. Cancelado e expirado são finais (expirar só acontece pelo prazo) e nenhum status volta para aguardando pagamento. Ao marcar como enviado dá para informar o código de rastreio (`trackingCode`, opcional, até 40 caracteres). A mudança é um `updateMany` condicional em `changeOrderStatus` (`src/lib/orders.ts`): se o pedido mudou em outra aba, nada é alterado e o painel avisa.
+- **Dashboard (`/admin`):** o topo traz os atalhos _Ver pedidos_, _Novo pedido_ e _Novo produto_ e o bloco _Precisa de atenção_ (pedidos aguardando pagamento, pagamentos em revisão e produtos sem estoque, cada um com link para a lista ou o estoque; sem nada pendente aparece _"Tudo em dia"_). A seção _Comercial_ lê os pedidos do banco (`getDashboardMetrics` em `src/lib/dashboard.ts`): receita, ticket médio, pedidos pagos, total de pedidos e o bloco _Pedidos por status_ (barra proporcional e um cartão por status, com a quantidade e o percentual, que leva a `/admin/orders?status=...`; as cores ficam em `src/views/AdminView/components/status-colors.ts`). Os produtos em destaque do final abrem a página de edição do produto. **Receita** é a soma do `total` (já com frete) menos o `discount` de Pix, quando ele foi gravado, dos pedidos de status `PAID`, `IN_PRODUCTION`, `READY` e `SHIPPED`, ou seja, do pagamento em diante (`paidOrderStatuses` em `src/lib/order-status.ts`). Ficam de fora `AWAITING_PAYMENT` (ainda não pagou) e `CANCELLED` e `EXPIRED` (o dinheiro não entrou ou foi devolvido). O **ticket médio** é a receita dividida pelo número desses pedidos pagos.
+
+### Frete (Melhor Envio)
+
+A cotação usa a API do Melhor Envio. A entrega continua fora da plataforma: aqui só entra o valor e o prazo. O token nunca vai para o navegador.
+
+**Variáveis de ambiente** (modelo em `.env.example`; em desenvolvimento ficam no `.env.local`, em produção no painel da hospedagem):
+
+| Variável | Para que serve |
+| --- | --- |
+| `MELHOR_ENVIO_TOKEN` | Token do aplicativo no Melhor Envio. Só no servidor. |
+| `MELHOR_ENVIO_BASE_URL` | `https://sandbox.melhorenvio.com.br` para testar, ou `https://melhorenvio.com.br` em produção. |
+| `MELHOR_ENVIO_FROM_POSTAL_CODE` | CEP de origem da loja, 8 dígitos. |
+| `MELHOR_ENVIO_USER_AGENT` | Nome do app e e-mail de contato, exigidos no cabeçalho `User-Agent`. Se ficar vazio, usa `NIX (contato@nix3d.com.br)`. |
+
+O peso de cada produto (kg) entra na cotação. Ele é cadastrado no admin, no formulário do produto, e o seed em `prisma/catalog.ts` já traz um peso por item. Depois de atualizar o banco (`npm run db:migrate`), rode `npm run db:seed` para gravar esses pesos nos produtos do catálogo.
+
+### Checkout (InfinitePay)
+
+A InfinitePay só cobra. O frete continua sendo a cotação do Melhor Envio, enviada como um item _"Frete"_ porque a documentação não descreve um campo próprio de frete. O preço sai do pedido gravado no servidor, em centavos (`Math.round(reais * 100)`).
+
+Depois do pagamento a pessoa cai em `/pedido/obrigado`. Essa página e o webhook (`POST /api/payments/infinitepay/webhook`) chamam `POST /payment_check` e só então `markOrderPaid`. Parâmetros da URL e o corpo do webhook não provam pagamento. A comparação usa `amount`. No cartão ele precisa ser o total do pedido; `paid_amount` pode ser maior quando a taxa de parcelamento fica com o cliente. No Pix, `amount` pode vir já com o desconto, ou continuar no total e o desconto aparecer em `paid_amount`. Os dois casos viram `PAID` e gravam `discount`. Um valor fora dessa conta vai para `paymentReview`.
+
+O webhook leva um token nosso na query (`INFINITEPAY_WEBHOOK_SECRET`), comparado com `timingSafeEqual`. Ele só existe se `NEXT_PUBLIC_SITE_URL` for HTTPS. Em `http://localhost` o webhook não é enviado e a página de obrigado confirma o pagamento. A resposta é `200` quando processou, já estava processado ou o `order_nsu` não é de um pedido nosso, e `400` quando a verificação falhou de forma temporária (para a InfinitePay tentar de novo).
+
+`options.assured_installments` é `3`, no mesmo texto do FAQ (cartão em até 3x sem juros). De 4x a 12x a taxa fica com quem compra, e o checkout da InfinitePay mostra esses juros antes do pagamento. `options.discounts.pix` sai de `pixDiscountPercent` (`5` em `src/lib/payment-terms.ts`). A API aplica esse percentual no link inteiro, e o frete é uma linha do link, então o valor enviado é o percentual equivalente a 5% só dos produtos. Se o Pix ficaria abaixo de R$ 1,00, o desconto fica de fora. `single_payment` e `valid_until` (igual a `expiresAt`) pedem um único pagamento dentro do prazo do pedido. Se o pagamento for confirmado depois que o pedido expirou, o estoque é baixado de novo e o pedido volta para `PAID` quando todos os itens têm estoque. Sem estoque, ou se o pedido foi cancelado, ele fica como está e `paymentReview` marca a revisão manual. O reembolso, nesse caso, é feito no app da InfinitePay.
+
+A mudança manual de status continua valendo (pedido pelo WhatsApp, por exemplo). Marcar `PAID` à mão, na página do pedido, não preenche os dados do pagamento. Criar o pedido já como pago por fora grava a forma e a data.
+
+**Variáveis de ambiente** (modelo em `.env.example`; em desenvolvimento ficam no `.env.local`, em produção no painel da hospedagem):
+
+| Variável | Para que serve |
+| --- | --- |
+| `INFINITEPAY_API_KEY` | API Key `inchk_...`, enviada no header `X-Api-Key`. Só no servidor. Nunca em log, resposta ou no banco. |
+| `INFINITEPAY_HANDLE` | InfiniteTag sem `$`. Vai no corpo junto com a chave. |
+| `INFINITEPAY_WEBHOOK_SECRET` | Segredo nosso na URL do webhook. Gere com `openssl rand -base64 32`. Sem ele o webhook responde 401. |
+| `INFINITEPAY_ORDER_PREFIX` | Prefixo do `order_nsu` (`nix-123`). Padrão `nix`. |
+| `NEXT_PUBLIC_SITE_URL` | Origem pública do site, usada em `redirect_url` e no webhook. |
+
+**Ainda não confirmado numa chamada real** (a documentação oficial e a Central de Ajuda divergem, e não há sandbox descrito):
+
+- O campo da URL na resposta de `POST /links`. O código aceita `checkout_url` e, se não vier, `url` ou `link`, e só em `https://checkout.infinitepay.io`.
+- Se `handle` no corpo é obrigatório, ignorado ou conflita com `X-Api-Key`. Enviamos os dois.
+- Se a API aceita `webhook: { url, events }` ou só `webhook_url`. Enviamos o formato novo e, num HTTP 400 cuja mensagem cita webhook, tentamos `webhook_url`.
+- O corpo dos eventos que não são `paid`. A primeira versão assina só `paid`.
+- Quantas vezes e com qual intervalo o webhook é reenviado, e o tempo limite da resposta.
+- Se existe ambiente de teste. Os testes automatizados simulam a API.
+- Se `valid_until` bloqueia o pagamento depois da data e se `single_payment` impede uma segunda tentativa.
+- Se `paid_amount` pode ser menor que `amount` numa compra real com desconto no Pix. O código aceita o desconto tanto em `amount` quanto em `paid_amount`. Uma compra de R$ 1,00 (o mínimo, já com o desconto aplicado) ainda precisa ser conferida na conta e estornada pelo app.
+
+### Expiração de pedidos
+
+Um pedido aguardando pagamento segura o estoque até o prazo acabar. Depois disso ele expira e o estoque volta para a vitrine.
+
+**Variáveis de ambiente** (modelo em `.env.example`; em desenvolvimento ficam no `.env.local`, em produção no painel da hospedagem):
+
+| Variável | Para que serve | Padrão |
+| --- | --- | --- |
+| `ORDER_EXPIRATION_MINUTES` | Minutos que um pedido aguardando pagamento segura o estoque. Deve ser um número inteiro maior que 0; valor ausente ou inválido usa o padrão. Vale para os pedidos criados depois da mudança (cada pedido guarda o próprio `expiresAt`). | `60` |
+| `CRON_SECRET` | Segredo que autoriza a chamada de `GET /api/orders/expire`. Fica só no servidor (nunca use o prefixo `NEXT_PUBLIC_`). Gere com `openssl rand -base64 32`. **Sem ele a rota recusa qualquer chamada com 401.** | _(sem padrão, obrigatório para o cron)_ |
+
+**Quando um pedido vencido expira**
+
+1. **Ao criar um pedido:** cada `placeOrder` expira os pedidos vencidos antes de conferir o carrinho. Esse é o único gatilho automático, sem nenhuma configuração.
+2. **Pela rota de cron** `GET /api/orders/expire`, que precisa ser agendada (veja abaixo).
+
+> **Atenção:** se a rota não for agendada, os pedidos vencidos **só expiram quando um novo pedido é feito**. Enquanto ninguém comprar, o estoque deles continua reservado e a vitrine mostra esse estoque como indisponível. Em produção, agende a rota.
+
+**A rota** exige o cabeçalho `Authorization: Bearer <CRON_SECRET>` e responde `{ "expired": <quantidade> }` (`401` se o cabeçalho faltar ou estiver errado). É segura para chamar quantas vezes quiser: chamadas repetidas ou simultâneas não devolvem o estoque duas vezes. Teste manualmente:
+
+```bash
+curl -H "Authorization: Bearer $CRON_SECRET" https://SEU-DOMINIO/api/orders/expire
+# {"expired":0}
+```
+
+**Opção A: cron da Vercel.** Defina `CRON_SECRET` nas variáveis de ambiente do projeto na Vercel (a Vercel envia sozinha o cabeçalho `Authorization: Bearer <CRON_SECRET>` nas chamadas de cron) e crie o arquivo `vercel.json` na raiz do projeto:
+
+```json
+{
+  "crons": [{ "path": "/api/orders/expire", "schedule": "*/15 * * * *" }]
+}
+```
+
+O exemplo roda a cada 15 minutos (horário UTC). O plano gratuito (Hobby) limita os crons a uma execução por dia; para rodar com mais frequência é preciso um plano pago ou a opção B.
+
+**Opção B: cron externo** (cron-job.org, GitHub Actions agendado, `crontab` de um servidor etc.). Qualquer agendador que faça uma requisição `GET` com o cabeçalho serve. Exemplo de `crontab` a cada 15 minutos:
+
+```bash
+*/15 * * * * curl -fsS -H "Authorization: Bearer SEU_CRON_SECRET" https://SEU-DOMINIO/api/orders/expire
+```
+
+No cron-job.org: crie um job com a URL `https://SEU-DOMINIO/api/orders/expire`, método `GET`, intervalo de 15 minutos, e em _Advanced → Headers_ adicione `Authorization` com o valor `Bearer SEU_CRON_SECRET`.
+
+Use um intervalo menor ou igual a `ORDER_EXPIRATION_MINUTES` para que o estoque não fique preso muito além do prazo.
+
+### Testes
+
+```bash
+npm test
+```
+
+Executa os testes de `tests/` (Node test runner) sobre as regras do carrinho, CEP e ViaCEP, dimensões, leitura dos formulários, fotos de produto (tipo, tamanho, URL, upload só por admin e foto compartilhada entre produtos), criação de pedidos, checkout da InfinitePay (API simulada), lista e página de pedidos do painel (incluindo a mudança de status e o pedido criado pelo admin) e métricas do dashboard. Com `DATABASE_URL`, também confere se toda tabela do `public` está com RLS ligado. Os arquivos rodam um de cada vez (`--test-concurrency=1`) porque compartilham o banco. Os testes de pedido e de foto compartilhada usam o banco de `DATABASE_URL` (lido do `.env`): criam produtos próprios e removem tudo no final. Sem `DATABASE_URL` eles são ignorados.
 
 ---
 
@@ -177,36 +372,41 @@ Todos os botões *"Comprar"* dos cards, o botão *"Carrinho"* do topo e o botão
 Este front-end foi projetado para desacoplar a camada de apresentação do armazenamento de dados.
 
 ### 1. Contrato da Interface de Dados
-Localizado em **`src/types/produto.ts`**:
+
+Localizado em **`src/types/product.ts`**:
+
 ```ts
-export interface Produto {
+export interface Product {
   id: number;
   sku: string;
-  nome: string;
-  categoria: string;
-  capacidade: string;
-  dimensoes: string;
-  preco: number;
-  precoFormatado: string;
-  parcelamento: string;
-  descricao: string;
-  especificacoes: string[];
-  imagem: string;
-  imagens?: string[];
-  destaque: boolean;
+  name: string;
+  category: string;
+  capacity: string;
+  dimensions: { width: number; height: number; length: number }; // cm
+  price: number;
+  formattedPrice: string;
+  installments: string;
+  description: string;
+  specifications: string[];
+  image: string;
+  images?: string[];
+  featured: boolean;
 }
 ```
 
 ### 2. Conectando com Banco de Dados (ex: Prisma, PostgreSQL, MongoDB)
-No arquivo **`src/data/produtos.ts`**, basta substituir o retorno estático da função `getProdutos()` pela chamada ao seu banco ou API:
+
+A leitura do catálogo fica em **`src/lib/products.ts`**, na função `getProducts()`:
+
 ```ts
-// Exemplo com Prisma / ORM:
-export async function getProdutos(): Promise<Produto[]> {
-  return await prisma.produto.findMany({
-    orderBy: { id: 'asc' }
+export async function getProducts(): Promise<Product[]> {
+  return prisma.product.findMany({
+    where: { active: true },
+    orderBy: { sortOrder: "asc" },
   });
 }
 ```
+
 Como a página utiliza o modelo de componentes do Next.js App Router, a integração é direta.
 
 ---
@@ -215,7 +415,8 @@ Como a página utiliza o modelo de componentes do Next.js App Router, a integra�
 
 O componente **`src/components/ProductLightbox.tsx`** é responsável pela experiência imersiva de visualização dos produtos.
 
-### Comportamento e Funcionalidades:
+### Comportamento e Funcionalidades
+
 - **No Card de Produto (Repouso):** A aparência visual do card permanece 100% idêntica ao baseline original. A única diferença intencional é o cursor `zoom-in` sobre a foto, indicando que ela pode ser ampliada.
 - **No Desktop:**
   - Overlay escuro e neutro com efeito de vidro (`rgba(10, 11, 14, 0.94)` + `backdrop-filter`).
@@ -243,20 +444,46 @@ O componente **`src/components/ProductLightbox.tsx`** é responsável pela exper
 > **Status:** O método de publicação final pode ser definido de acordo com a preferência da equipe e do cliente. Abaixo estão as opções recomendadas prontas para uso:
 
 ### Opção A: Vercel (Recomendada pela infraestrutura Next.js)
+
 1. Crie uma conta em [vercel.com](https://vercel.com) e importe o repositório.
 2. Defina o **Root Directory** como `nix-nextjs`.
-3. Adicione a variável de ambiente `NEXT_PUBLIC_CART_URL` nas configurações do projeto.
-4. Clique em **Deploy**. A Vercel executará `npm run build` e configurará CDN global e SSL automaticamente.
+3. Adicione as variáveis de ambiente do `.env.example` (banco do pooler, as três variáveis do Supabase, InfinitePay, Melhor Envio e `NEXT_PUBLIC_SITE_URL`) nas configurações do projeto. A `SUPABASE_SERVICE_ROLE_KEY` fica sem o prefixo `NEXT_PUBLIC_`. Em Production e em Preview, também a `DIRECT_URL` (veja [Migrations no deploy](#migrations-no-deploy)). Antes do primeiro deploy: `supabase db push`. O corpo de cada Server Action aceita 4,5 MB, dentro do limite de 4,5 MB das funções da Vercel, para uma foto de 4 MB.
+4. Clique em **Deploy**. A Vercel executará `npm run build`, que aplica as migrations no banco do ambiente (Production ou Preview), e configurará CDN global e SSL automaticamente.
+
+### Migrations no deploy
+
+O `npm run build` roda `scripts/migrate-on-deploy.mjs` e depois `next build`.
+
+| Variável (Vercel, em **Production** e **Preview**) | Valor |
+| --- | --- |
+| `DATABASE_URL` | Pooler de **transação** (porta 6543, `sslmode=require`), usado pelo app. |
+| `DIRECT_URL` ou `MIGRATE_DATABASE_URL` | Pooler de **sessão** (porta 5432, `sslmode=require`), usado só pelo `prisma migrate deploy`. Se as duas existirem, vale a `MIGRATE_DATABASE_URL`. |
+
+`SHADOW_DATABASE_URL` não vai para a Vercel: só o `prisma migrate dev` usa.
+
+- **Quando roda:** com `VERCEL_ENV=production` ou `VERCEL_ENV=preview`, que a própria Vercel define. No build local, no CI e em `VERCEL_ENV=development` o script não abre conexão.
+- **Preview usa o banco que estiver na `DIRECT_URL`/`MIGRATE_DATABASE_URL` de Preview.** O ideal é um banco (ou projeto Supabase) separado só para Preview. Se o Preview apontar para o banco de produção, qualquer branch com uma migration nova aplica essa migration **em produção** já no build do Preview, antes de qualquer merge na `main`.
+- **Sem `DIRECT_URL`/`MIGRATE_DATABASE_URL`:** o build de Production ou Preview falha com uma mensagem. A `DATABASE_URL` não é usada como reserva, e uma URL na porta 6543 é recusada, porque o migrate pelo pooler de transação não é seguro.
+- **Migration com erro:** o build falha e a Vercel não publica. A versão anterior continua no ar. O log nunca mostra URL, usuário, senha ou host.
+- **Ordem:** a migration roda **antes** do `next build`, porque o build pré-renderiza a home lendo a tabela `product`. Num banco novo, ou com uma coluna nova, o build quebraria antes de chegar à migration. Por isso toda migration precisa funcionar com o código que está no ar (só adicionar colunas e tabelas; remover em um deploy seguinte), já que um `next build` que falhe depois dela deixa o banco migrado com a versão anterior no ar.
+- **Rodar de novo** não faz nada (`No pending migrations to apply`). Deploys simultâneos esperam o lock do Prisma.
+- **Banco novo:** as migrations criam tudo do zero no Supabase. Elas usam os papéis `anon` e `authenticated`, que todo projeto Supabase já tem; num Postgres comum, crie esses papéis antes. Um banco com tabelas e sem histórico do Prisma falha com `P3005` e precisa de baseline (`prisma migrate resolve --applied <migration>`).
+
+**Rollback.** O *Instant Rollback* da Vercel volta o código sem rebuild e sem tocar no banco. Redeploy de um commit antigo também é seguro: o `migrate deploy` ignora migrations que já estão no banco e não existem naquele commit. O Prisma não desfaz migrations sozinho. Para desfazer uma, escreva uma migration nova que reverta a mudança. Se uma migration falhou no meio (`P3018`), corrija o banco à mão e marque com `npx prisma migrate resolve --rolled-back <migration>` (ou `--applied`), com a `DIRECT_URL` de produção só no terminal, nunca em arquivo versionado.
 
 ### Opção B: Netlify
+
 1. Conecte o repositório no painel da [Netlify](https://netlify.com).
 2. Configure o Base Directory: `nix-nextjs`, Build command: `npm run build`, Publish directory: `.next`.
 3. Instale o plugin oficial `@netlify/plugin-nextjs`.
 
 ### Opção C: Cloudflare Pages / Servidor Node.js Próprio (VPS / Docker)
+
 Caso opte por hospedar em VPS Linux própria (Ubuntu / Debian com Docker ou PM2):
+
 ```bash
 npm run build
 npm run start
 ```
+
 Configure um proxy reverso no Nginx apontando para a porta `3000` com certificado SSL gratuito do Let's Encrypt.

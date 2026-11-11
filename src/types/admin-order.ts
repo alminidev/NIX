@@ -1,0 +1,189 @@
+/**
+ * Contrato da lista de pedidos no painel.
+ * getAdminOrders() em lib/admin-orders.ts recebe IAdminOrderFilters e devolve
+ * IAdminOrderPage; parseOrderFilters() em lib/admin-order-filters.ts monta os
+ * filtros a partir dos searchParams da página.
+ */
+
+import type { OrderSource, OrderStatus } from "@/generated/prisma/enums";
+import type { TCustomerKind } from "@/lib/tax-id";
+import type { ICheckoutFieldErrors } from "@/types/order";
+
+export interface IAdminOrder {
+  id: number;
+  status: OrderStatus;
+  customerName: string;
+  customerEmail: string;
+  /** Total em reais */
+  total: number;
+  /** Soma das quantidades dos itens */
+  itemCount: number;
+  createdAt: Date;
+  /** Pagamento conferido que precisa de revisão manual */
+  paymentReview: boolean;
+}
+
+export interface IAdminOrderFilters {
+  /** Busca por nome, e-mail ou número do pedido; vazio = sem busca */
+  q: string;
+  status: OrderStatus | null;
+  /** Primeiro dia (AAAA-MM-DD, horário de Brasília), inclusive */
+  from: string | null;
+  /** Último dia (AAAA-MM-DD, horário de Brasília), inclusive */
+  to: string | null;
+  /** Página pedida, a partir de 1 */
+  page: number;
+  /** Só pedidos com pagamento em revisão */
+  review: boolean;
+}
+
+export interface IAdminOrderPage {
+  orders: IAdminOrder[];
+  /** Pedidos que atendem aos filtros, somando todas as páginas */
+  total: number;
+  /** Página devolvida (ajustada ao intervalo existente) */
+  page: number;
+  pageSize: number;
+  pageCount: number;
+}
+
+/** Item do pedido, com o produto e o preço congelados na hora da compra. */
+export interface IAdminOrderItem {
+  id: number;
+  productId: number;
+  name: string;
+  sku: string;
+  /** Foto principal do produto; vazio quando não há */
+  image: string;
+  quantity: number;
+  /** Preço unitário em reais, o do momento do pedido */
+  unitPrice: number;
+  /** unitPrice vezes quantity */
+  lineTotal: number;
+}
+
+/**
+ * Contrato da página de um pedido (/admin/orders/[id]).
+ * getAdminOrder() em lib/admin-orders.ts devolve objetos neste formato.
+ */
+export interface IAdminOrderDetail {
+  id: number;
+  status: OrderStatus;
+  source: OrderSource;
+  customer: {
+    name: string;
+    email: string;
+    /** Só dígitos, com DDD */
+    phone: string;
+    /** Null nos pedidos anteriores ao campo */
+    kind: TCustomerKind | null;
+    /** CPF ou CNPJ sem pontuação; null nos pedidos anteriores ao campo */
+    document: string | null;
+  };
+  address: {
+    /** CEP, só dígitos (8) */
+    postalCode: string;
+    street: string;
+    number: string;
+    /** Vazio quando não há complemento */
+    complement: string;
+    neighborhood: string;
+    city: string;
+    state: string;
+  };
+  items: IAdminOrderItem[];
+  /** Soma das quantidades dos itens */
+  itemCount: number;
+  subtotal: number;
+  /** Frete em reais; null enquanto não houve cotação */
+  shipping: number | null;
+  /**
+   * Rótulo opcional do frete. Pedidos cotados no site deixam vazio; o prazo
+   * escolhido fica em deliveryDays.
+   */
+  shippingService: string | null;
+  /** Prazo em dias úteis da opção escolhida; null sem cotação */
+  deliveryDays: number | null;
+  total: number;
+  trackingCode: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  /** Prazo para pagar; só vale enquanto o pedido aguarda pagamento */
+  expiresAt: Date | null;
+  payment: {
+    review: boolean;
+    reviewReason: string | null;
+    /** `credit_card`, `pix` ou null quando o pagamento não foi pela InfinitePay */
+    method: string | null;
+    /** Valor do pedido conferido no payment_check, em reais */
+    amount: number | null;
+    /** Valor efetivamente pago, em reais */
+    paidAmount: number | null;
+    /** Desconto de Pix aplicado neste pagamento, em reais */
+    discount: number | null;
+    installments: number | null;
+    transactionNsu: string | null;
+    invoiceSlug: string | null;
+    paidAt: Date | null;
+    receiptUrl: string | null;
+    checkoutUrl: string | null;
+  };
+}
+
+export interface IOrderStatusState {
+  status: "idle" | "error" | "success";
+  message: string;
+}
+
+export const orderStatusInitialState: IOrderStatusState = {
+  status: "idle",
+  message: "",
+};
+
+/** Cliente que o admin pode escolher ao criar um pedido. */
+export interface IAdminCustomerOption {
+  id: string;
+  name: string;
+  email: string;
+  /** Só dígitos, com DDD; vazio quando o cliente ainda não tem pedido */
+  phone: string;
+  /** Null quando o cliente ainda não tem documento num pedido */
+  kind: TCustomerKind | null;
+  /** CPF ou CNPJ sem pontuação; vazio quando ainda não há documento */
+  document: string;
+}
+
+/** Produto ativo que pode entrar num pedido criado no painel. */
+export interface IAdminOrderProductOption {
+  id: number;
+  name: string;
+  sku: string;
+  /** Preço atual em reais */
+  price: number;
+  formattedPrice: string;
+  stock: number;
+}
+
+export interface IAdminOrderFieldErrors extends ICheckoutFieldErrors {
+  source?: string;
+  payment?: string;
+  paymentMethod?: string;
+  paidAt?: string;
+}
+
+export interface IAdminOrderFormState {
+  status: "idle" | "error" | "success";
+  message: string;
+  fieldErrors: IAdminOrderFieldErrors;
+  orderId: number | null;
+  /** Link da InfinitePay; null quando o pedido foi pago por fora */
+  checkoutUrl: string | null;
+}
+
+export const adminOrderFormInitialState: IAdminOrderFormState = {
+  status: "idle",
+  message: "",
+  fieldErrors: {},
+  orderId: null,
+  checkoutUrl: null,
+};
