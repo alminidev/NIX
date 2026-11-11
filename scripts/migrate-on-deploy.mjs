@@ -1,5 +1,5 @@
-// Roda `prisma migrate deploy` no build de produção da Vercel, antes do `next build`.
-// Fora de VERCEL_ENV=production (CI, build local, Preview) não abre conexão com banco nenhum.
+// Roda `prisma migrate deploy` nos builds de Production e Preview da Vercel, antes do `next build`.
+// Fora deles (CI, build local, VERCEL_ENV=development) não abre conexão com banco nenhum.
 // Nunca escreve a URL, o usuário, a senha ou o host do banco no log.
 
 import { spawn } from "node:child_process";
@@ -9,26 +9,34 @@ import { pathToFileURL } from "node:url";
 
 const transactionPoolerPort = "6543";
 
+/** Ambientes da Vercel em que o build aplica as migrations. */
+const migratingEnvironments = new Set(["production", "preview"]);
+
+/** @param {string} vercelEnv */
+function environmentLabel(vercelEnv) {
+  return vercelEnv === "production" ? "Production" : "Preview";
+}
+
 /**
  * Decide o que o build faz com as migrations.
  * @param {Record<string, string | undefined>} env
- * @returns {{ action: "skip", reason: string } | { action: "error", message: string } | { action: "migrate", url: string }}
+ * @returns {{ action: "skip", reason: string } | { action: "error", message: string } | { action: "migrate", url: string, vercelEnv: string }}
  */
 export function planDeployMigration(env) {
-  const vercelEnv = env.VERCEL_ENV?.trim();
-  if (vercelEnv !== "production") {
+  const vercelEnv = env.VERCEL_ENV?.trim() ?? "";
+  if (!migratingEnvironments.has(vercelEnv)) {
     return {
       action: "skip",
       reason: `VERCEL_ENV=${vercelEnv || "(ausente)"}: migrations ignoradas, nenhum banco é acessado.`,
     };
   }
 
+  const label = environmentLabel(vercelEnv);
   const url = env.MIGRATE_DATABASE_URL?.trim() || env.DIRECT_URL?.trim();
   if (!url) {
     return {
       action: "error",
-      message:
-        "Build de produção sem DIRECT_URL nem MIGRATE_DATABASE_URL. Defina uma delas na Vercel (Production) com a conexão de sessão do pooler do Supabase (porta 5432, sslmode=require). A DATABASE_URL (pooler de transação, porta 6543) não é usada para migrations.",
+      message: `Build de ${label} sem DIRECT_URL nem MIGRATE_DATABASE_URL. Defina uma delas na Vercel (${label}) com a conexão de sessão do pooler do Supabase (porta 5432, sslmode=require). A DATABASE_URL (pooler de transação, porta 6543) não é usada para migrations.`,
     };
   }
 
@@ -57,7 +65,7 @@ export function planDeployMigration(env) {
     };
   }
 
-  return { action: "migrate", url };
+  return { action: "migrate", url, vercelEnv };
 }
 
 /**
@@ -134,7 +142,7 @@ async function main() {
     return 1;
   }
 
-  console.log("[migrate-on-deploy] VERCEL_ENV=production: rodando prisma migrate deploy.");
+  console.log(`[migrate-on-deploy] VERCEL_ENV=${plan.vercelEnv}: rodando prisma migrate deploy.`);
   const code = await runMigrateDeploy(plan.url, process.env);
   if (code !== 0) {
     console.error(

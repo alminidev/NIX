@@ -102,7 +102,7 @@ O seed publica as seis fotos do catálogo no bucket e **não troca** a foto de u
 
 **Produção.** Ainda não há banco de produção com pedidos. O projeto cloud (região `sa-east-1`, Postgres **17**, a mesma `major_version` do `supabase/config.toml`) fica a cargo de quem é dono da conta. A CLI 3 do repositório só aceita Postgres 17 e recusa 15 e 16, então o projeto na nuvem tem de estar na 17. A ordem, quando o projeto existir:
 
-1. Defina `DIRECT_URL` ou `MIGRATE_DATABASE_URL` com a conexão de **sessão** do pooler (porta 5432 e `sslmode=require`). O `prisma migrate deploy` lê essa URL, e não a `DATABASE_URL` do pooler. A conexão direta (`db.<ref>.supabase.co`) é IPv6 e pode não funcionar no ambiente de deploy. Na Vercel, o build de produção roda as migrations sozinho ([Migrations no deploy](#migrations-no-deploy)).
+1. Defina `DIRECT_URL` ou `MIGRATE_DATABASE_URL` com a conexão de **sessão** do pooler (porta 5432 e `sslmode=require`). O `prisma migrate deploy` lê essa URL, e não a `DATABASE_URL` do pooler. A conexão direta (`db.<ref>.supabase.co`) é IPv6 e pode não funcionar no ambiente de deploy. Na Vercel, os builds de Production e Preview rodam as migrations sozinhos ([Migrations no deploy](#migrations-no-deploy)).
 2. `supabase link` e `supabase db push`, para criar o bucket e as regras de acesso.
 3. Cadastrar na hospedagem a `DATABASE_URL` do pooler (porta 6543, `sslmode=require`, sem `pgbouncer`) e as três variáveis do Supabase. A `service_role` sem `NEXT_PUBLIC_`.
 4. Publicar o app.
@@ -447,22 +447,23 @@ O componente **`src/components/ProductLightbox.tsx`** é responsável pela exper
 
 1. Crie uma conta em [vercel.com](https://vercel.com) e importe o repositório.
 2. Defina o **Root Directory** como `nix-nextjs`.
-3. Adicione as variáveis de ambiente do `.env.example` (banco do pooler, as três variáveis do Supabase, InfinitePay, Melhor Envio e `NEXT_PUBLIC_SITE_URL`) nas configurações do projeto. A `SUPABASE_SERVICE_ROLE_KEY` fica sem o prefixo `NEXT_PUBLIC_`. Em Production, também a `DIRECT_URL` (veja [Migrations no deploy](#migrations-no-deploy)). Antes do primeiro deploy: `supabase db push`. O corpo de cada Server Action aceita 4,5 MB, dentro do limite de 4,5 MB das funções da Vercel, para uma foto de 4 MB.
-4. Clique em **Deploy**. A Vercel executará `npm run build`, que aplica as migrations em produção, e configurará CDN global e SSL automaticamente.
+3. Adicione as variáveis de ambiente do `.env.example` (banco do pooler, as três variáveis do Supabase, InfinitePay, Melhor Envio e `NEXT_PUBLIC_SITE_URL`) nas configurações do projeto. A `SUPABASE_SERVICE_ROLE_KEY` fica sem o prefixo `NEXT_PUBLIC_`. Em Production e em Preview, também a `DIRECT_URL` (veja [Migrations no deploy](#migrations-no-deploy)). Antes do primeiro deploy: `supabase db push`. O corpo de cada Server Action aceita 4,5 MB, dentro do limite de 4,5 MB das funções da Vercel, para uma foto de 4 MB.
+4. Clique em **Deploy**. A Vercel executará `npm run build`, que aplica as migrations no banco do ambiente (Production ou Preview), e configurará CDN global e SSL automaticamente.
 
 ### Migrations no deploy
 
 O `npm run build` roda `scripts/migrate-on-deploy.mjs` e depois `next build`.
 
-| Variável (Vercel, só em **Production**) | Valor |
+| Variável (Vercel, em **Production** e **Preview**) | Valor |
 | --- | --- |
 | `DATABASE_URL` | Pooler de **transação** (porta 6543, `sslmode=require`), usado pelo app. |
 | `DIRECT_URL` ou `MIGRATE_DATABASE_URL` | Pooler de **sessão** (porta 5432, `sslmode=require`), usado só pelo `prisma migrate deploy`. Se as duas existirem, vale a `MIGRATE_DATABASE_URL`. |
 
 `SHADOW_DATABASE_URL` não vai para a Vercel: só o `prisma migrate dev` usa.
 
-- **Quando roda:** só com `VERCEL_ENV=production`, que a própria Vercel define. No build local, no CI e nos Previews o script não abre conexão, mesmo que o Preview tenha uma URL de produção.
-- **Sem `DIRECT_URL`/`MIGRATE_DATABASE_URL`:** o build de produção falha com uma mensagem. A `DATABASE_URL` não é usada como reserva, e uma URL na porta 6543 é recusada, porque o migrate pelo pooler de transação não é seguro.
+- **Quando roda:** com `VERCEL_ENV=production` ou `VERCEL_ENV=preview`, que a própria Vercel define. No build local, no CI e em `VERCEL_ENV=development` o script não abre conexão.
+- **Preview usa o banco que estiver na `DIRECT_URL`/`MIGRATE_DATABASE_URL` de Preview.** O ideal é um banco (ou projeto Supabase) separado só para Preview. Se o Preview apontar para o banco de produção, qualquer branch com uma migration nova aplica essa migration **em produção** já no build do Preview, antes de qualquer merge na `main`.
+- **Sem `DIRECT_URL`/`MIGRATE_DATABASE_URL`:** o build de Production ou Preview falha com uma mensagem. A `DATABASE_URL` não é usada como reserva, e uma URL na porta 6543 é recusada, porque o migrate pelo pooler de transação não é seguro.
 - **Migration com erro:** o build falha e a Vercel não publica. A versão anterior continua no ar. O log nunca mostra URL, usuário, senha ou host.
 - **Ordem:** a migration roda **antes** do `next build`, porque o build pré-renderiza a home lendo a tabela `product`. Num banco novo, ou com uma coluna nova, o build quebraria antes de chegar à migration. Por isso toda migration precisa funcionar com o código que está no ar (só adicionar colunas e tabelas; remover em um deploy seguinte), já que um `next build` que falhe depois dela deixa o banco migrado com a versão anterior no ar.
 - **Rodar de novo** não faz nada (`No pending migrations to apply`). Deploys simultâneos esperam o lock do Prisma.
