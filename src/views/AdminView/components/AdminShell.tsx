@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   LogOut,
   Package,
+  Tags,
   type LucideIcon,
 } from "lucide-react";
 import Image from "next/image";
@@ -40,6 +41,12 @@ const navItems: INavItem[] = [
     exact: false,
   },
   { href: "/admin/products", label: "Produtos", icon: Package, exact: false },
+  {
+    href: "/admin/categories",
+    label: "Categorias",
+    icon: Tags,
+    exact: false,
+  },
   { href: "/admin/stock", label: "Estoque", icon: Boxes, exact: true },
 ];
 
@@ -51,10 +58,12 @@ function isCurrent(pathname: string, href: string, exact: boolean) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function isProductEditor(pathname: string) {
+function isEditor(pathname: string) {
   return (
     pathname === "/admin/products/new" ||
-    /^\/admin\/products\/\d+$/.test(pathname)
+    /^\/admin\/products\/\d+$/.test(pathname) ||
+    pathname === "/admin/categories/new" ||
+    /^\/admin\/categories\/\d+$/.test(pathname)
   );
 }
 
@@ -64,7 +73,7 @@ export default function AdminShell({ user, children }: IAdminShellProps) {
   const pathname = usePathname();
   const [signingOut, setSigningOut] = useState(false);
   const inicial = user.name.trim().charAt(0).toUpperCase() || "A";
-  const editor = isProductEditor(pathname);
+  const editor = isEditor(pathname);
 
   async function handleSignOut() {
     setSigningOut(true);

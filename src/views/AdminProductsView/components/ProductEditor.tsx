@@ -30,8 +30,14 @@ export function ProductEditor({
           className="m-auto max-w-md px-6 text-center text-[0.9375rem] text-ink-secondary"
           role="status"
         >
-          Nenhuma categoria cadastrada. Rode o seed do banco antes de criar
-          produtos.
+          Nenhuma categoria cadastrada.{" "}
+          <Link
+            href="/admin/categories/new"
+            className="font-semibold text-brand-blue-hover underline-offset-2 hover:underline"
+          >
+            Crie uma categoria
+          </Link>{" "}
+          antes de adicionar produtos.
         </p>
       </div>
     );
