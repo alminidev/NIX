@@ -438,6 +438,20 @@ export default function CheckoutForm({
               </div>
             </fieldset>
           ) : null}
+          {selectedOption ? (
+            <>
+              <input
+                type="hidden"
+                name="shippingPrice"
+                value={selectedOption.price}
+              />
+              <input
+                type="hidden"
+                name="shippingDeliveryDays"
+                value={selectedOption.deliveryDays}
+              />
+            </>
+          ) : null}
         </div>
 
         {addressFields.map(renderField)}

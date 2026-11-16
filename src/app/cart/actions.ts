@@ -7,7 +7,8 @@ import { readCheckoutForm } from "@/lib/order-input";
 import { startCheckout } from "@/lib/payments";
 import { quoteOrderShipping } from "@/lib/checkout-shipping";
 import { createOrder, expireOverdueOrders } from "@/lib/orders";
-import { calculateShipping } from "@/lib/shipping";
+import { calculateShipping, shippingMessages } from "@/lib/shipping";
+import { readDays, readPrice } from "@/lib/shipping-shared";
 import {
   isLocalPickup,
   localPickupOption,
@@ -127,6 +128,21 @@ export async function placeOrder(
   }
 
   const { items, customer, address } = parsed.input;
+  const serviceId = readShippingServiceId(formData);
+
+  // Sem opção marcada, a recotação não acharia o serviço e diria que as
+  // opções mudaram. Aqui a pessoa ainda não escolheu.
+  if (serviceId === null) {
+    const message = shippingMessages.chooseOption;
+
+    return {
+      status: "error",
+      message,
+      fieldErrors: { postalCode: message },
+      orderId: null,
+      checkoutUrl: null,
+    };
+  }
 
   // Confere cidade e UF com o CEP. Se a ViaCEP estiver fora do ar, segue.
   const postalCheck = await checkAddressPostalCode(address);
@@ -145,12 +161,14 @@ export async function placeOrder(
   if ((await expireOverdueOrders()) > 0) updateTag("products");
 
   const summary = await resolveCart(items);
-  const serviceId = readShippingServiceId(formData);
   // A retirada não consulta a transportadora: o frete é zero no servidor.
+  // Preço e prazo exibidos são opcionais; se vierem e divergirem, a recotação recusa.
   const quote = await quoteOrderShipping({
     postalCode: address.postalCode,
     lines: summary.lines,
     serviceId,
+    displayedPrice: readPrice(formData.get("shippingPrice")),
+    displayedDays: readDays(formData.get("shippingDeliveryDays")),
   });
 
   if (quote.status !== "quoted" || quote.price === null) {

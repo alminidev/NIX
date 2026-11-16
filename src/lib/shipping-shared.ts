@@ -41,6 +41,7 @@ export const shippingMessages = {
     "Não foi possível cotar o frete porque um produto está sem peso ou sem medidas.",
   optionsChanged:
     "As opções de frete mudaram. Calcule o frete de novo e escolha uma opção.",
+  chooseOption: "Escolha uma opção de frete.",
 } as const;
 
 export type ICarrierQuote =

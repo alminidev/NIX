@@ -176,10 +176,9 @@ function onePricePerDeadline(options: IShippingOption[]) {
  * duas entregas. A cotação só define valor e prazo — o nome da
  * transportadora não aparece.
  *
- * Se as duas saírem com o mesmo prazo, fica só a mais cara. Se todas as
- * cotações tiverem o mesmo prazo, só a mais cara aparece. Com uma única
- * cotação, só ela aparece. Com duas, a mais barata faz o papel da
- * intermediária. A retirada no local não entra aqui: ela é acrescentada
+ * Se todas as cotações tiverem o mesmo prazo, só a mais cara aparece. Com
+ * uma única cotação, só ela aparece. Com duas, a mais barata faz o papel
+ * da intermediária. A retirada no local não entra aqui: ela é acrescentada
  * depois, no fim.
  */
 export function presentShippingChoices(
@@ -205,7 +204,5 @@ export function presentShippingChoices(
   if (standard.price === highestPrice) return [standard];
 
   const express = choice(sorted[sorted.length - 1], minDays);
-  if (standard.deliveryDays === express.deliveryDays) return [express];
-
   return [standard, express];
 }

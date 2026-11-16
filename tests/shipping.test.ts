@@ -19,6 +19,7 @@ import {
 import { melhorEnvioSetup } from "../src/lib/shipping-melhor-envio";
 import type { IShippingRequest } from "../src/lib/shipping-shared";
 import type { ICartLine, IShippingOption, IShippingQuote } from "../src/types/cart";
+import { checkoutFormInitialState } from "../src/types/order";
 
 interface ISettingsRow {
   shippingProvider: string;
@@ -43,10 +44,12 @@ mock.module("@/lib/prisma", {
 let calculateShipping: typeof import("../src/lib/shipping").calculateShipping;
 let shippingMessages: typeof import("../src/lib/shipping").shippingMessages;
 let quoteOrderShipping: typeof import("../src/lib/checkout-shipping").quoteOrderShipping;
+let placeOrder: typeof import("../src/app/cart/actions").placeOrder;
 
 before(async () => {
   ({ calculateShipping, shippingMessages } = await import("../src/lib/shipping"));
   ({ quoteOrderShipping } = await import("../src/lib/checkout-shipping"));
+  ({ placeOrder } = await import("../src/app/cart/actions"));
 });
 
 const token = "token-secreto";
@@ -97,6 +100,30 @@ function quote(overrides: Record<string, unknown> = {}) {
     company: { id: 1, name: "Correios" },
     ...overrides,
   };
+}
+
+function checkoutForm(overrides: Record<string, string> = {}) {
+  const values: Record<string, string> = {
+    customerKind: "PERSON",
+    document: "111.444.777-35",
+    name: "Maria da Silva",
+    email: "Maria@Example.com",
+    phone: "(11) 91234-5678",
+    postalCode: "01310-100",
+    street: "Avenida Paulista",
+    number: "1000",
+    complement: "",
+    neighborhood: "Bela Vista",
+    city: "São Paulo",
+    state: "SP",
+    items: JSON.stringify([{ productId: 1, quantity: 2 }]),
+    ...overrides,
+  };
+  const formData = new FormData();
+  for (const [key, value] of Object.entries(values)) {
+    formData.set(key, value);
+  }
+  return formData;
 }
 
 describe("calculateShipping", () => {
@@ -538,6 +565,104 @@ describe("calculateShipping", () => {
     assert.notEqual(missing.serviceId, localPickupServiceId);
   });
 
+  it("rejects the order when the displayed price or deadline differs", async () => {
+    mock.method(globalThis, "fetch", async () =>
+      jsonResponse([
+        quote(),
+        quote({
+          id: 2,
+          name: "SEDEX",
+          custom_price: "60.00",
+          custom_delivery_time: 2,
+          company: { name: "Correios" },
+        }),
+      ]),
+    );
+
+    const shown = {
+      postalCode: request.postalCode,
+      lines: [orderLine],
+      serviceId: 2,
+      displayedPrice: 60,
+      displayedDays: 2,
+    };
+
+    const matched = await quoteOrderShipping(shown);
+    assert.equal(matched.status, "quoted");
+    assert.equal(matched.price, 60);
+    assert.equal(matched.deliveryDays, 2);
+    assert.equal(matched.serviceId, 2);
+
+    const omitted = await quoteOrderShipping({
+      postalCode: request.postalCode,
+      lines: [orderLine],
+      serviceId: 2,
+    });
+    assert.equal(omitted.status, "quoted");
+    assert.equal(omitted.price, 60);
+
+    const stalePrice = await quoteOrderShipping({
+      ...shown,
+      displayedPrice: 42.5,
+    });
+    assert.equal(stalePrice.status, "error");
+    assert.equal(stalePrice.message, shippingMessages.optionsChanged);
+    assert.equal(stalePrice.price, null);
+    assert.deepEqual(stalePrice.options, []);
+
+    const staleDays = await quoteOrderShipping({
+      ...shown,
+      displayedDays: 9,
+    });
+    assert.equal(staleDays.status, "error");
+    assert.equal(staleDays.message, shippingMessages.optionsChanged);
+    assert.equal(staleDays.price, null);
+
+    const pickup = await quoteOrderShipping({
+      postalCode: request.postalCode,
+      lines: [orderLine],
+      serviceId: localPickupServiceId,
+      displayedPrice: 0,
+      displayedDays: 0,
+    });
+    assert.equal(pickup.status, "quoted");
+    assert.equal(pickup.price, 0);
+
+    const stalePickup = await quoteOrderShipping({
+      postalCode: request.postalCode,
+      lines: [orderLine],
+      serviceId: localPickupServiceId,
+      displayedPrice: 12,
+      displayedDays: 0,
+    });
+    assert.equal(stalePickup.status, "error");
+    assert.equal(stalePickup.message, shippingMessages.optionsChanged);
+  });
+
+  it("asks to choose a shipping option when placeOrder has no service id", async () => {
+    const fetchMock = mock.method(globalThis, "fetch", async () => {
+      throw new Error("não deveria cotar");
+    });
+
+    const missing = await placeOrder(checkoutFormInitialState, checkoutForm());
+    const blank = await placeOrder(
+      checkoutFormInitialState,
+      checkoutForm({ shippingServiceId: "" }),
+    );
+
+    for (const result of [missing, blank]) {
+      assert.equal(result.status, "error");
+      assert.equal(result.message, "Escolha uma opção de frete.");
+      assert.equal(result.message, shippingMessages.chooseOption);
+      assert.notEqual(result.message, shippingMessages.optionsChanged);
+      assert.equal(result.fieldErrors.postalCode, "Escolha uma opção de frete.");
+      assert.equal(result.orderId, null);
+      assert.equal(result.checkoutUrl, null);
+    }
+
+    assert.equal(fetchMock.mock.callCount(), 0);
+  });
+
   it("does not quote when the shipping provider cannot be read", async () => {
     settingsFailure = new Error(`banco fora ${token}`);
     const fetchMock = mock.method(globalThis, "fetch", async () =>
@@ -616,6 +741,19 @@ describe("presentShippingChoices", () => {
         [1, 42.5, 9],
         [2, 60, 3],
       ],
+    );
+  });
+
+  it("returns only the most expensive quote when every deadline matches", () => {
+    const choices = presentShippingChoices([
+      option(1, 40, 5, "PAC"),
+      option(2, 80, 5, "SEDEX"),
+      option(3, 60, 5, ".Package"),
+    ]);
+
+    assert.deepEqual(
+      choices.map((choice) => [choice.serviceId, choice.price, choice.deliveryDays]),
+      [[2, 80, 5]],
     );
   });
 
