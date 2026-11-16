@@ -3,6 +3,7 @@
 import { useAuthContext } from "@/contexts/AuthContext";
 import {
   Boxes,
+  CircleUser,
   ClipboardList,
   LayoutDashboard,
   LogOut,
@@ -48,6 +49,12 @@ const navItems: INavItem[] = [
     exact: false,
   },
   { href: "/admin/stock", label: "Estoque", icon: Boxes, exact: true },
+  {
+    href: "/admin/profile",
+    label: "Meu perfil",
+    icon: CircleUser,
+    exact: true,
+  },
 ];
 
 function isCurrent(pathname: string, href: string, exact: boolean) {
@@ -101,7 +108,7 @@ export default function AdminShell({ user, children }: IAdminShellProps) {
           </Link>
 
           <nav
-            className="order-3 grid w-full grid-cols-3 gap-1 min-[720px]:grid-cols-5 min-[861px]:order-none min-[861px]:mt-3 min-[861px]:flex min-[861px]:flex-col"
+            className="order-3 grid w-full grid-cols-3 gap-1 min-[720px]:grid-cols-6 min-[861px]:order-none min-[861px]:mt-3 min-[861px]:flex min-[861px]:flex-col"
             aria-label="Painel administrativo"
           >
             <p className="mx-2 mb-2 hidden text-[0.6875rem] font-semibold tracking-wider text-ink-muted uppercase min-[861px]:block">
