@@ -122,10 +122,12 @@ model Product {
   @@map("product")
 }
 
-// Linha única da loja. O id 1 guarda o modelo do tempo de produção.
+// Linha única da loja. O id 1 guarda o modelo do tempo de produção e o provedor de frete.
 model ShopSettings {
   id                     Int    @id @default(1)
   productionTimeTemplate String @default("Após a compra o tempo de produção do produto é de {dias}.")
+  // melhor_envio ou central_do_frete. Sem a linha, a loja usa o Melhor Envio.
+  shippingProvider       String @default("melhor_envio")
 
   @@map("shop_settings")
 }

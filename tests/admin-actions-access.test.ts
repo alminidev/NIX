@@ -36,6 +36,7 @@ const calls = {
     data: { name: string; slug: string; sortOrder: number };
   }>,
   settingsWrites: [] as string[],
+  shippingProviderWrites: [] as string[],
 };
 
 function resetCalls() {
@@ -50,6 +51,7 @@ function resetCalls() {
   calls.categoryWrites = 0;
   calls.categoryUpdates.length = 0;
   calls.settingsWrites.length = 0;
+  calls.shippingProviderWrites.length = 0;
 }
 
 mock.module("next/navigation", {
@@ -117,10 +119,25 @@ mock.module("@/lib/prisma", {
       },
       shopSettings: {
         upsert: async (args: {
-          create: { productionTimeTemplate: string };
+          create: {
+            productionTimeTemplate?: string;
+            shippingProvider?: string;
+          };
+          update: {
+            productionTimeTemplate?: string;
+            shippingProvider?: string;
+          };
         }) => {
-          calls.settingsWrites.push(args.create.productionTimeTemplate);
-          return { id: 1, productionTimeTemplate: args.create.productionTimeTemplate };
+          const template =
+            args.update.productionTimeTemplate ??
+            args.create.productionTimeTemplate;
+          const provider =
+            args.update.shippingProvider ?? args.create.shippingProvider;
+          if (typeof template === "string") calls.settingsWrites.push(template);
+          if (typeof provider === "string") {
+            calls.shippingProviderWrites.push(provider);
+          }
+          return { id: 1, productionTimeTemplate: template, shippingProvider: provider };
         },
       },
     },
@@ -210,13 +227,16 @@ describe("actions do admin sem sessão", () => {
   let changeOwnPassword: typeof import("../src/app/admin/profile/actions").changeOwnPassword;
   let saveCategory: typeof import("../src/app/admin/categories/actions").saveCategory;
   let saveShopSettings: typeof import("../src/app/admin/settings/actions").saveShopSettings;
+  let saveShippingProvider: typeof import("../src/app/admin/settings/actions").saveShippingProvider;
 
   before(async () => {
     ({ saveProfile, changeOwnPassword } = await import(
       "../src/app/admin/profile/actions"
     ));
     ({ saveCategory } = await import("../src/app/admin/categories/actions"));
-    ({ saveShopSettings } = await import("../src/app/admin/settings/actions"));
+    ({ saveShopSettings, saveShippingProvider } = await import(
+      "../src/app/admin/settings/actions"
+    ));
   });
 
   beforeEach(() => {
@@ -308,6 +328,63 @@ describe("actions do admin sem sessão", () => {
       "/admin/settings?notice=saved",
     );
     assert.deepEqual(calls.settingsWrites, ["Prazo de produção: {dias}."]);
+    assert.deepEqual(calls.shippingProviderWrites, []);
+  });
+
+  it("grava o provedor de frete só para admin", async () => {
+    function providerBody(provider: string) {
+      const data = new FormData();
+      data.set("shippingProvider", provider);
+      return data;
+    }
+
+    session = null;
+    const anonymous = await saveShippingProvider(
+      settingsFormInitialState,
+      providerBody("central_do_frete"),
+    );
+
+    session = {
+      user: {
+        id: "cliente-1",
+        role: "cliente",
+        email: "cliente@exemplo.com",
+        name: "Cliente",
+      },
+    };
+    const customer = await saveShippingProvider(
+      settingsFormInitialState,
+      providerBody("central_do_frete"),
+    );
+
+    assert.equal(anonymous.status, "error");
+    assert.equal(anonymous.message, "Acesso negado.");
+    assert.equal(customer.status, "error");
+    assert.equal(customer.message, "Acesso negado.");
+    assert.deepEqual(calls.shippingProviderWrites, []);
+
+    session = adminSession();
+    const invalid = await saveShippingProvider(
+      settingsFormInitialState,
+      providerBody("outro"),
+    );
+    assert.equal(invalid.status, "error");
+    assert.match(
+      invalid.fieldErrors.shippingProvider ?? "",
+      /Melhor Envio ou Central do Frete/,
+    );
+    assert.deepEqual(calls.shippingProviderWrites, []);
+
+    await expectRedirect(
+      () =>
+        saveShippingProvider(
+          settingsFormInitialState,
+          providerBody("central_do_frete"),
+        ),
+      "/admin/settings?notice=saved",
+    );
+    assert.deepEqual(calls.shippingProviderWrites, ["central_do_frete"]);
+    assert.deepEqual(calls.settingsWrites, []);
   });
 
   it("mantém o identificador original ao editar com outro slug no formulário", async () => {

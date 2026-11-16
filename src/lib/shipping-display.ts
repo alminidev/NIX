@@ -1,7 +1,7 @@
 import { formatCurrency } from "@/lib/cart-calculation";
 import type { IShippingOption, IShippingQuote } from "@/types/cart";
 
-/** Id reservado: não existe no Melhor Envio. O preço é sempre zero. */
+/** Id reservado: não existe na cotação. O preço é sempre zero. */
 export const localPickupServiceId = 0;
 
 export const localPickupOption: IShippingOption = {
@@ -34,7 +34,7 @@ export function formatShippingAmount(price: number) {
 
 /**
  * Cotação só da retirada no local. O valor não vem do navegador nem do
- * Melhor Envio: a retirada é sempre grátis.
+ * provedor de frete: a retirada é sempre grátis.
  */
 export function localPickupQuote(
   carriers: IShippingOption[] = [],

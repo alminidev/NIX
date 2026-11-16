@@ -1,5 +1,6 @@
 import type { IShopSettings, TSettingsNotice } from "@/types/admin-settings";
 import ProductionTimeForm from "@/views/AdminSettingsView/components/ProductionTimeForm";
+import ShippingProviderForm from "@/views/AdminSettingsView/components/ShippingProviderForm";
 
 interface IAdminSettingsViewProps {
   settings: IShopSettings;
@@ -21,7 +22,7 @@ export function AdminSettingsView({
         </h1>
         <p className="mt-2 max-w-140 text-[0.9375rem] text-ink-secondary">
           O texto do tempo de produção aparece no card quando o produto tem um
-          prazo em dias.
+          prazo em dias. O frete usa o provedor escolhido abaixo.
         </p>
       </header>
 
@@ -34,7 +35,19 @@ export function AdminSettingsView({
         </p>
       ) : null}
 
+      {settings.shippingSettingsReady ? null : (
+        <p
+          className="rounded-input border border-[#f0c7c7] bg-[#fff1f1] px-4 py-3 text-sm text-[#9b1c1c]"
+          role="alert"
+        >
+          Não foi possível ler o provedor salvo. A cotação de entrega fica
+          indisponível até a leitura voltar. A retirada no local continua
+          disponível.
+        </p>
+      )}
+
       <ProductionTimeForm settings={settings} />
+      <ShippingProviderForm settings={settings} />
     </div>
   );
 }

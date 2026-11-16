@@ -42,7 +42,10 @@ export interface ICartSummary {
 export type TShippingStatus = "pending" | "quoted" | "error";
 
 export interface IShippingOption {
-  /** Id do serviço no Melhor Envio */
+  /**
+   * Id do serviço na cotação do provedor ativo (Melhor Envio ou Central do Frete).
+   * 0 é a retirada no local e não vem da transportadora.
+   */
   serviceId: number;
   /** Nome da transportadora; vazio quando a API não informa */
   company: string;

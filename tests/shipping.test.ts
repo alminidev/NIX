@@ -1,11 +1,7 @@
 import assert from "node:assert/strict";
-import { afterEach, beforeEach, describe, it, mock } from "node:test";
+import { afterEach, before, beforeEach, describe, it, mock } from "node:test";
 import { calculateTotal } from "../src/lib/cart-calculation";
-import {
-  calculateShipping,
-  shippingMessages,
-  type IShippingRequest,
-} from "../src/lib/shipping";
+import { centralDoFreteSetup } from "../src/lib/shipping-central-do-frete";
 import {
   formatDeliveryDays,
   formatShippingAmount,
@@ -17,7 +13,38 @@ import {
   presentShippingChoices,
   shippingChoiceLabel,
 } from "../src/lib/shipping-display";
-import type { IShippingOption, IShippingQuote } from "../src/types/cart";
+import { melhorEnvioSetup } from "../src/lib/shipping-melhor-envio";
+import type { IShippingRequest } from "../src/lib/shipping-shared";
+import type { ICartLine, IShippingOption, IShippingQuote } from "../src/types/cart";
+
+interface ISettingsRow {
+  shippingProvider: string;
+}
+
+let settingsRow: ISettingsRow | null = null;
+let settingsFailure: Error | null = null;
+
+mock.module("@/lib/prisma", {
+  namedExports: {
+    prisma: {
+      shopSettings: {
+        findUnique: async () => {
+          if (settingsFailure) throw settingsFailure;
+          return settingsRow;
+        },
+      },
+    },
+  },
+});
+
+let calculateShipping: typeof import("../src/lib/shipping").calculateShipping;
+let shippingMessages: typeof import("../src/lib/shipping").shippingMessages;
+let quoteOrderShipping: typeof import("../src/lib/checkout-shipping").quoteOrderShipping;
+
+before(async () => {
+  ({ calculateShipping, shippingMessages } = await import("../src/lib/shipping"));
+  ({ quoteOrderShipping } = await import("../src/lib/checkout-shipping"));
+});
 
 const token = "token-secreto";
 const envKeys = [
@@ -25,6 +52,10 @@ const envKeys = [
   "MELHOR_ENVIO_BASE_URL",
   "MELHOR_ENVIO_FROM_POSTAL_CODE",
   "MELHOR_ENVIO_USER_AGENT",
+  "CENTRAL_DO_FRETE_TOKEN",
+  "CENTRAL_DO_FRETE_BASE_URL",
+  "CENTRAL_DO_FRETE_FROM_POSTAL_CODE",
+  "CENTRAL_DO_FRETE_CARGO_TYPES",
 ] as const;
 
 const savedEnv = Object.fromEntries(
@@ -67,6 +98,8 @@ function quote(overrides: Record<string, unknown> = {}) {
 
 describe("calculateShipping", () => {
   beforeEach(() => {
+    settingsRow = null;
+    settingsFailure = null;
     process.env.MELHOR_ENVIO_TOKEN = token;
     process.env.MELHOR_ENVIO_BASE_URL = "https://sandbox.melhorenvio.com.br";
     process.env.MELHOR_ENVIO_FROM_POSTAL_CODE = "01310-100";
@@ -326,6 +359,61 @@ describe("calculateShipping", () => {
     assert.equal(result.message, shippingMessages.missingPackage);
     assert.equal(fetchMock.mock.callCount(), 0);
   });
+
+  it("keeps Melhor Envio when the saved provider is unknown", async () => {
+    settingsRow = { shippingProvider: "outro" };
+    const fetchMock = mock.method(globalThis, "fetch", async () =>
+      jsonResponse([quote()]),
+    );
+
+    const result = await calculateShipping(request);
+
+    assert.equal(result.status, "quoted");
+    const [url] = fetchMock.mock.calls[0].arguments as [string];
+    assert.equal(
+      url,
+      "https://sandbox.melhorenvio.com.br/api/v2/me/shipment/calculate",
+    );
+  });
+
+  it("uses Melhor Envio when the shipping column is not in the database yet", async () => {
+    const { Prisma } = await import("../src/generated/prisma/client");
+    settingsFailure = new Prisma.PrismaClientKnownRequestError(
+      "The column shippingProvider does not exist",
+      {
+        code: "P2022",
+        clientVersion: "test",
+        meta: { column: "shippingProvider" },
+      },
+    );
+    const fetchMock = mock.method(globalThis, "fetch", async () =>
+      jsonResponse([quote()]),
+    );
+
+    const result = await calculateShipping(request);
+
+    assert.equal(result.status, "quoted");
+    assert.equal(result.price, 42.5);
+    const [url] = fetchMock.mock.calls[0].arguments as [string];
+    assert.equal(
+      url,
+      "https://sandbox.melhorenvio.com.br/api/v2/me/shipment/calculate",
+    );
+  });
+
+  it("does not quote when the shipping provider cannot be read", async () => {
+    settingsFailure = new Error(`banco fora ${token}`);
+    const fetchMock = mock.method(globalThis, "fetch", async () =>
+      jsonResponse([quote()]),
+    );
+
+    const result = await calculateShipping(request);
+
+    assert.equal(result.status, "error");
+    assert.equal(result.message, shippingMessages.unavailable);
+    assert.equal(JSON.stringify(result).includes(token), false);
+    assert.equal(fetchMock.mock.callCount(), 0);
+  });
 });
 
 function option(
@@ -534,5 +622,348 @@ describe("local pickup", () => {
     assert.equal(result.status, "error");
     assert.equal(result.price, null);
     assert.equal(result.message, shippingMessages.unavailable);
+  });
+});
+
+const centralToken = "token-central";
+
+function centralPrice(overrides: Record<string, unknown> = {}) {
+  return {
+    id: 1,
+    shipping_carrier: "Correios",
+    price: 42.5,
+    delivery_time: 9,
+    service_type: null,
+    ...overrides,
+  };
+}
+
+function centralQuote(prices: unknown[], code = "RAMT4RPA") {
+  return {
+    code,
+    expiration: "2026-11-16T20:00:00Z",
+    invoice_amount: 2381,
+    prices,
+  };
+}
+
+const orderLine: ICartLine = {
+  productId: 1,
+  sku: "NIX-DB12",
+  name: "Dry Box 12",
+  capacity: "12 filamentos",
+  image: "",
+  dimensions: { width: 35, height: 60, length: 46 },
+  weight: 18,
+  unitPrice: 1190.5,
+  formattedUnitPrice: "",
+  quantity: 2,
+  maxQuantity: 2,
+  lineTotal: 2381,
+  formattedLineTotal: "",
+};
+
+describe("Central do Frete", () => {
+  beforeEach(() => {
+    settingsRow = { shippingProvider: "central_do_frete" };
+    settingsFailure = null;
+    process.env.MELHOR_ENVIO_TOKEN = token;
+    process.env.MELHOR_ENVIO_BASE_URL = "https://sandbox.melhorenvio.com.br";
+    process.env.MELHOR_ENVIO_FROM_POSTAL_CODE = "01310-100";
+    process.env.CENTRAL_DO_FRETE_TOKEN = centralToken;
+    process.env.CENTRAL_DO_FRETE_BASE_URL = "https://sandbox.centraldofrete.com";
+    process.env.CENTRAL_DO_FRETE_FROM_POSTAL_CODE = "01310-100";
+    delete process.env.CENTRAL_DO_FRETE_CARGO_TYPES;
+  });
+
+  afterEach(() => {
+    mock.restoreAll();
+    for (const key of envKeys) {
+      const value = savedEnv[key];
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+  });
+
+  it("quotes with the subtotal and volumes and no Bearer prefix", async () => {
+    const second = {
+      ...request.lines[0],
+      sku: "NIX-STATION",
+      quantity: 1,
+      dimensions: { width: 10.2, height: 8, length: 4 },
+      weight: 3,
+      unitPrice: 10.25,
+    };
+    const fetchMock = mock.method(globalThis, "fetch", async () =>
+      jsonResponse(centralQuote([centralPrice()])),
+    );
+
+    const result = await calculateShipping({
+      ...request,
+      lines: [...request.lines, second],
+    });
+
+    assert.equal(result.status, "quoted");
+    assert.equal(result.price, 42.5);
+    assert.equal(result.deliveryDays, 9);
+    assert.equal(result.serviceId, 1);
+    assert.equal(result.company, null);
+    assert.equal(result.serviceName, null);
+    assert.equal(JSON.stringify(result).includes(centralToken), false);
+    assert.equal(JSON.stringify(result).includes("RAMT4RPA"), false);
+    assert.equal(JSON.stringify(result).includes("Correios"), false);
+
+    const [url, init] = fetchMock.mock.calls[0].arguments as [string, RequestInit];
+    assert.equal(url, "https://sandbox.centraldofrete.com/v1/quotation");
+    assert.equal(init.method, "POST");
+    const headers = new Headers(init.headers);
+    assert.equal(headers.get("authorization"), centralToken);
+    assert.equal(headers.get("authorization")?.includes("Bearer"), false);
+    assert.equal(headers.get("user-agent"), null);
+    assert.deepEqual(JSON.parse(String(init.body)), {
+      from: "01310100",
+      to: "01018020",
+      invoice_amount: 2391.25,
+      volumes: [
+        {
+          quantity: 2,
+          width: 35,
+          height: 60,
+          length: 46,
+          weight: 18,
+        },
+        {
+          quantity: 1,
+          width: 10.2,
+          height: 8,
+          length: 4,
+          weight: 3,
+        },
+      ],
+    });
+  });
+
+  it("sends cargo types when they are configured and omits them otherwise", async () => {
+    process.env.CENTRAL_DO_FRETE_CARGO_TYPES = "3, 8";
+    const fetchMock = mock.method(globalThis, "fetch", async () =>
+      jsonResponse(centralQuote([centralPrice({ id: 9, price: "32.50", delivery_time: "7", service_type: "PAC" })])),
+    );
+
+    const result = await calculateShipping(request);
+
+    assert.equal(result.serviceId, 9);
+    assert.equal(result.price, 32.5);
+    assert.equal(result.deliveryDays, 7);
+    const [, init] = fetchMock.mock.calls[0].arguments as [string, RequestInit];
+    assert.equal(JSON.parse(String(init.body)).cargo_types[0], 3);
+    assert.deepEqual(JSON.parse(String(init.body)).cargo_types, [3, 8]);
+  });
+
+  it("keeps the mid-price and the expensive quote, then local pickup", async () => {
+    mock.method(globalThis, "fetch", async () =>
+      jsonResponse(
+        centralQuote([
+          centralPrice({ id: 1, price: 106.13, delivery_time: 11, service_type: "PAC" }),
+          centralPrice({ id: 2, price: 116.26, delivery_time: 4, shipping_carrier: "Jadlog" }),
+          centralPrice({ id: 3, price: 142.36, delivery_time: 5, service_type: ".Package" }),
+          centralPrice({ id: 4, price: 184.33, delivery_time: 7, service_type: "SEDEX" }),
+        ]),
+      ),
+    );
+
+    const quoted = offerLocalPickup(await calculateShipping(request));
+
+    assert.deepEqual(
+      quoted.options.map((choice) => [choice.serviceId, choice.price, choice.deliveryDays, choice.name]),
+      [
+        [3, 142.36, 11, ""],
+        [4, 184.33, 4, ""],
+        [localPickupServiceId, 0, 0, "Retirada no local"],
+      ],
+    );
+  });
+
+  it("recalculates the chosen service on the server and skips the carrier for local pickup", async () => {
+    const fetchMock = mock.method(globalThis, "fetch", async () =>
+      jsonResponse(
+        centralQuote([
+          centralPrice({ id: 3, price: 142.36, delivery_time: 5 }),
+          centralPrice({ id: 4, price: 184.33, delivery_time: 7 }),
+        ]),
+      ),
+    );
+
+    const delivered = await quoteOrderShipping({
+      postalCode: request.postalCode,
+      lines: [orderLine],
+      serviceId: 4,
+    });
+
+    assert.equal(delivered.status, "quoted");
+    assert.equal(delivered.price, 184.33);
+    assert.equal(delivered.deliveryDays, 5);
+    assert.equal(delivered.serviceId, 4);
+    assert.equal(fetchMock.mock.callCount(), 1);
+
+    const pickup = await quoteOrderShipping({
+      postalCode: request.postalCode,
+      lines: [orderLine],
+      serviceId: localPickupServiceId,
+    });
+
+    assert.equal(pickup.price, 0);
+    assert.equal(pickup.serviceId, localPickupServiceId);
+    assert.equal(fetchMock.mock.callCount(), 1);
+  });
+
+  it("maps an uncovered route without exposing the API body", async () => {
+    mock.method(globalThis, "fetch", async () =>
+      jsonResponse(
+        {
+          error: true,
+          message: `Rota secreta ${centralToken}`,
+          code: 422,
+          reason: "uncovered_route",
+        },
+        422,
+      ),
+    );
+
+    const result = await calculateShipping(request);
+
+    assert.equal(result.status, "error");
+    assert.equal(result.message, shippingMessages.uncovered);
+    assert.equal(JSON.stringify(result).includes(centralToken), false);
+    assert.equal(JSON.stringify(result).includes("Rota secreta"), false);
+    assert.equal(JSON.stringify(result).includes("uncovered_route"), false);
+  });
+
+  it("returns a friendly error on timeout", async () => {
+    mock.method(globalThis, "fetch", async () => {
+      throw new DOMException("The operation was aborted due to timeout", "TimeoutError");
+    });
+
+    const result = await calculateShipping(request);
+
+    assert.equal(result.message, shippingMessages.timeout);
+    assert.equal(result.message?.includes(centralToken), false);
+  });
+
+  it("does not call the API when the token or the host is not allowed", async () => {
+    delete process.env.CENTRAL_DO_FRETE_TOKEN;
+    const missingToken = mock.method(globalThis, "fetch", async () =>
+      jsonResponse(centralQuote([centralPrice()])),
+    );
+
+    const withoutToken = await calculateShipping(request);
+
+    assert.equal(withoutToken.message, shippingMessages.unavailable);
+    assert.equal(missingToken.mock.callCount(), 0);
+
+    mock.restoreAll();
+    process.env.CENTRAL_DO_FRETE_TOKEN = centralToken;
+    process.env.CENTRAL_DO_FRETE_BASE_URL = "https://evil.example";
+    const unexpectedHost = mock.method(globalThis, "fetch", async () =>
+      jsonResponse(centralQuote([centralPrice()])),
+    );
+
+    const rejectedHost = await calculateShipping(request);
+
+    assert.equal(rejectedHost.status, "error");
+    assert.equal(unexpectedHost.mock.callCount(), 0);
+    assert.equal(JSON.stringify(rejectedHost).includes(centralToken), false);
+  });
+
+  it("does not call the API when cargo types are invalid", async () => {
+    process.env.CENTRAL_DO_FRETE_CARGO_TYPES = "abc";
+    const fetchMock = mock.method(globalThis, "fetch", async () =>
+      jsonResponse(centralQuote([centralPrice()])),
+    );
+
+    const result = await calculateShipping(request);
+
+    assert.equal(result.message, shippingMessages.unavailable);
+    assert.equal(fetchMock.mock.callCount(), 0);
+  });
+
+  it("maps carrier refusals to unavailable without the API body", async () => {
+    const cases = [
+      { status: 401, reason: "unauthenticated" },
+      { status: 403, reason: "account_cannot_quote" },
+      { status: 422, reason: "cargo_type_required" },
+      { status: 422, reason: "origin_required" },
+      { status: 422, reason: "invalid_cargo_type" },
+      { status: 422, reason: "destination_required" },
+      { status: 422, reason: "quotation_refused" },
+      { status: 503, reason: "temporarily_unavailable" },
+    ];
+
+    for (const item of cases) {
+      mock.restoreAll();
+      const secret = `segredo-${item.reason}`;
+      mock.method(globalThis, "fetch", async () =>
+        jsonResponse(
+          { error: true, message: secret, code: 1, reason: item.reason },
+          item.status,
+        ),
+      );
+
+      const result = await calculateShipping(request);
+
+      assert.equal(result.status, "error");
+      assert.equal(result.message, shippingMessages.unavailable);
+      assert.equal(JSON.stringify(result).includes(secret), false);
+      assert.equal(JSON.stringify(result).includes(item.reason), false);
+    }
+  });
+
+  it("ignores a price whose id is reserved for local pickup", async () => {
+    mock.method(globalThis, "fetch", async () =>
+      jsonResponse(centralQuote([centralPrice({ id: 0, price: 10, delivery_time: 2 })])),
+    );
+
+    const result = await calculateShipping(request);
+
+    assert.equal(result.status, "error");
+    assert.equal(result.message, shippingMessages.uncovered);
+    assert.equal(result.serviceId, null);
+  });
+});
+
+describe("shipping provider setup", () => {
+  it("reports missing Central do Frete variables without their values", () => {
+    const setup = centralDoFreteSetup({
+      CENTRAL_DO_FRETE_TOKEN: "segredo-super",
+      CENTRAL_DO_FRETE_BASE_URL: "https://evil.example",
+      CENTRAL_DO_FRETE_CARGO_TYPES: "x",
+    });
+
+    assert.equal(setup.ready, false);
+    assert.deepEqual(setup.missing, [
+      "CENTRAL_DO_FRETE_BASE_URL",
+      "CENTRAL_DO_FRETE_FROM_POSTAL_CODE",
+      "CENTRAL_DO_FRETE_CARGO_TYPES",
+    ]);
+    assert.equal(JSON.stringify(setup).includes("segredo-super"), false);
+    assert.equal(JSON.stringify(setup).includes("evil.example"), false);
+  });
+
+  it("marks a provider ready only when the server can quote", () => {
+    assert.deepEqual(
+      centralDoFreteSetup({
+        CENTRAL_DO_FRETE_TOKEN: "token",
+        CENTRAL_DO_FRETE_BASE_URL: "https://api.centraldofrete.com",
+        CENTRAL_DO_FRETE_FROM_POSTAL_CODE: "01310-100",
+      }),
+      { ready: true, missing: [] },
+    );
+    assert.deepEqual(
+      melhorEnvioSetup({
+        MELHOR_ENVIO_TOKEN: "token",
+        MELHOR_ENVIO_BASE_URL: "http://sandbox.melhorenvio.com.br",
+        MELHOR_ENVIO_FROM_POSTAL_CODE: "01310100",
+      }),
+      { ready: false, missing: ["MELHOR_ENVIO_BASE_URL"] },
+    );
   });
 });

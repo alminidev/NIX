@@ -8,7 +8,7 @@ import type { ICartLine, IShippingQuote } from "@/types/cart";
 import "server-only";
 
 /**
- * Frete gravado no pedido. A retirada no local não consulta o Melhor Envio.
+ * Frete gravado no pedido. A retirada no local não consulta o provedor.
  * A entrega usa a mesma cotação do carrinho, e o preço não vem do navegador.
  */
 export async function quoteOrderShipping(input: {
