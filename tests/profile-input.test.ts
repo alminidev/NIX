@@ -30,7 +30,7 @@ function passwordForm(overrides: Record<string, string> = {}) {
 }
 
 describe("readProfileForm", () => {
-  it("normaliza o e-mail e não lê foto", () => {
+  it("normaliza o e-mail e não lê imagem", () => {
     const parsed = readProfileForm(profileForm({ image: "/images/logo-nix.png" }), currentEmail);
 
     assert.deepEqual(parsed.fieldErrors, {});

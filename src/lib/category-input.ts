@@ -2,7 +2,8 @@ import type { ICategoryFieldErrors } from "@/types/admin-category";
 
 export interface ICategoryInput {
   name: string;
-  slug: string;
+  /** Na edição fica null: o servidor preserva o slug já gravado. */
+  slug: string | null;
   sortOrder: number;
 }
 
@@ -52,9 +53,10 @@ export function readCategoryForm(formData: FormData): IParsedCategoryForm {
     return { id, input: null, fieldErrors: {} };
   }
 
+  const editing = id !== null;
   const name = readString(formData, "name");
-  const slug = readString(formData, "slug").toLowerCase();
   const sortRaw = readString(formData, "sortOrder");
+  let slug: string | null = null;
 
   if (name.length < 2) {
     fieldErrors.name = "Informe o nome da categoria.";
@@ -62,11 +64,14 @@ export function readCategoryForm(formData: FormData): IParsedCategoryForm {
     fieldErrors.name = `O nome pode ter no máximo ${categoryFieldLimits.name} caracteres.`;
   }
 
-  if (slug.length < 2) {
-    fieldErrors.slug = "Informe um identificador com pelo menos 2 caracteres.";
-  } else if (slug.length > categoryFieldLimits.slug || !slugPattern.test(slug)) {
-    fieldErrors.slug =
-      "Use letras minúsculas, números e hífens. Exemplo: armarios.";
+  if (!editing) {
+    slug = readString(formData, "slug").toLowerCase();
+    if (slug.length < 2) {
+      fieldErrors.slug = "Informe um identificador com pelo menos 2 caracteres.";
+    } else if (slug.length > categoryFieldLimits.slug || !slugPattern.test(slug)) {
+      fieldErrors.slug =
+        "Use letras minúsculas, números e hífens. Exemplo: armarios.";
+    }
   }
 
   if (!/^\d+$/.test(sortRaw) || Number(sortRaw) > categoryFieldLimits.sortOrder) {

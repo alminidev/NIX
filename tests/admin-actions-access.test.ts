@@ -30,6 +30,10 @@ const calls = {
   }>,
   categoryReads: 0,
   categoryWrites: 0,
+  categoryUpdates: [] as Array<{
+    where: { id: number };
+    data: { name: string; slug: string; sortOrder: number };
+  }>,
 };
 
 function resetCalls() {
@@ -42,6 +46,7 @@ function resetCalls() {
   calls.userWrites.length = 0;
   calls.categoryReads = 0;
   calls.categoryWrites = 0;
+  calls.categoryUpdates.length = 0;
 }
 
 mock.module("next/navigation", {
@@ -87,13 +92,20 @@ mock.module("@/lib/prisma", {
         },
       },
       category: {
-        findUnique: async () => {
+        findUnique: async (args: { where: { id?: number; slug?: string } }) => {
           calls.categoryReads += 1;
+          if (typeof args.where.id === "number") {
+            return { id: args.where.id, slug: "armarios" };
+          }
           return null;
         },
-        update: async () => {
+        update: async (args: {
+          where: { id: number };
+          data: { name: string; slug: string; sortOrder: number };
+        }) => {
           calls.categoryWrites += 1;
-          return { id: 1 };
+          calls.categoryUpdates.push({ where: args.where, data: args.data });
+          return { id: args.where.id };
         },
         create: async () => {
           calls.categoryWrites += 1;
@@ -233,6 +245,28 @@ describe("actions do admin sem sessão", () => {
     assert.equal(calls.categoryWrites, 0);
   });
 
+  it("mantém o identificador original ao editar com outro slug no formulário", async () => {
+    session = adminSession();
+    const body = categoryBody();
+    body.set("id", "2");
+    body.set("slug", "stations");
+    body.set("name", "Nome novo");
+    body.set("sortOrder", "4");
+
+    await expectRedirect(
+      () => saveCategory(categoryFormInitialState, body),
+      "/admin/categories?notice=updated",
+    );
+
+    assert.equal(calls.categoryWrites, 1);
+    assert.deepEqual(calls.categoryUpdates, [
+      {
+        where: { id: 2 },
+        data: { name: "Nome novo", slug: "armarios", sortOrder: 4 },
+      },
+    ]);
+  });
+
   it("salva o nome sem enviar image e sem pedir senha", async () => {
     session = adminSession();
     const body = profileBody();
@@ -272,7 +306,7 @@ describe("actions do admin sem sessão", () => {
     assert.equal(calls.userWrites.length, 0);
   });
 
-  it("grava o e-mail novo só depois de conferir a senha, sem mexer na foto", async () => {
+  it("grava o e-mail novo só depois de conferir a senha, sem mexer na imagem", async () => {
     session = adminSession();
     const body = profileBody({
       email: "novo@exemplo.com",

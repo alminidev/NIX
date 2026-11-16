@@ -27,8 +27,8 @@ describe("suggestCategorySlug", () => {
 });
 
 describe("readCategoryForm", () => {
-  it("aceita nome, identificador e ordem", () => {
-    const parsed = readCategoryForm(form());
+  it("aceita nome, identificador e ordem e grava o identificador em minúsculas", () => {
+    const parsed = readCategoryForm(form({ slug: "Armarios" }));
 
     assert.equal(parsed.id, null);
     assert.deepEqual(parsed.fieldErrors, {});
@@ -39,11 +39,20 @@ describe("readCategoryForm", () => {
     });
   });
 
-  it("grava o identificador em minúsculas e lê o id da edição", () => {
+  it("na edição lê o id e ignora o identificador enviado", () => {
     const parsed = readCategoryForm(form({ id: "2", slug: "Stations" }));
 
     assert.equal(parsed.id, 2);
-    assert.equal(parsed.input?.slug, "stations");
+    assert.equal(parsed.input?.slug, null);
+    assert.deepEqual(parsed.fieldErrors, {});
+
+    const missing = readCategoryForm(form({ id: "2", slug: "" }));
+    const invalid = readCategoryForm(form({ id: "2", slug: "Armários" }));
+
+    assert.equal(missing.input?.slug, null);
+    assert.equal(missing.fieldErrors.slug, undefined);
+    assert.equal(invalid.input?.slug, null);
+    assert.equal(invalid.fieldErrors.slug, undefined);
   });
 
   it("recusa nome curto, identificador inválido e ordem fora do limite", () => {

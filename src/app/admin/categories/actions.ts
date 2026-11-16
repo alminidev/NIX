@@ -50,22 +50,50 @@ export async function saveCategory(
   }
 
   const input = parsed.input;
-  const slugOwner = await prisma.category.findUnique({
-    where: { slug: input.slug },
-    select: { id: true },
-  });
+  let slug: string;
 
-  if (slugOwner && slugOwner.id !== parsed.id) {
+  if (parsed.id) {
+    const current = await prisma.category.findUnique({
+      where: { id: parsed.id },
+      select: { slug: true },
+    });
+
+    if (!current) {
+      return {
+        status: "error",
+        message: "Esta categoria não existe mais.",
+        fieldErrors: {},
+      };
+    }
+
+    slug = current.slug;
+  } else if (input.slug) {
+    slug = input.slug;
+    const slugOwner = await prisma.category.findUnique({
+      where: { slug },
+      select: { id: true },
+    });
+
+    if (slugOwner) {
+      return {
+        status: "error",
+        message: "Revise os campos destacados.",
+        fieldErrors: { slug: "Já existe uma categoria com este identificador." },
+      };
+    }
+  } else {
     return {
       status: "error",
       message: "Revise os campos destacados.",
-      fieldErrors: { slug: "Já existe uma categoria com este identificador." },
+      fieldErrors: {
+        slug: "Informe um identificador com pelo menos 2 caracteres.",
+      },
     };
   }
 
   const data = {
     name: input.name,
-    slug: input.slug,
+    slug,
     sortOrder: input.sortOrder,
   };
 
