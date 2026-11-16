@@ -7,12 +7,14 @@ interface IProductEditorProps {
   categories: IAdminCategory[];
   product?: IAdminProduct;
   nextSortOrder: number;
+  productionTimeTemplate: string;
 }
 
 export function ProductEditor({
   categories,
   product,
   nextSortOrder,
+  productionTimeTemplate,
 }: IProductEditorProps) {
   if (categories.length === 0) {
     return (
@@ -49,6 +51,7 @@ export function ProductEditor({
       categories={categories}
       product={product}
       nextSortOrder={nextSortOrder}
+      productionTimeTemplate={productionTimeTemplate}
     />
   );
 }

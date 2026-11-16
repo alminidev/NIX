@@ -2,6 +2,7 @@
 
 import { Modal } from "@/components/Modal";
 import ProductLightbox from "@/components/ProductLightbox";
+import ProductionTimeText from "@/components/ProductionTimeText";
 import ProductPurchaseActions from "@/components/ProductPurchaseActions";
 import { Sheet } from "@/components/Sheet";
 import { desktopMediaQuery, useMediaQuery } from "@/hooks/useMediaQuery";
@@ -300,6 +301,11 @@ function ProductDetailContent({
                 ))}
               </ul>
             ) : null}
+
+            <ProductionTimeText
+              text={product.productionTimeText}
+              className="mt-4"
+            />
           </div>
 
           <div className="border-t border-border-hairline px-7 py-4">
@@ -371,6 +377,8 @@ function ProductDetailContent({
                         {formatDimensions(product.dimensions)}
                       </span>
                     </div>
+
+                    <ProductionTimeText text={product.productionTimeText} />
 
                     {product.specifications.length > 0 ? (
                       <ul className="list-none border-t border-border-hairline pt-3.5">

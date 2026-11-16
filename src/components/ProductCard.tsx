@@ -1,6 +1,7 @@
 "use client";
 
 import ProductPurchaseActions from "@/components/ProductPurchaseActions";
+import ProductionTimeText from "@/components/ProductionTimeText";
 import { formatDimensions } from "@/lib/product-dimensions";
 import type { IProduct } from "@/types/product";
 import Image from "next/image";
@@ -79,6 +80,11 @@ export default function ProductCard({
             {formatDimensions(product.dimensions)}
           </span>
         </div>
+
+        <ProductionTimeText
+          text={product.productionTimeText}
+          className="mb-3.5"
+        />
 
         {product.specifications.length > 0 && (
           <ul className="mb-5 list-none border-t border-border-hairline pt-3.5">

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { before, beforeEach, describe, it, mock } from "node:test";
 import { categoryFormInitialState } from "../src/types/admin-category";
+import { settingsFormInitialState } from "../src/types/admin-settings";
 import {
   passwordFormInitialState,
   profileFormInitialState,
@@ -34,6 +35,7 @@ const calls = {
     where: { id: number };
     data: { name: string; slug: string; sortOrder: number };
   }>,
+  settingsWrites: [] as string[],
 };
 
 function resetCalls() {
@@ -47,6 +49,7 @@ function resetCalls() {
   calls.categoryReads = 0;
   calls.categoryWrites = 0;
   calls.categoryUpdates.length = 0;
+  calls.settingsWrites.length = 0;
 }
 
 mock.module("next/navigation", {
@@ -112,6 +115,14 @@ mock.module("@/lib/prisma", {
           return { id: 1 };
         },
       },
+      shopSettings: {
+        upsert: async (args: {
+          create: { productionTimeTemplate: string };
+        }) => {
+          calls.settingsWrites.push(args.create.productionTimeTemplate);
+          return { id: 1, productionTimeTemplate: args.create.productionTimeTemplate };
+        },
+      },
     },
   },
 });
@@ -172,6 +183,12 @@ function passwordBody() {
   return data;
 }
 
+function settingsBody(template = "Prazo de produção: {dias}.") {
+  const data = new FormData();
+  data.set("productionTimeTemplate", template);
+  return data;
+}
+
 function categoryBody() {
   const data = new FormData();
   data.set("name", "Armários Dry Box");
@@ -192,12 +209,14 @@ describe("actions do admin sem sessão", () => {
   let saveProfile: typeof import("../src/app/admin/profile/actions").saveProfile;
   let changeOwnPassword: typeof import("../src/app/admin/profile/actions").changeOwnPassword;
   let saveCategory: typeof import("../src/app/admin/categories/actions").saveCategory;
+  let saveShopSettings: typeof import("../src/app/admin/settings/actions").saveShopSettings;
 
   before(async () => {
     ({ saveProfile, changeOwnPassword } = await import(
       "../src/app/admin/profile/actions"
     ));
     ({ saveCategory } = await import("../src/app/admin/categories/actions"));
+    ({ saveShopSettings } = await import("../src/app/admin/settings/actions"));
   });
 
   beforeEach(() => {
@@ -243,6 +262,52 @@ describe("actions do admin sem sessão", () => {
     assert.equal(customer.message, "Acesso negado.");
     assert.equal(calls.categoryReads, 0);
     assert.equal(calls.categoryWrites, 0);
+  });
+
+  it("grava o modelo global só para admin e recusa quem não é", async () => {
+    session = null;
+    const anonymous = await saveShopSettings(
+      settingsFormInitialState,
+      settingsBody(),
+    );
+
+    session = {
+      user: {
+        id: "cliente-1",
+        role: "cliente",
+        email: "cliente@exemplo.com",
+        name: "Cliente",
+      },
+    };
+    const customer = await saveShopSettings(
+      settingsFormInitialState,
+      settingsBody(),
+    );
+
+    assert.equal(anonymous.status, "error");
+    assert.equal(anonymous.message, "Acesso negado.");
+    assert.equal(customer.status, "error");
+    assert.equal(customer.message, "Acesso negado.");
+    assert.deepEqual(calls.settingsWrites, []);
+
+    session = adminSession();
+    const invalid = await saveShopSettings(
+      settingsFormInitialState,
+      settingsBody("Sem o prazo."),
+    );
+    assert.equal(invalid.status, "error");
+    assert.match(invalid.fieldErrors.productionTimeTemplate ?? "", /\{dias\}/);
+    assert.deepEqual(calls.settingsWrites, []);
+
+    await expectRedirect(
+      () =>
+        saveShopSettings(
+          settingsFormInitialState,
+          settingsBody("Prazo de produção: {dias}."),
+        ),
+      "/admin/settings?notice=saved",
+    );
+    assert.deepEqual(calls.settingsWrites, ["Prazo de produção: {dias}."]);
   });
 
   it("mantém o identificador original ao editar com outro slug no formulário", async () => {

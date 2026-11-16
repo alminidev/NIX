@@ -1,5 +1,9 @@
 import { isProductImageUrl, productImageMessages } from "@/lib/product-image";
 import {
+  parseProductionDays,
+  parseProductionTimeTemplate,
+} from "@/lib/production-time";
+import {
   maxDimension,
   maxWeight,
   parseDimension,
@@ -29,6 +33,10 @@ export interface IProductInput {
   featured: boolean;
   active: boolean;
   sortOrder: number;
+  /** null quando o campo vem vazio */
+  productionDays: number | null;
+  /** null usa o modelo global de Configurações */
+  productionTimeTemplate: string | null;
 }
 
 export interface IParsedProductForm {
@@ -106,6 +114,11 @@ export function readProductForm(formData: FormData): IParsedProductForm {
   const description = readString(formData, "description");
   const sortRaw = readString(formData, "sortOrder");
   const priceResult = parsePrice(readString(formData, "price"));
+  const productionDays = parseProductionDays(readString(formData, "productionDays"));
+  const productionTimeTemplate = parseProductionTimeTemplate(
+    readString(formData, "productionTimeTemplate"),
+    { allowEmpty: true },
+  );
 
   if (sku.length < 2) {
     fieldErrors.sku = "Informe um SKU com pelo menos 2 caracteres.";
@@ -157,6 +170,14 @@ export function readProductForm(formData: FormData): IParsedProductForm {
     fieldErrors.price = priceResult.error;
   }
 
+  if ("error" in productionDays) {
+    fieldErrors.productionDays = productionDays.error;
+  }
+
+  if ("error" in productionTimeTemplate) {
+    fieldErrors.productionTimeTemplate = productionTimeTemplate.error;
+  }
+
   const specificationValues = formData
     .getAll("specifications")
     .filter((value): value is string => typeof value === "string")
@@ -196,7 +217,9 @@ export function readProductForm(formData: FormData): IParsedProductForm {
     length === null ||
     width === null ||
     height === null ||
-    weight === null
+    weight === null ||
+    !("value" in productionDays) ||
+    !("value" in productionTimeTemplate)
   ) {
     return { id, input: null, fieldErrors };
   }
@@ -227,6 +250,8 @@ export function readProductForm(formData: FormData): IParsedProductForm {
       featured: formData.get("featured") === "on",
       active: formData.get("active") === "on",
       sortOrder: Number(sortRaw),
+      productionDays: productionDays.value,
+      productionTimeTemplate: productionTimeTemplate.value,
     },
     fieldErrors,
   };

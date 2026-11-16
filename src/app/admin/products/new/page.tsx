@@ -3,6 +3,7 @@ import {
   getAdminCategories,
   getNextProductSortOrder,
 } from "@/lib/admin-products";
+import { getProductionTimeTemplate } from "@/lib/shop-settings";
 import { getSession } from "@/lib/session";
 import { ProductEditor } from "@/views/AdminProductsView/components/ProductEditor";
 import type { Metadata } from "next";
@@ -22,13 +23,18 @@ async function NewProduct() {
     return null;
   }
 
-  const [categories, nextSortOrder] = await Promise.all([
+  const [categories, nextSortOrder, productionTimeTemplate] = await Promise.all([
     getAdminCategories(),
     getNextProductSortOrder(),
+    getProductionTimeTemplate(),
   ]);
 
   return (
-    <ProductEditor categories={categories} nextSortOrder={nextSortOrder} />
+    <ProductEditor
+      categories={categories}
+      nextSortOrder={nextSortOrder}
+      productionTimeTemplate={productionTimeTemplate}
+    />
   );
 }
 

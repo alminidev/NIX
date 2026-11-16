@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+import { catalogProductionTime } from "@/lib/production-time";
+import { getProductionTimeTemplate } from "@/lib/shop-settings";
 import type { IProduct } from "@/types/product";
 import { cacheLife, cacheTag } from "next/cache";
 
@@ -7,7 +9,12 @@ const currency = new Intl.NumberFormat("pt-BR", {
   currency: "BRL",
 });
 
-export async function getProducts(): Promise<IProduct[]> {
+interface ICachedProduct extends Omit<IProduct, "productionTimeText"> {
+  /** Override só deste produto. Vazio usa o modelo lido fora do cache. */
+  productionTimeTemplate: string | null;
+}
+
+async function getCachedProducts(): Promise<ICachedProduct[]> {
   "use cache";
   cacheLife("hours");
   cacheTag("products");
@@ -50,6 +57,26 @@ export async function getProducts(): Promise<IProduct[]> {
       images: urls.length > 1 ? urls : undefined,
       inStock: product.stock > 0,
       featured: product.featured,
+      productionDays: product.productionDays,
+      productionTimeTemplate: product.productionTimeTemplate,
     };
   });
+}
+
+export async function getProducts(): Promise<IProduct[]> {
+  // O modelo global fica fora do cache de horas. Senão a vitrine continua
+  // com a frase antiga depois que Configurações muda.
+  const [products, globalTemplate] = await Promise.all([
+    getCachedProducts(),
+    getProductionTimeTemplate(),
+  ]);
+
+  return products.map(({ productionTimeTemplate, ...product }) => ({
+    ...product,
+    productionTimeText: catalogProductionTime(
+      product.productionDays,
+      productionTimeTemplate,
+      globalTemplate,
+    ).productionTimeText,
+  }));
 }

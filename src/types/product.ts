@@ -50,4 +50,8 @@ export interface IProduct {
   inStock: boolean;
   /** true = exibe badge "Mais Escolhido" */
   featured: boolean;
+  /** Dias de produção cadastrados. null ou 0 não geram texto. */
+  productionDays: number | null;
+  /** Frase já formatada para o card e o detalhe. null quando não deve aparecer. */
+  productionTimeText: string | null;
 }

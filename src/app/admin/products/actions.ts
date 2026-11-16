@@ -110,6 +110,8 @@ export async function saveProduct(
         active: input.active,
         sortOrder: input.sortOrder,
         categoryId: input.categoryId,
+        productionDays: input.productionDays,
+        productionTimeTemplate: input.productionTimeTemplate,
       };
 
       const saved = parsed.id
