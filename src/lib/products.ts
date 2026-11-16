@@ -9,25 +9,25 @@ const currency = new Intl.NumberFormat("pt-BR", {
   currency: "BRL",
 });
 
-interface ICachedProduct extends Omit<IProduct, "productionTimeText"> {
-  /** Override só deste produto. Vazio usa o modelo lido fora do cache. */
-  productionTimeTemplate: string | null;
-}
-
-async function getCachedProducts(): Promise<ICachedProduct[]> {
+async function getCachedProducts(): Promise<IProduct[]> {
   "use cache";
   cacheLife("hours");
   cacheTag("products");
 
-  const products = await prisma.product.findMany({
-    where: { active: true },
-    orderBy: { sortOrder: "asc" },
-    include: {
-      category: true,
-      specifications: { orderBy: { sortOrder: "asc" } },
-      images: { orderBy: { sortOrder: "asc" } },
-    },
-  });
+  // O modelo global entra neste cache de horas. saveShopSettings chama
+  // updateTag("products"), então a vitrine troca a frase quando Configurações muda.
+  const [products, globalTemplate] = await Promise.all([
+    prisma.product.findMany({
+      where: { active: true },
+      orderBy: { sortOrder: "asc" },
+      include: {
+        category: true,
+        specifications: { orderBy: { sortOrder: "asc" } },
+        images: { orderBy: { sortOrder: "asc" } },
+      },
+    }),
+    getProductionTimeTemplate(),
+  ]);
 
   return products.map((product) => {
     const primary =
@@ -58,25 +58,15 @@ async function getCachedProducts(): Promise<ICachedProduct[]> {
       inStock: product.stock > 0,
       featured: product.featured,
       productionDays: product.productionDays,
-      productionTimeTemplate: product.productionTimeTemplate,
+      productionTimeText: catalogProductionTime(
+        product.productionDays,
+        product.productionTimeTemplate,
+        globalTemplate,
+      ).productionTimeText,
     };
   });
 }
 
 export async function getProducts(): Promise<IProduct[]> {
-  // O modelo global fica fora do cache de horas. Senão a vitrine continua
-  // com a frase antiga depois que Configurações muda.
-  const [products, globalTemplate] = await Promise.all([
-    getCachedProducts(),
-    getProductionTimeTemplate(),
-  ]);
-
-  return products.map(({ productionTimeTemplate, ...product }) => ({
-    ...product,
-    productionTimeText: catalogProductionTime(
-      product.productionDays,
-      productionTimeTemplate,
-      globalTemplate,
-    ).productionTimeText,
-  }));
+  return getCachedProducts();
 }
