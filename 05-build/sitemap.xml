@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  
+  <!-- Página Principal / Landing Page Oficial NIX 3D -->
+  <url>
+    <loc>https://nix3d.com.br/</loc>
+    <lastmod>2026-10-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    
+    <!-- Imagem Hero Showroom -->
+    <image:image>
+      <image:loc>https://nix3d.com.br/images/hero-showroom-oficial.png</image:loc>
+      <image:title>NIX 3D — Linha Completa de Mobiliário Técnico e Estufas Dry Box para Impressão 3D</image:title>
+      <image:caption>Estúdio showroom oficial NIX 3D com armários desumidificadores e bancadas integradas Bambu Lab</image:caption>
+    </image:image>
+
+    <!-- Imagem Produto 1: DRY BOX 12 -->
+    <image:image>
+      <image:loc>https://nix3d.com.br/images/dry-box-12.jpg</image:loc>
+      <image:title>NIX DRY BOX 12 — Estufa Desumidificadora para 12 Filamentos</image:title>
+      <image:caption>Armário hermético para 12 rolos de filamento 3D com controle térmico ativo menor que 20% UR</image:caption>
+    </image:image>
+
+    <!-- Imagem Produto 2: DRY BOX 24 -->
+    <image:image>
+      <image:loc>https://nix3d.com.br/images/dry-box-24.jpg</image:loc>
+      <image:title>NIX DRY BOX 24 — Estufa Desumidificadora para 24 Filamentos</image:title>
+      <image:caption>Armário desumidificador com controle térmico ativo e passagens pneumáticas PTFE para 24 bobinas</image:caption>
+    </image:image>
+
+    <!-- Imagem Produto 3: DRY BOX 48 -->
+    <image:image>
+      <image:loc>https://nix3d.com.br/images/dry-box-48.png</image:loc>
+      <image:title>NIX DRY BOX 48 — Estufa Industrial para 48 Filamentos</image:title>
+      <image:caption>Armário industrial de alta capacidade para até 48 filamentos com circulação dupla de ar aquecido</image:caption>
+    </image:image>
+
+    <!-- Imagem Produto 4: DRY BOX STATION BAMBU LAB A1 COMBO -->
+    <image:image>
+      <image:loc>https://nix3d.com.br/images/setup-lab-a1.png</image:loc>
+      <image:title>NIX DRY BOX STATION Bambu Lab A1 Combo — Bancada Rígida + 22 Filamentos</image:title>
+      <image:caption>Estação integrada com bancada antivibração para Bambu Lab A1 e AMS, com capacidade total para 22 filamentos</image:caption>
+    </image:image>
+
+    <!-- Imagem Produto 5: DRY BOX STATION BAMBU LAB A2L COMBO -->
+    <image:image>
+      <image:loc>https://nix3d.com.br/images/setup-lab-a2.png</image:loc>
+      <image:title>NIX DRY BOX STATION Bambu Lab A2L Combo — Bancada Ampliada + 28 Filamentos</image:title>
+      <image:caption>Estação técnica ampliada para alta produção com bancada antivibração e armazenamento climatizado para 28 filamentos</image:caption>
+    </image:image>
+
+    <!-- Logotipo NIX -->
+    <image:image>
+      <image:loc>https://nix3d.com.br/images/logo-nix.png</image:loc>
+      <image:title>Logotipo Oficial NIX 3D</image:title>
+      <image:caption>Identidade visual da marca NIX 3D especializada em manufatura aditiva</image:caption>
+    </image:image>
+  </url>
+
+  <!-- Seções Internas Indexáveis -->
+  <url>
+    <loc>https://nix3d.com.br/#produtos</loc>
+    <lastmod>2026-10-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <url>
+    <loc>https://nix3d.com.br/#diferenciais</loc>
+    <lastmod>2026-10-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://nix3d.com.br/#faq</loc>
+    <lastmod>2026-10-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+</urlset>
+
