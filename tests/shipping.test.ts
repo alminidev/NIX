@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import { afterEach, before, beforeEach, describe, it, mock } from "node:test";
 import { calculateTotal } from "../src/lib/cart-calculation";
-import { centralDoFreteSetup } from "../src/lib/shipping-central-do-frete";
+import {
+  centralDoFreteServiceId,
+  centralDoFreteSetup,
+} from "../src/lib/shipping-central-do-frete";
 import {
   formatDeliveryDays,
   formatShippingAmount,
@@ -401,6 +404,140 @@ describe("calculateShipping", () => {
     );
   });
 
+  it("shows one delivery, the most expensive, when every quote shares a deadline", async () => {
+    mock.method(globalThis, "fetch", async () =>
+      jsonResponse([
+        quote({
+          id: 1,
+          name: "PAC",
+          custom_price: "40.00",
+          custom_delivery_time: 5,
+          company: { name: "Correios" },
+        }),
+        quote({
+          id: 2,
+          name: "SEDEX",
+          custom_price: "80.00",
+          custom_delivery_time: 5,
+          company: { name: "Jadlog" },
+        }),
+        quote({
+          id: 3,
+          name: ".Package",
+          custom_price: "55.00",
+          custom_delivery_time: 5,
+          company: { name: "Azul Cargo" },
+        }),
+      ]),
+    );
+
+    const quoted = offerLocalPickup(await calculateShipping(request));
+
+    assert.deepEqual(
+      quoted.options.map((choice) => [
+        choice.serviceId,
+        choice.price,
+        choice.deliveryDays,
+        choice.company,
+        choice.name,
+      ]),
+      [
+        [2, 80, 5, "", ""],
+        [localPickupServiceId, 0, 0, "", "Retirada no local"],
+      ],
+    );
+    assert.equal(JSON.stringify(quoted).includes("Correios"), false);
+    assert.equal(JSON.stringify(quoted).includes("Jadlog"), false);
+    assert.equal(JSON.stringify(quoted).includes("Azul"), false);
+  });
+
+  it("returns delivery options without the carrier name", async () => {
+    mock.method(globalThis, "fetch", async () =>
+      jsonResponse([
+        quote({ company: { name: "Correios" } }),
+        quote({
+          id: 2,
+          name: "SEDEX",
+          custom_price: "60.00",
+          custom_delivery_time: 3,
+          company: { name: "Jadlog" },
+        }),
+      ]),
+    );
+
+    const result = await calculateShipping(request);
+
+    assert.equal(result.company, null);
+    assert.equal(result.serviceName, null);
+    for (const option of result.options) {
+      assert.equal(option.company, "");
+      assert.equal(option.name, "");
+    }
+    assert.equal(JSON.stringify(result).includes("Correios"), false);
+    assert.equal(JSON.stringify(result).includes("Jadlog"), false);
+    assert.equal(JSON.stringify(result).includes("PAC"), false);
+    assert.equal(JSON.stringify(result).includes("SEDEX"), false);
+  });
+
+  it("rejects a checkout service outside the filtered choices", async () => {
+    mock.method(globalThis, "fetch", async () =>
+      jsonResponse([
+        quote({
+          id: 1,
+          name: "PAC",
+          custom_price: "40.00",
+          custom_delivery_time: 11,
+          company: { name: "Correios" },
+        }),
+        quote({
+          id: 2,
+          name: ".Com",
+          custom_price: "70.00",
+          custom_delivery_time: 6,
+          company: { name: "Jadlog" },
+        }),
+        quote({
+          id: 3,
+          name: "SEDEX",
+          custom_price: "100.00",
+          custom_delivery_time: 3,
+          company: { name: "Correios" },
+        }),
+      ]),
+    );
+
+    const cart = await calculateShipping({ ...request, serviceId: 1 });
+
+    assert.equal(cart.status, "quoted");
+    assert.equal(cart.serviceId, 2);
+    assert.equal(cart.price, 70);
+
+    const rejected = await quoteOrderShipping({
+      postalCode: request.postalCode,
+      lines: [orderLine],
+      serviceId: 1,
+    });
+
+    assert.equal(rejected.status, "error");
+    assert.equal(
+      rejected.message,
+      "As opções de frete mudaram. Calcule o frete de novo e escolha uma opção.",
+    );
+    assert.equal(rejected.price, null);
+    assert.equal(rejected.serviceId, null);
+    assert.deepEqual(rejected.options, []);
+
+    const missing = await quoteOrderShipping({
+      postalCode: request.postalCode,
+      lines: [orderLine],
+      serviceId: null,
+    });
+
+    assert.equal(missing.status, "error");
+    assert.equal(missing.price, null);
+    assert.notEqual(missing.serviceId, localPickupServiceId);
+  });
+
   it("does not quote when the shipping provider cannot be read", async () => {
     settingsFailure = new Error(`banco fora ${token}`);
     const fetchMock = mock.method(globalThis, "fetch", async () =>
@@ -506,6 +643,90 @@ describe("presentShippingChoices", () => {
       [
         [2, 50, 8],
         [3, 80, 4],
+      ],
+    );
+  });
+
+  it("keeps one delivery per deadline, the most expensive, then the mid-price and the expensive", () => {
+    const choices = presentShippingChoices([
+      option(1, 40, 12, "PAC"),
+      option(2, 70, 6, ".Com"),
+      option(3, 100, 4, ".Package"),
+      option(4, 160, 2, "SEDEX"),
+    ]);
+
+    assert.deepEqual(
+      choices.map((choice) => [choice.serviceId, choice.price, choice.deliveryDays]),
+      [
+        [3, 100, 12],
+        [4, 160, 2],
+      ],
+    );
+    assert.equal(new Set(choices.map((choice) => choice.deliveryDays)).size, choices.length);
+  });
+
+  it("drops the cheaper quote that shares a deadline with a costlier one", () => {
+    const choices = presentShippingChoices([
+      option(1, 10, 9, "PAC"),
+      option(2, 50, 5, ".Com"),
+      option(3, 60, 5, ".Package"),
+      option(4, 100, 2, "SEDEX"),
+    ]);
+
+    assert.deepEqual(
+      choices.map((choice) => [choice.serviceId, choice.price, choice.deliveryDays]),
+      [
+        [3, 60, 9],
+        [4, 100, 2],
+      ],
+    );
+  });
+
+  it("keeps the smaller service id when the same deadline ties on price", () => {
+    const forward = presentShippingChoices([
+      option(8, 50, 4, "PAC"),
+      option(3, 50, 4, "SEDEX"),
+      option(9, 90, 2, ".Package"),
+    ]);
+    const reversed = presentShippingChoices([
+      option(3, 50, 4, "SEDEX"),
+      option(9, 90, 2, ".Package"),
+      option(8, 50, 4, "PAC"),
+    ]);
+    const shown = (choices: IShippingOption[]) =>
+      choices.map((choice) => [choice.serviceId, choice.price, choice.deliveryDays]);
+
+    assert.deepEqual(shown(forward), [
+      [3, 50, 4],
+      [9, 90, 2],
+    ]);
+    assert.deepEqual(shown(reversed), shown(forward));
+
+    const tied = presentShippingChoices([
+      option(8, 50, 4, "PAC"),
+      option(3, 50, 4, "SEDEX"),
+    ]);
+
+    assert.equal(tied.length, 1);
+    assert.equal(tied[0].serviceId, 3);
+    assert.equal(tied[0].price, 50);
+    assert.equal(tied[0].deliveryDays, 4);
+  });
+
+  it("labels the expensive option with the shortest deadline even when that quote is the slowest", () => {
+    // A cotação da mais cara leva 12 dias. O rótulo continua sendo o menor
+    // prazo, e a intermediária fica com o maior prazo.
+    const choices = presentShippingChoices([
+      option(1, 40, 3, "PAC"),
+      option(2, 70, 5, ".Package"),
+      option(3, 120, 12, "SEDEX"),
+    ]);
+
+    assert.deepEqual(
+      choices.map((choice) => [choice.serviceId, choice.price, choice.deliveryDays]),
+      [
+        [2, 70, 12],
+        [3, 120, 3],
       ],
     );
   });
@@ -706,7 +927,8 @@ describe("Central do Frete", () => {
     assert.equal(result.status, "quoted");
     assert.equal(result.price, 42.5);
     assert.equal(result.deliveryDays, 9);
-    assert.equal(result.serviceId, 1);
+    assert.equal(result.serviceId, centralDoFreteServiceId("Correios", "", ""));
+    assert.notEqual(result.serviceId, 1);
     assert.equal(result.company, null);
     assert.equal(result.serviceName, null);
     assert.equal(JSON.stringify(result).includes(centralToken), false);
@@ -751,7 +973,8 @@ describe("Central do Frete", () => {
 
     const result = await calculateShipping(request);
 
-    assert.equal(result.serviceId, 9);
+    assert.equal(result.serviceId, centralDoFreteServiceId("Correios", "PAC", ""));
+    assert.notEqual(result.serviceId, 9);
     assert.equal(result.price, 32.5);
     assert.equal(result.deliveryDays, 7);
     const [, init] = fetchMock.mock.calls[0].arguments as [string, RequestInit];
@@ -772,23 +995,43 @@ describe("Central do Frete", () => {
     );
 
     const quoted = offerLocalPickup(await calculateShipping(request));
+    const standard = centralDoFreteServiceId("Correios", ".Package", "");
+    const express = centralDoFreteServiceId("Correios", "SEDEX", "");
 
+    assert.notEqual(standard, 3);
+    assert.notEqual(express, 4);
     assert.deepEqual(
       quoted.options.map((choice) => [choice.serviceId, choice.price, choice.deliveryDays, choice.name]),
       [
-        [3, 142.36, 11, ""],
-        [4, 184.33, 4, ""],
+        [standard, 142.36, 11, ""],
+        [express, 184.33, 4, ""],
         [localPickupServiceId, 0, 0, "Retirada no local"],
       ],
     );
+    for (const choice of quoted.options) {
+      assert.equal(choice.company, "");
+    }
   });
 
   it("recalculates the chosen service on the server and skips the carrier for local pickup", async () => {
+    const sedex = centralDoFreteServiceId("Correios", "SEDEX", "Aéreo");
     const fetchMock = mock.method(globalThis, "fetch", async () =>
       jsonResponse(
         centralQuote([
-          centralPrice({ id: 3, price: 142.36, delivery_time: 5 }),
-          centralPrice({ id: 4, price: 184.33, delivery_time: 7 }),
+          centralPrice({
+            id: 31,
+            price: 142.36,
+            delivery_time: 5,
+            service_type: "PAC",
+            modal: "Rodoviário",
+          }),
+          centralPrice({
+            id: 47,
+            price: 184.33,
+            delivery_time: 7,
+            service_type: "SEDEX",
+            modal: "Aéreo",
+          }),
         ]),
       ),
     );
@@ -796,13 +1039,14 @@ describe("Central do Frete", () => {
     const delivered = await quoteOrderShipping({
       postalCode: request.postalCode,
       lines: [orderLine],
-      serviceId: 4,
+      serviceId: sedex,
     });
 
     assert.equal(delivered.status, "quoted");
     assert.equal(delivered.price, 184.33);
     assert.equal(delivered.deliveryDays, 5);
-    assert.equal(delivered.serviceId, 4);
+    assert.equal(delivered.serviceId, sedex);
+    assert.notEqual(delivered.serviceId, 47);
     assert.equal(fetchMock.mock.callCount(), 1);
 
     const pickup = await quoteOrderShipping({
@@ -917,16 +1161,354 @@ describe("Central do Frete", () => {
     }
   });
 
-  it("ignores a price whose id is reserved for local pickup", async () => {
+  it("quotes a price whose quotation id is zero with a stable service id", async () => {
     mock.method(globalThis, "fetch", async () =>
-      jsonResponse(centralQuote([centralPrice({ id: 0, price: 10, delivery_time: 2 })])),
+      jsonResponse(
+        centralQuote([
+          centralPrice({ id: 0, price: 10, delivery_time: 2, service_type: "PAC" }),
+        ]),
+      ),
     );
 
     const result = await calculateShipping(request);
 
-    assert.equal(result.status, "error");
-    assert.equal(result.message, shippingMessages.uncovered);
-    assert.equal(result.serviceId, null);
+    assert.equal(result.status, "quoted");
+    assert.equal(result.price, 10);
+    assert.equal(result.deliveryDays, 2);
+    assert.equal(result.serviceId, centralDoFreteServiceId("Correios", "PAC", ""));
+    assert.notEqual(result.serviceId, 0);
+  });
+
+  it("uses max_delivery_time and falls back to delivery_time", async () => {
+    let call = 0;
+    mock.method(globalThis, "fetch", async () => {
+      call += 1;
+      if (call === 1) {
+        return jsonResponse(
+          centralQuote([
+            centralPrice({
+              price: 42.5,
+              delivery_time: 4,
+              max_delivery_time: 9,
+              service_type: "PAC",
+            }),
+          ]),
+        );
+      }
+
+      return jsonResponse(
+        centralQuote([
+          centralPrice({
+            price: 42.5,
+            delivery_time: 6,
+            max_delivery_time: null,
+            service_type: "PAC",
+          }),
+        ]),
+      );
+    });
+
+    const withMax = await calculateShipping(request);
+    const fallback = await calculateShipping(request);
+
+    assert.equal(withMax.deliveryDays, 9);
+    assert.notEqual(withMax.deliveryDays, 4);
+    assert.equal(fallback.deliveryDays, 6);
+  });
+
+  it("shows the most expensive delivery and local pickup when every deadline matches", async () => {
+    mock.method(globalThis, "fetch", async () =>
+      jsonResponse(
+        centralQuote([
+          centralPrice({
+            id: 11,
+            price: 40,
+            delivery_time: 2,
+            max_delivery_time: 5,
+            service_type: "PAC",
+            shipping_carrier: "Correios",
+          }),
+          centralPrice({
+            id: 12,
+            price: 80,
+            delivery_time: 1,
+            max_delivery_time: 5,
+            service_type: "SEDEX",
+            shipping_carrier: "Jadlog",
+          }),
+          centralPrice({
+            id: 13,
+            price: 55,
+            delivery_time: 4,
+            max_delivery_time: 5,
+            service_type: ".Package",
+            shipping_carrier: "Azul",
+          }),
+        ]),
+      ),
+    );
+
+    const quoted = offerLocalPickup(await calculateShipping(request));
+    const sedex = centralDoFreteServiceId("Jadlog", "SEDEX", "");
+
+    assert.deepEqual(
+      quoted.options.map((choice) => [
+        choice.serviceId,
+        choice.price,
+        choice.deliveryDays,
+        choice.company,
+        choice.name,
+      ]),
+      [
+        [sedex, 80, 5, "", ""],
+        [localPickupServiceId, 0, 0, "", "Retirada no local"],
+      ],
+    );
+    assert.equal(JSON.stringify(quoted).includes("Correios"), false);
+    assert.equal(JSON.stringify(quoted).includes("Jadlog"), false);
+    assert.equal(JSON.stringify(quoted).includes("Azul"), false);
+    assert.equal(JSON.stringify(quoted).includes("SEDEX"), false);
+  });
+
+  it("keeps the higher price when two prices are the same service", async () => {
+    mock.method(globalThis, "fetch", async () =>
+      jsonResponse(
+        centralQuote([
+          centralPrice({
+            id: 10,
+            price: 40,
+            delivery_time: 8,
+            service_type: "PAC",
+            modal: "Rodoviário",
+          }),
+          centralPrice({
+            id: 11,
+            price: 70,
+            delivery_time: 2,
+            service_type: "PAC",
+            modal: "Rodoviário",
+          }),
+        ]),
+      ),
+    );
+
+    const higher = await calculateShipping(request);
+
+    assert.equal(higher.options.length, 1);
+    assert.equal(higher.price, 70);
+    assert.equal(higher.deliveryDays, 2);
+    assert.equal(
+      higher.serviceId,
+      centralDoFreteServiceId("Correios", "PAC", "Rodoviário"),
+    );
+    assert.notEqual(higher.serviceId, 10);
+    assert.notEqual(higher.serviceId, 11);
+  });
+
+  it("keeps the first price when the same service ties", async () => {
+    mock.method(globalThis, "fetch", async () =>
+      jsonResponse(
+        centralQuote([
+          centralPrice({
+            id: 10,
+            price: 40,
+            delivery_time: 8,
+            service_type: "PAC",
+            modal: "Rodoviário",
+          }),
+          centralPrice({
+            id: 11,
+            price: 40,
+            delivery_time: 3,
+            service_type: "PAC",
+            modal: "Rodoviário",
+          }),
+        ]),
+      ),
+    );
+
+    const tied = await calculateShipping(request);
+
+    assert.equal(tied.options.length, 1);
+    assert.equal(tied.price, 40);
+    assert.equal(tied.deliveryDays, 8);
+    assert.equal(tied.serviceId, centralDoFreteServiceId("Correios", "PAC", "Rodoviário"));
+  });
+
+  it("finds the chosen option again when the quotation id changes", async () => {
+    const pac = centralDoFreteServiceId("Correios", "PAC", "Rodoviário");
+    const sedex = centralDoFreteServiceId("Correios", "SEDEX", "Aéreo");
+    let call = 0;
+    mock.method(globalThis, "fetch", async () => {
+      call += 1;
+      const pacId = call === 1 ? 111 : 908001;
+      const sedexId = call === 1 ? 222 : 908002;
+      return jsonResponse(
+        centralQuote(
+          [
+            centralPrice({
+              id: pacId,
+              shipping_carrier: "Correios",
+              service_type: "PAC",
+              modal: "Rodoviário",
+              price: 142.36,
+              delivery_time: 5,
+              max_delivery_time: 11,
+            }),
+            centralPrice({
+              id: sedexId,
+              shipping_carrier: "Correios",
+              service_type: "SEDEX",
+              modal: "Aéreo",
+              price: 184.33,
+              delivery_time: 7,
+              max_delivery_time: 7,
+            }),
+          ],
+          call === 1 ? "COTACAO1" : "COTACAO2",
+        ),
+      );
+    });
+
+    const cart = await calculateShipping(request);
+
+    assert.equal(cart.status, "quoted");
+    assert.equal(cart.serviceId, pac);
+    assert.notEqual(cart.serviceId, 111);
+    assert.deepEqual(
+      cart.options.map((option) => [option.serviceId, option.company, option.name]),
+      [
+        [pac, "", ""],
+        [sedex, "", ""],
+      ],
+    );
+    assert.equal(JSON.stringify(cart).includes("Correios"), false);
+    assert.equal(JSON.stringify(cart).includes("COTACAO1"), false);
+
+    const order = await quoteOrderShipping({
+      postalCode: request.postalCode,
+      lines: [orderLine],
+      serviceId: sedex,
+    });
+
+    assert.equal(order.status, "quoted");
+    assert.equal(order.serviceId, sedex);
+    assert.equal(order.price, 184.33);
+    assert.equal(order.deliveryDays, 7);
+    assert.notEqual(order.serviceId, 222);
+    assert.notEqual(order.serviceId, 908002);
+    assert.equal(call, 2);
+  });
+
+  it("rejects a checkout service outside the filtered choices", async () => {
+    const pac = centralDoFreteServiceId("Correios", "PAC", "Rodoviário");
+    const jadlog = centralDoFreteServiceId("Jadlog", ".Com", "Rodoviário");
+    mock.method(globalThis, "fetch", async () =>
+      jsonResponse(
+        centralQuote([
+          centralPrice({
+            id: 501,
+            shipping_carrier: "Correios",
+            service_type: "PAC",
+            modal: "Rodoviário",
+            price: 40,
+            delivery_time: 12,
+            max_delivery_time: 12,
+          }),
+          centralPrice({
+            id: 502,
+            shipping_carrier: "Jadlog",
+            service_type: ".Com",
+            modal: "Rodoviário",
+            price: 70,
+            delivery_time: 6,
+            max_delivery_time: 6,
+          }),
+          centralPrice({
+            id: 503,
+            shipping_carrier: "Correios",
+            service_type: "SEDEX",
+            modal: "Aéreo",
+            price: 100,
+            delivery_time: 3,
+            max_delivery_time: 3,
+          }),
+        ]),
+      ),
+    );
+
+    const cart = await calculateShipping({ ...request, serviceId: pac });
+
+    assert.equal(cart.status, "quoted");
+    assert.equal(cart.serviceId, jadlog);
+    assert.equal(cart.price, 70);
+    assert.equal(
+      cart.options.some((option) => option.serviceId === pac),
+      false,
+    );
+
+    const rejected = await quoteOrderShipping({
+      postalCode: request.postalCode,
+      lines: [orderLine],
+      serviceId: pac,
+    });
+
+    assert.equal(rejected.status, "error");
+    assert.equal(
+      rejected.message,
+      "As opções de frete mudaram. Calcule o frete de novo e escolha uma opção.",
+    );
+    assert.equal(rejected.price, null);
+    assert.equal(rejected.serviceId, null);
+    assert.deepEqual(rejected.options, []);
+
+    const byQuotationId = await quoteOrderShipping({
+      postalCode: request.postalCode,
+      lines: [orderLine],
+      serviceId: 502,
+    });
+
+    assert.equal(byQuotationId.status, "error");
+    assert.equal(byQuotationId.price, null);
+    assert.notEqual(jadlog, 502);
+  });
+
+  it("returns delivery options without the carrier name", async () => {
+    mock.method(globalThis, "fetch", async () =>
+      jsonResponse(
+        centralQuote([
+          centralPrice({
+            shipping_carrier: "Correios",
+            service_type: "PAC",
+            modal: "Rodoviário",
+            price: 40,
+            delivery_time: 8,
+          }),
+          centralPrice({
+            id: 2,
+            shipping_carrier: "Jadlog",
+            service_type: "SEDEX",
+            modal: "Aéreo",
+            price: 80,
+            delivery_time: 3,
+          }),
+        ]),
+      ),
+    );
+
+    const result = await calculateShipping(request);
+
+    assert.equal(result.company, null);
+    assert.equal(result.serviceName, null);
+    for (const option of result.options) {
+      assert.equal(option.company, "");
+      assert.equal(option.name, "");
+    }
+    assert.equal(JSON.stringify(result).includes("Correios"), false);
+    assert.equal(JSON.stringify(result).includes("Jadlog"), false);
+    assert.equal(JSON.stringify(result).includes("PAC"), false);
+    assert.equal(JSON.stringify(result).includes("SEDEX"), false);
+    assert.equal(JSON.stringify(result).includes("Rodoviário"), false);
   });
 });
 

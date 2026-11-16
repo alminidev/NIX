@@ -19,11 +19,15 @@ export interface IShippingRequest {
     unitPrice: number;
   }>;
   /**
-   * Opção escolhida no carrinho (a intermediária ou a mais cara). Se ela
-   * ainda existir na cotação nova, ela é a usada; senão vale a intermediária.
-   * O preço nunca vem do navegador.
+   * Opção escolhida no carrinho, entre as entregas já filtradas. Se ela
+   * ainda existir na cotação nova, ela é a usada. Sem `strictService`, um
+   * id que sumiu cai na intermediária. Com `strictService` (o checkout),
+   * um id fora das opções filtradas devolve erro e o pedido não é criado.
+   * O preço nunca vem do navegador. A retirada no local não passa por aqui.
    */
   serviceId?: number | null;
+  /** Recusa um serviceId ausente nas opções filtradas, em vez de substituí-lo. */
+  strictService?: boolean;
 }
 
 export const shippingTimeoutMs = 8000;
@@ -35,6 +39,8 @@ export const shippingMessages = {
   uncovered: "Não há entrega disponível para este CEP.",
   missingPackage:
     "Não foi possível cotar o frete porque um produto está sem peso ou sem medidas.",
+  optionsChanged:
+    "As opções de frete mudaram. Calcule o frete de novo e escolha uma opção.",
 } as const;
 
 export type ICarrierQuote =

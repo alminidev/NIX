@@ -19,8 +19,9 @@ export { shippingMessages, shippingTimeoutMs } from "@/lib/shipping-shared";
  * Cota o frete no provedor ativo (Melhor Envio ou Central do Frete).
  * Sem registro de configuração, usa o Melhor Envio. Só calcula: a etiqueta
  * não é comprada e a entrega é feita por fora. Nunca lança e nunca devolve
- * o token. A pessoa vê a opção de preço intermediário (padrão, maior prazo)
- * e a mais cara (menor prazo).
+ * o token. A pessoa vê no máximo duas entregas, com prazos diferentes: a de
+ * preço intermediário (maior prazo) e a mais cara (menor prazo). Cada prazo
+ * entra uma vez, pela cotação mais cara.
  */
 export async function calculateShipping(
   request: IShippingRequest,
@@ -51,16 +52,21 @@ export async function calculateShipping(
   const options = presentShippingChoices(quote.options);
   if (options.length === 0) return errorQuote(shippingMessages.uncovered);
 
-  const picked =
-    options.find((option) => option.serviceId === request.serviceId) ??
-    options[0];
+  const picked = options.find((option) => option.serviceId === request.serviceId);
+
+  // O carrinho cai na intermediária. O checkout (strictService) recusa.
+  if (!picked && request.strictService) {
+    return errorQuote(shippingMessages.optionsChanged);
+  }
+
+  const chosen = picked ?? options[0];
 
   return {
     status: "quoted",
-    price: picked.price,
-    deliveryDays: picked.deliveryDays,
+    price: chosen.price,
+    deliveryDays: chosen.deliveryDays,
     message: null,
-    serviceId: picked.serviceId,
+    serviceId: chosen.serviceId,
     company: null,
     serviceName: null,
     options,

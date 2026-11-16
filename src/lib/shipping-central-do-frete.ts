@@ -7,7 +7,6 @@ import {
   readPostalCode,
   readPrice,
   readServerToken,
-  readServiceId,
   shippingMessages,
   shippingTimeoutMs,
   type ICarrierQuote,
@@ -96,18 +95,67 @@ function invoiceAmount(lines: IShippingRequest["lines"]) {
   return amount;
 }
 
+const fnvOffset = 0x811c9dc5;
+const fnvPrime = 0x01000193;
+
+/**
+ * Id estável do serviço. `prices[].id` é da cotação (o pedido da API usa
+ * `quotation_code` + `price_id`) e muda a cada cálculo. O hash é FNV-1a de
+ * transportadora, tipo de serviço e modal, em 31 bits, e nunca é 0
+ * (0 é a retirada no local).
+ */
+export function centralDoFreteServiceId(
+  carrier: string,
+  serviceType: string,
+  modal: string,
+) {
+  const bytes = new TextEncoder().encode(
+    `${carrier}\u0000${serviceType}\u0000${modal}`,
+  );
+  let hash = fnvOffset;
+
+  for (const byte of bytes) {
+    hash ^= byte;
+    hash = Math.imul(hash, fnvPrime);
+  }
+
+  const positive = (hash >>> 0) & 0x7fffffff;
+  return positive === 0 ? 1 : positive;
+}
+
+function cents(value: number) {
+  return Math.round(value * 100);
+}
+
 function readOption(value: unknown): IShippingOption | null {
   if (typeof value !== "object" || value === null) return null;
   const row = value as Record<string, unknown>;
-  const serviceId = readServiceId(row.id);
-  const price = readPrice(row.price);
-  const deliveryDays = readDays(row.delivery_time);
-  if (serviceId === null || price === null || deliveryDays === null) return null;
-
   const company = readLabel(row.shipping_carrier);
-  const name = readLabel(row.service_type) || company;
+  const serviceType = readLabel(row.service_type);
+  const modal = readLabel(row.modal);
+  const serviceId = centralDoFreteServiceId(company, serviceType, modal);
+  const price = readPrice(row.price);
+  const deliveryDays =
+    readDays(row.max_delivery_time) ?? readDays(row.delivery_time);
+  if (price === null || deliveryDays === null) return null;
+
+  const name = serviceType || company;
 
   return { serviceId, company, name, price, deliveryDays };
+}
+
+/** Mesmo serviço na cotação: fica o de maior preço. Empate fica com o primeiro. */
+function keepDistinctServices(options: IShippingOption[]) {
+  const byService = new Map<number, IShippingOption>();
+
+  for (const option of options) {
+    const current = byService.get(option.serviceId);
+    if (!current || cents(option.price) > cents(current.price)) {
+      byService.set(option.serviceId, option);
+    }
+  }
+
+  return [...byService.values()];
 }
 
 function readReason(body: unknown) {
@@ -224,8 +272,10 @@ export async function quoteCentralDoFrete(
 
   return {
     status: "quoted",
-    options: prices
-      .map(readOption)
-      .filter((option): option is IShippingOption => option !== null),
+    options: keepDistinctServices(
+      prices
+        .map(readOption)
+        .filter((option): option is IShippingOption => option !== null),
+    ),
   };
 }

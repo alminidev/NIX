@@ -43,8 +43,9 @@ export type TShippingStatus = "pending" | "quoted" | "error";
 
 export interface IShippingOption {
   /**
-   * Id do serviço na cotação do provedor ativo (Melhor Envio ou Central do Frete).
-   * 0 é a retirada no local e não vem da transportadora.
+   * Id estável do serviço. No Melhor Envio é o id do serviço; na Central do
+   * Frete é um hash da transportadora, do tipo e do modal — o id da cotação
+   * muda a cada cálculo e não é usado. 0 é a retirada no local.
    */
   serviceId: number;
   /** Nome da transportadora; vazio quando a API não informa */
@@ -70,9 +71,10 @@ export interface IShippingQuote {
   company: string | null;
   serviceName: string | null;
   /**
-   * Opções do carrinho. A cotação traz no máximo duas entregas (preço
-   * intermediário com maior prazo e, se houver, a mais cara com menor prazo).
-   * A retirada no local entra em seguida, sempre de graça.
+   * Opções do carrinho. No máximo duas entregas, com prazos diferentes: a de
+   * preço intermediário (maior prazo) e, se houver, a mais cara (menor prazo).
+   * A retirada no local entra em seguida, sempre de graça. company e name
+   * das entregas ficam vazios: o nome da transportadora não aparece.
    */
   options: IShippingOption[];
 }
