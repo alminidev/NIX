@@ -12,7 +12,7 @@ export const INSTAGRAM_HANDLE = "@nix3d_";
 
 export const catalogIntro = {
   kicker: "Catálogo Oficial",
-  title: "Linha Dry Box & Dry Box Station",
+  title: "Linha Dry Box",
   description:
     "A NIX transforma o armazenamento de filamentos em uma experiência mais prática, funcional e eficiente. Descubra a Dry Box ideal para o seu setup.",
 };
@@ -70,11 +70,6 @@ export const faqItems = [
     pergunta: "Qual é o consumo elétrico do sistema de controle térmico?",
     resposta:
       "É utilizado o sistema de aquecimento por PTC, uma tecnologia de última geração que proporciona aquecimento eficiente com baixo consumo de energia. Em testes com funcionamento contínuo de 24 horas, o consumo mensal estimado foi de aproximadamente 40 kWh.",
-  },
-  {
-    pergunta: "A Dry Box Station é compatível com quais impressoras?",
-    resposta:
-      "A Dry Box Station foi desenvolvida especialmente para as impressoras Bambu Lab A1 e A2L, permitindo integrar o AMS ao interior da estufa e ampliar a capacidade de armazenamento de filamentos. Porém, nada impede a utilização de outros modelos ou marcas de impressoras compatíveis com o tamanho da mesa.",
   },
   {
     pergunta: "Quais são as formas de pagamento?",

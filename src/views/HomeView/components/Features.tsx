@@ -29,8 +29,7 @@ export default function Features() {
                 Padrão Estúdio Maker
               </strong>
               <span className="text-sm text-ink-muted">
-                Dry Box para diferentes setups de impressão 3D. Dry Box Station
-                com integração exclusiva para Bambu Lab A1 e A2L.
+                Dry Box para diferentes setups de impressão 3D.
               </span>
             </div>
           </div>

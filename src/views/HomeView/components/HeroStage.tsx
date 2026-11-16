@@ -13,7 +13,7 @@ export default function HeroStage() {
     >
       <div className="absolute inset-0 z-[1] size-full overflow-hidden max-[768px]:flex max-[768px]:items-center max-[768px]:justify-center">
         <Image
-          src="/images/hero-showroom-oficial.png"
+          src="/images/hero-estudio-filamentos.png"
           alt="Linha completa NIX em estúdio showroom com estufas Dry Box e estações de impressão 3D"
           fill
           preload
@@ -23,8 +23,8 @@ export default function HeroStage() {
       </div>
 
       <div className="pointer-events-none relative z-[2] mx-auto w-full max-w-[1200px] px-4 pt-[clamp(14px,2.2vw,36px)] min-[640px]:px-6 max-[768px]:sr-only">
-        <div className="pointer-events-auto mx-auto max-w-240 text-center">
-          <h1 className="mx-auto text-[clamp(1.75rem,3.1vw,2.9rem)] leading-[1.22] font-bold tracking-[-0.025em] text-black">
+        <div className="pointer-events-auto mx-auto max-w-[1100px] text-center">
+          <h1 className="mx-auto text-[clamp(2.1rem,3.72vw,3.48rem)] leading-[1.22] font-bold tracking-[-0.025em] text-black">
             A evolução definitiva do seu
             <br />
             setup de impressão 3D.
