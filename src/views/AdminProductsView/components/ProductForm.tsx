@@ -599,7 +599,7 @@ export default function ProductForm({
           <Section
             index="03"
             title="Ficha"
-            description="O texto curto e as medidas que aparecem no card."
+            description="A descrição abre no detalhe do produto. Capacidade, medidas e especificações ficam no card."
           >
             <div className="space-y-2">
               <Field
@@ -781,7 +781,7 @@ export default function ProductForm({
           <Section
             index="05"
             title="Imagens"
-            description="A foto principal é a que abre o card. JPEG, PNG ou WebP, até 4 MB. A foto aparece na hora e sobe ao salvar."
+            description="A foto principal é a do card. JPEG, PNG ou WebP, até 4 MB. A foto aparece na hora e sobe ao salvar."
           >
             <div className="grid gap-4 min-[760px]:grid-cols-2">
               {images.map((image, index) => {
@@ -896,7 +896,6 @@ export default function ProductForm({
             installments={installments}
             capacity={capacity}
             dimensions={dimensions}
-            description={description}
             image={shownImage(primaryImage)}
             active={active}
             featured={featured}
@@ -1083,7 +1082,6 @@ function Preview({
   installments,
   capacity,
   dimensions,
-  description,
   image,
   active,
   featured,
@@ -1096,7 +1094,6 @@ function Preview({
   installments: string;
   capacity: string;
   dimensions: string;
-  description: string;
   image: string;
   active: boolean;
   featured: boolean;
@@ -1150,9 +1147,6 @@ function Preview({
         <h2 className="mt-1 text-xl leading-tight font-semibold tracking-[-0.02em] text-ink-primary">
           {name}
         </h2>
-        <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-ink-secondary">
-          {description.trim() || "A descrição curta aparece aqui."}
-        </p>
 
         {dimensions.trim() ? (
           <p className="mt-3 rounded-input bg-surface-canvas-fog px-3 py-2 text-[0.8125rem] font-semibold text-ink-primary">

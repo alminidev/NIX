@@ -94,15 +94,19 @@ export default function ProductLightbox({
     previousActiveElement.current =
       document.activeElement as HTMLElement | null;
 
-    // Trava de rolagem do body
+    // Se o detalhe do produto já travou a página, este lightbox não
+    // devolve o overflow ao fechar. Quem travou primeiro é quem libera.
     const originalOverflow = document.body.style.overflow;
     const originalPaddingRight = document.body.style.paddingRight;
+    const lockedByParent = originalOverflow === "hidden";
     const scrollbarWidth =
       window.innerWidth - document.documentElement.clientWidth;
 
-    document.body.style.overflow = "hidden";
-    if (scrollbarWidth > 0) {
-      document.body.style.paddingRight = `${scrollbarWidth}px`;
+    if (!lockedByParent) {
+      document.body.style.overflow = "hidden";
+      if (scrollbarWidth > 0) {
+        document.body.style.paddingRight = `${scrollbarWidth}px`;
+      }
     }
 
     // Move o foco para dentro do modal
@@ -111,8 +115,10 @@ export default function ProductLightbox({
     });
 
     return () => {
-      document.body.style.overflow = originalOverflow;
-      document.body.style.paddingRight = originalPaddingRight;
+      if (!lockedByParent) {
+        document.body.style.overflow = originalOverflow;
+        document.body.style.paddingRight = originalPaddingRight;
+      }
       previousActiveElement.current?.focus();
     };
   }, [isOpen]);

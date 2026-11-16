@@ -38,7 +38,7 @@ export interface IProduct {
   formattedPrice: string;
   /** Texto de parcelamento (ex: 'Até 3x sem juros') */
   installments: string;
-  /** Descrição curta do produto */
+  /** Descrição exibida no detalhe do produto */
   description: string;
   /** Lista de especificações técnicas exibidas no card */
   specifications: string[];

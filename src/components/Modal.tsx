@@ -1,26 +1,13 @@
 "use client";
 
+import { useOverlayDialog } from "@/components/useOverlayDialog";
 import { X } from "lucide-react";
-import {
-  useEffect,
-  useRef,
-  useState,
-  type PropsWithChildren,
-} from "react";
+import { type PropsWithChildren } from "react";
 import { createPortal } from "react-dom";
 
 function cx(...values: Array<string | false | null | undefined>) {
   return values.filter(Boolean).join(" ");
 }
-
-const focusableSelector = [
-  "a[href]",
-  "button:not([disabled])",
-  "input:not([disabled]):not([type='hidden'])",
-  "select:not([disabled])",
-  "textarea:not([disabled])",
-  "[tabindex]:not([tabindex='-1'])",
-].join(", ");
 
 interface IModalFooterProps extends PropsWithChildren {
   className?: string;
@@ -136,6 +123,15 @@ interface IModalProps extends PropsWithChildren {
   className?: string;
   elevated?: boolean;
   labelledBy?: string;
+  /** Centralizado, sem o sheet das telas estreitas. */
+  placement?: "responsive" | "center";
+  size?: "default" | "wide";
+  /** Fica acima do header fixo da vitrine (z-100). */
+  abovePageChrome?: boolean;
+  /** Outro diálogo na frente trata o teclado. */
+  suspended?: boolean;
+  /** A rolagem fica num filho. O painel não rola. */
+  clip?: boolean;
 }
 
 function Modal({
@@ -145,139 +141,31 @@ function Modal({
   className,
   elevated = false,
   labelledBy,
+  placement = "responsive",
+  size = "default",
+  abovePageChrome = false,
+  suspended = false,
+  clip = false,
   children,
 }: IModalProps) {
-  const panelRef = useRef<HTMLDivElement>(null);
-  const previousFocus = useRef<HTMLElement | null>(null);
-  const isFirstRender = useRef(true);
-  const [isVisible, setIsVisible] = useState(false);
-  const [shouldRender, setShouldRender] = useState(false);
-
-  useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false;
-      if (!open) return;
-    }
-
-    if (open) {
-      setShouldRender(true);
-      const openTimer = window.setTimeout(() => {
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            setIsVisible(true);
-          });
-        });
-      }, 0);
-      return () => window.clearTimeout(openTimer);
-    }
-
-    setIsVisible(false);
-    const closeTimer = window.setTimeout(() => {
-      setShouldRender(false);
-    }, 300);
-    return () => window.clearTimeout(closeTimer);
-  }, [open]);
-
-  useEffect(() => {
-    if (!open) return;
-
-    previousFocus.current = document.activeElement as HTMLElement | null;
-    const originalOverflow = document.body.style.overflow;
-    const originalPaddingRight = document.body.style.paddingRight;
-    const scrollbarWidth =
-      window.innerWidth - document.documentElement.clientWidth;
-
-    document.body.style.overflow = "hidden";
-    if (scrollbarWidth > 0) {
-      document.body.style.paddingRight = `${scrollbarWidth}px`;
-    }
-
-    return () => {
-      document.body.style.overflow = originalOverflow;
-      document.body.style.paddingRight = originalPaddingRight;
-      if (previousFocus.current?.isConnected) {
-        previousFocus.current.focus();
-      }
-    };
-  }, [open]);
-
-  useEffect(() => {
-    if (!open || !shouldRender) return;
-
-    const frame = requestAnimationFrame(() => {
-      const panel = panelRef.current;
-      if (!panel) return;
-      const preferred = panel.querySelector<HTMLElement>(
-        "[data-autofocus]",
-      );
-      const fallback = panel.querySelector<HTMLElement>(focusableSelector);
-      (preferred ?? fallback ?? panel).focus();
-    });
-
-    return () => cancelAnimationFrame(frame);
-  }, [open, shouldRender]);
-
-  useEffect(() => {
-    if (!open) return;
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        if (loading) return;
-        event.preventDefault();
-        onClose();
-        return;
-      }
-
-      if (event.key !== "Tab") return;
-      const panel = panelRef.current;
-      if (!panel) return;
-
-      const focusable = Array.from(
-        panel.querySelectorAll<HTMLElement>(focusableSelector),
-      );
-      if (focusable.length === 0) {
-        event.preventDefault();
-        panel.focus();
-        return;
-      }
-
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      const active = document.activeElement;
-
-      if (!panel.contains(active)) {
-        event.preventDefault();
-        (event.shiftKey ? last : first).focus();
-        return;
-      }
-
-      if (event.shiftKey && active === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && active === last) {
-        event.preventDefault();
-        first.focus();
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [open, onClose, loading]);
-
-  function handleClose() {
-    if (loading) return;
-    onClose();
-  }
+  const { panelRef, isVisible, shouldRender, requestClose } = useOverlayDialog({
+    open,
+    onClose,
+    loading,
+    suspended,
+  });
 
   if (!shouldRender || typeof window === "undefined") {
     return null;
   }
 
+  const centered = placement === "center";
   const modalContent = (
     <div
       className={cx(
-        "fixed inset-0 flex items-end justify-center sm:items-center",
-        elevated ? "z-[60]" : "z-50",
+        "fixed inset-0 flex justify-center",
+        centered ? "items-center p-4" : "items-end sm:items-center",
+        abovePageChrome ? "z-[120]" : elevated ? "z-[60]" : "z-50",
       )}
     >
       {open ? (
@@ -288,7 +176,7 @@ function Modal({
       ) : null}
       <div
         aria-hidden="true"
-        onClick={handleClose}
+        onClick={requestClose}
         className={cx(
           "absolute inset-0 z-10 bg-[rgba(10,11,14,0.45)]",
           isVisible ? "opacity-100" : "opacity-0",
@@ -307,12 +195,20 @@ function Modal({
         aria-labelledby={labelledBy}
         tabIndex={-1}
         className={cx(
-          "relative z-20 w-full overflow-y-auto border border-border-hairline bg-surface-card text-ink-secondary shadow-card-hover outline-none",
-          "max-h-[min(92dvh,100%)] pb-[env(safe-area-inset-bottom)]",
-          "rounded-t-[16px] sm:max-w-[440px] sm:rounded-card sm:pb-0",
-          isVisible
-            ? "translate-y-0 sm:scale-100 sm:opacity-100"
-            : "translate-y-full sm:translate-y-5 sm:scale-95 sm:opacity-0",
+          "relative z-20 w-full border border-border-hairline bg-surface-card text-ink-secondary shadow-card-hover outline-none",
+          clip ? "overflow-hidden" : "overflow-y-auto overscroll-contain",
+          centered
+            ? size === "wide"
+              ? "max-h-[min(88dvh,100%)] max-w-[960px] rounded-card"
+              : "max-h-[min(88dvh,100%)] max-w-[440px] rounded-card"
+            : "max-h-[min(92dvh,100%)] rounded-t-[16px] pb-[env(safe-area-inset-bottom)] sm:max-w-[440px] sm:rounded-card sm:pb-0",
+          centered
+            ? isVisible
+              ? "translate-y-0 scale-100 opacity-100"
+              : "translate-y-5 scale-95 opacity-0"
+            : isVisible
+              ? "translate-y-0 sm:scale-100 sm:opacity-100"
+              : "translate-y-full sm:translate-y-5 sm:scale-95 sm:opacity-0",
           className,
         )}
         style={{

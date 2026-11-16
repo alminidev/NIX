@@ -1,10 +1,10 @@
 "use client";
 
+import ProductDetail from "@/components/ProductDetail";
 import type { IProduct } from "@/types/product";
 import { catalogDisclaimer, catalogSectionCopy } from "@/views/HomeView/copy";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import ProductCard from "../../../components/ProductCard";
-import ProductLightbox from "../../../components/ProductLightbox";
 
 interface IProductGridProps {
   products: IProduct[];
@@ -40,8 +40,8 @@ function groupByCategory(products: IProduct[]) {
  * Todo produto ativo entra na seção da própria categoria, independente do SKU.
  */
 export default function ProductGrid({ products }: IProductGridProps) {
-  const [activeLightboxProduct, setActiveLightboxProduct] =
-    useState<IProduct | null>(null);
+  const [detailProduct, setDetailProduct] = useState<IProduct | null>(null);
+  const closeDetail = useCallback(() => setDetailProduct(null), []);
   const sections = groupByCategory(products);
 
   return (
@@ -89,7 +89,7 @@ export default function ProductGrid({ products }: IProductGridProps) {
                       key={product.sku}
                       product={product}
                       preload={index === 0 && productIndex === 0}
-                      onOpenLightbox={(item) => setActiveLightboxProduct(item)}
+                      onOpenDetail={setDetailProduct}
                     />
                   ))}
                 </div>
@@ -108,11 +108,7 @@ export default function ProductGrid({ products }: IProductGridProps) {
         </div>
       </div>
 
-      <ProductLightbox
-        product={activeLightboxProduct}
-        isOpen={activeLightboxProduct !== null}
-        onClose={() => setActiveLightboxProduct(null)}
-      />
+      <ProductDetail product={detailProduct} onClose={closeDetail} />
     </>
   );
 }
