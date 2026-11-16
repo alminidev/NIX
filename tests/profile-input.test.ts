@@ -1,17 +1,14 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import {
-  isProfileImage,
-  readPasswordForm,
-  readProfileForm,
-} from "../src/lib/profile-input";
+import { readPasswordForm, readProfileForm } from "../src/lib/profile-input";
+
+const currentEmail = "admin@admin.com";
 
 function profileForm(overrides: Record<string, string> = {}) {
   const data = new FormData();
   const values: Record<string, string> = {
     name: "Administrador",
     email: "Admin@Admin.com",
-    image: "",
     ...overrides,
   };
 
@@ -32,47 +29,74 @@ function passwordForm(overrides: Record<string, string> = {}) {
   return data;
 }
 
-describe("isProfileImage", () => {
-  it("aceita http(s) e caminho do site", () => {
-    assert.equal(isProfileImage("https://cdn.exemplo.com/foto.png"), true);
-    assert.equal(isProfileImage("/images/logo-nix.png"), true);
-    assert.equal(isProfileImage("javascript:alert(1)"), false);
-    assert.equal(isProfileImage("/admin"), false);
-  });
-});
-
 describe("readProfileForm", () => {
-  it("normaliza o e-mail e trata foto vazia como ausência", () => {
-    const parsed = readProfileForm(profileForm());
+  it("normaliza o e-mail e não lê foto", () => {
+    const parsed = readProfileForm(profileForm({ image: "/images/logo-nix.png" }), currentEmail);
 
     assert.deepEqual(parsed.fieldErrors, {});
     assert.deepEqual(parsed.input, {
       name: "Administrador",
       email: "admin@admin.com",
-      image: null,
+      currentPassword: null,
     });
+    assert.equal(parsed.input !== null && "image" in parsed.input, false);
   });
 
-  it("aceita uma foto do site", () => {
+  it("não exige senha quando só o nome muda", () => {
     const parsed = readProfileForm(
-      profileForm({ image: "  /images/logo-nix.png  " }),
+      profileForm({ name: "Outro nome", currentPassword: "segredo" }),
+      "Admin@Admin.com",
     );
 
-    assert.equal(parsed.input?.image, "/images/logo-nix.png");
+    assert.deepEqual(parsed.fieldErrors, {});
+    assert.equal(parsed.input?.name, "Outro nome");
+    assert.equal(parsed.input?.currentPassword, null);
+    assert.equal(JSON.stringify(parsed).includes("segredo"), false);
   });
 
-  it("recusa nome curto, e-mail inválido e foto que não é endereço", () => {
+  it("exige a senha atual para trocar o e-mail e não a devolve no erro", () => {
+    const secret = "senha-atual";
+    const missing = readProfileForm(
+      profileForm({ email: "novo@exemplo.com" }),
+      currentEmail,
+    );
+
+    assert.equal(missing.input, null);
+    assert.equal(missing.fieldErrors.currentPassword, "Informe a senha atual.");
+
+    const parsed = readProfileForm(
+      profileForm({ email: "novo@exemplo.com", currentPassword: secret }),
+      currentEmail,
+    );
+
+    assert.deepEqual(parsed.fieldErrors, {});
+    assert.equal(parsed.input?.email, "novo@exemplo.com");
+    assert.equal(parsed.input?.currentPassword, secret);
+
+    const tooLong = "x".repeat(129);
+    const rejected = readProfileForm(
+      profileForm({ email: "novo@exemplo.com", currentPassword: tooLong }),
+      currentEmail,
+    );
+
+    assert.equal(rejected.input, null);
+    assert.equal(
+      rejected.fieldErrors.currentPassword,
+      "A senha atual pode ter no máximo 128 caracteres.",
+    );
+    assert.equal(JSON.stringify(rejected).includes(tooLong), false);
+    assert.equal(JSON.stringify(rejected.fieldErrors).includes(secret), false);
+  });
+
+  it("recusa nome curto e e-mail inválido", () => {
     const { input, fieldErrors } = readProfileForm(
-      profileForm({ name: "A", email: "sem-arroba", image: "nota-foto" }),
+      profileForm({ name: "A", email: "sem-arroba" }),
+      currentEmail,
     );
 
     assert.equal(input, null);
     assert.equal(fieldErrors.name, "Informe o nome.");
     assert.equal(fieldErrors.email, "Informe um e-mail válido.");
-    assert.equal(
-      fieldErrors.image,
-      "Informe um endereço http(s) ou um caminho do site (/images/...).",
-    );
   });
 });
 

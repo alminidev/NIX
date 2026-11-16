@@ -8,7 +8,6 @@ import type {
 export const profileFieldLimits = {
   name: 120,
   email: 254,
-  image: 500,
 } as const;
 
 /** O mesmo mínimo e máximo da better-auth (minPasswordLength e o padrão de 128). */
@@ -18,7 +17,6 @@ export const passwordLimits = {
 } as const;
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const siteImagePath = /^\/images\/[A-Za-z0-9._/-]+$/;
 
 export interface IParsedProfileForm {
   input: IProfileInput | null;
@@ -40,23 +38,19 @@ function readSecret(formData: FormData, key: string) {
   return typeof value === "string" ? value : "";
 }
 
-/** URL http(s) ou caminho de imagem do próprio site. */
-export function isProfileImage(value: string) {
-  if (siteImagePath.test(value)) return true;
-
-  try {
-    const url = new URL(value);
-    return url.protocol === "https:" || url.protocol === "http:";
-  } catch {
-    return false;
-  }
+function sameEmail(left: string, right: string) {
+  return left.trim().toLowerCase() === right.trim().toLowerCase();
 }
 
-export function readProfileForm(formData: FormData): IParsedProfileForm {
+export function readProfileForm(
+  formData: FormData,
+  currentEmail: string,
+): IParsedProfileForm {
   const fieldErrors: IProfileFieldErrors = {};
   const name = readString(formData, "name");
   const email = readString(formData, "email").toLowerCase();
-  const imageRaw = readString(formData, "image");
+  const emailChanged = !sameEmail(email, currentEmail);
+  const currentPassword = readSecret(formData, "currentPassword");
 
   if (name.length < 2) {
     fieldErrors.name = "Informe o nome.";
@@ -64,23 +58,15 @@ export function readProfileForm(formData: FormData): IParsedProfileForm {
     fieldErrors.name = `O nome pode ter no máximo ${profileFieldLimits.name} caracteres.`;
   }
 
-  if (
-    email.length > profileFieldLimits.email ||
-    !emailPattern.test(email)
-  ) {
+  if (email.length > profileFieldLimits.email || !emailPattern.test(email)) {
     fieldErrors.email = "Informe um e-mail válido.";
   }
 
-  let image: string | null = null;
-  if (imageRaw) {
-    if (
-      imageRaw.length > profileFieldLimits.image ||
-      !isProfileImage(imageRaw)
-    ) {
-      fieldErrors.image =
-        "Informe um endereço http(s) ou um caminho do site (/images/...).";
-    } else {
-      image = imageRaw;
+  if (emailChanged) {
+    if (!currentPassword) {
+      fieldErrors.currentPassword = "Informe a senha atual.";
+    } else if (currentPassword.length > passwordLimits.max) {
+      fieldErrors.currentPassword = `A senha atual pode ter no máximo ${passwordLimits.max} caracteres.`;
     }
   }
 
@@ -89,7 +75,11 @@ export function readProfileForm(formData: FormData): IParsedProfileForm {
   }
 
   return {
-    input: { name, email, image },
+    input: {
+      name,
+      email,
+      currentPassword: emailChanged ? currentPassword : null,
+    },
     fieldErrors,
   };
 }

@@ -139,7 +139,9 @@ export default function CategoryForm({
                 hint={
                   errors.slug
                     ? undefined
-                    : "Letras minúsculas, números e hífens. A home usa este valor na seção."
+                    : category
+                      ? "Não pode ser alterado. A home reconhece a seção por este valor."
+                      : "Letras minúsculas, números e hífens. A home usa este valor na seção."
                 }
                 hintId="category-slug-hint"
               >
@@ -147,20 +149,27 @@ export default function CategoryForm({
                   name="slug"
                   value={slug}
                   onChange={(event) => {
+                    if (category) return;
                     setSlugTouched(true);
                     setSlug(event.target.value.toLowerCase());
                   }}
                   required
                   minLength={2}
                   maxLength={categoryFieldLimits.slug}
+                  readOnly={Boolean(category)}
                   disabled={pending}
                   spellCheck={false}
                   autoCapitalize="none"
+                  aria-readonly={Boolean(category)}
                   aria-invalid={Boolean(errors.slug)}
                   aria-describedby={
                     errors.slug ? "category-slug-error" : "category-slug-hint"
                   }
-                  className={controlClass(Boolean(errors.slug))}
+                  className={`${controlClass(Boolean(errors.slug))}${
+                    category
+                      ? " read-only:cursor-default read-only:bg-surface-canvas-fog read-only:text-ink-secondary"
+                      : ""
+                  }`}
                 />
               </Field>
 
@@ -202,13 +211,15 @@ export default function CategoryForm({
 }
 
 function usageDescription(count: number) {
+  const home =
+    "Na home, algumas categorias usam um texto fixo no lugar do nome.";
   if (count === 0) {
-    return "Nenhum produto usa esta categoria. O nome entra na vitrine quando houver produtos.";
+    return `Nenhum produto usa esta categoria. ${home}`;
   }
   if (count === 1) {
-    return "1 produto usa esta categoria. O nome aparece na vitrine e nos produtos.";
+    return `1 produto usa esta categoria. O nome aparece nos produtos. ${home}`;
   }
-  return `${count} produtos usam esta categoria. O nome aparece na vitrine e nos produtos.`;
+  return `${count} produtos usam esta categoria. O nome aparece nos produtos. ${home}`;
 }
 
 function Section({

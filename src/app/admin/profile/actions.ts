@@ -62,6 +62,57 @@ function prismaCode(error: unknown) {
   return null;
 }
 
+/** Confere a senha atual pela better-auth, sem comparar o hash aqui. */
+async function confirmCurrentPassword(
+  currentPassword: string | null,
+): Promise<IProfileFormState | null> {
+  if (!currentPassword) {
+    return {
+      ...reviewProfile,
+      fieldErrors: { currentPassword: "Informe a senha atual." },
+    };
+  }
+
+  try {
+    const verified = await auth.api.verifyPassword({
+      body: { password: currentPassword },
+      headers: await headers(),
+    });
+
+    if (!verified.status) {
+      return {
+        ...reviewProfile,
+        fieldErrors: { currentPassword: "A senha atual está incorreta." },
+      };
+    }
+
+    return null;
+  } catch (error) {
+    const code = authCode(error);
+
+    if (code === "INVALID_PASSWORD") {
+      return {
+        ...reviewProfile,
+        fieldErrors: { currentPassword: "A senha atual está incorreta." },
+      };
+    }
+
+    if (code === "UNAUTHORIZED") {
+      return {
+        status: "error",
+        message: "Sua sessão expirou. Entre novamente.",
+        fieldErrors: {},
+      };
+    }
+
+    return {
+      status: "error",
+      message: "Não foi possível salvar o perfil.",
+      fieldErrors: {},
+    };
+  }
+}
+
 export async function saveProfile(
   _previous: IProfileFormState,
   formData: FormData,
@@ -69,33 +120,38 @@ export async function saveProfile(
   const session = await requireAdmin();
   if (!session) return deniedProfile;
 
-  const parsed = readProfileForm(formData);
+  const parsed = readProfileForm(formData, session.user.email);
   if (!parsed.input) {
     return { ...reviewProfile, fieldErrors: parsed.fieldErrors };
   }
 
   const input = parsed.input;
-  const emailChanged = input.email !== session.user.email;
+  const emailChanged =
+    input.email !== session.user.email.trim().toLowerCase();
 
   if (emailChanged) {
-    const owner = await prisma.user.findUnique({
-      where: { email: input.email },
-      select: { id: true },
-    });
-
-    if (owner && owner.id !== session.user.id) {
-      return {
-        ...reviewProfile,
-        fieldErrors: { email: "Já existe uma conta com este e-mail." },
-      };
-    }
+    const passwordError = await confirmCurrentPassword(input.currentPassword);
+    if (passwordError) return passwordError;
   }
 
   try {
+    if (emailChanged) {
+      const owner = await prisma.user.findUnique({
+        where: { email: input.email },
+        select: { id: true },
+      });
+
+      if (owner && owner.id !== session.user.id) {
+        return {
+          ...reviewProfile,
+          fieldErrors: { email: "Já existe uma conta com este e-mail." },
+        };
+      }
+    }
+
     await auth.api.updateUser({
       body: {
         name: input.name,
-        image: input.image,
       },
       headers: await headers(),
     });
@@ -154,6 +210,7 @@ export async function changeOwnPassword(
       body: {
         currentPassword: parsed.input.currentPassword,
         newPassword: parsed.input.newPassword,
+        revokeOtherSessions: true,
       },
       headers: await headers(),
     });

@@ -25,8 +25,8 @@ export function AdminProfileView({ profile, notice }: IAdminProfileViewProps) {
           Meu perfil
         </h1>
         <p className="mt-2 max-w-140 text-[0.9375rem] text-ink-secondary">
-          Atualize seu nome, e-mail e foto. A senha é trocada à parte e vale
-          só para esta conta.
+          Atualize seu nome e e-mail. A senha é trocada à parte e vale só
+          para esta conta.
         </p>
       </header>
 

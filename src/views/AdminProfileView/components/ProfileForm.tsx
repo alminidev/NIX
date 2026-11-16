@@ -1,7 +1,7 @@
 "use client";
 
 import { saveProfile } from "@/app/admin/profile/actions";
-import { isProfileImage, profileFieldLimits } from "@/lib/profile-input";
+import { passwordLimits, profileFieldLimits } from "@/lib/profile-input";
 import {
   profileFormInitialState,
   type IAdminProfile,
@@ -27,9 +27,8 @@ export default function ProfileForm({ profile }: IProfileFormProps) {
   const errors = state.fieldErrors;
   const [name, setName] = useState(profile.name);
   const [email, setEmail] = useState(profile.email);
-  const [image, setImage] = useState(profile.image ?? "");
-  const initial = name.trim().charAt(0).toUpperCase() || "A";
-  const preview = isProfileImage(image.trim()) ? image.trim() : null;
+  const emailChanged =
+    email.trim().toLowerCase() !== profile.email.trim().toLowerCase();
 
   return (
     <form action={action}>
@@ -43,7 +42,7 @@ export default function ProfileForm({ profile }: IProfileFormProps) {
               Dados do perfil
             </h2>
             <p className="mt-0.5 text-[0.8125rem] leading-relaxed text-ink-muted">
-              Nome, e-mail de acesso e a foto exibida nesta conta.
+              Nome e e-mail de acesso desta conta.
             </p>
           </div>
         </header>
@@ -103,6 +102,36 @@ export default function ProfileForm({ profile }: IProfileFormProps) {
               className={controlClass(Boolean(errors.email))}
             />
           </Field>
+
+          {emailChanged ? (
+            <Field
+              label="Senha atual"
+              error={errors.currentPassword}
+              errorId="profile-current-password-error"
+              hint={
+                errors.currentPassword
+                  ? undefined
+                  : "Confirme a senha atual para trocar o e-mail."
+              }
+              hintId="profile-current-password-hint"
+            >
+              <input
+                name="currentPassword"
+                type="password"
+                autoComplete="current-password"
+                required
+                maxLength={passwordLimits.max}
+                disabled={pending}
+                aria-invalid={Boolean(errors.currentPassword)}
+                aria-describedby={
+                  errors.currentPassword
+                    ? "profile-current-password-error"
+                    : "profile-current-password-hint"
+                }
+                className={controlClass(Boolean(errors.currentPassword))}
+              />
+            </Field>
+          ) : null}
 
           <div className="flex justify-end">
             <button

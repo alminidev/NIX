@@ -1,18 +1,17 @@
 /**
  * Contrato da tela Meu perfil.
- * A página lê nome, e-mail e foto da sessão; as actions não recebem id de usuário.
+ * A página lê nome e e-mail da sessão; as actions não recebem id de usuário.
  */
 
 export interface IAdminProfile {
   name: string;
   email: string;
-  image: string | null;
 }
 
 export interface IProfileFieldErrors {
   name?: string;
   email?: string;
-  image?: string;
+  currentPassword?: string;
 }
 
 export interface IProfileFormState {
@@ -30,7 +29,8 @@ export const profileFormInitialState: IProfileFormState = {
 export interface IProfileInput {
   name: string;
   email: string;
-  image: string | null;
+  /** Presente só quando o e-mail enviado é diferente do atual. */
+  currentPassword: string | null;
 }
 
 export interface IPasswordFieldErrors {
