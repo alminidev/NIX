@@ -9,7 +9,7 @@ export default function HeroStage() {
       <div className="hero-media-wrapper">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/images/hero-showroom-oficial.png"
+          src="/images/Estúdio futurista com armários de filamentos coloridos.png"
           alt="Linha completa NIX em estúdio showroom"
           width={1920}
           height={1080}

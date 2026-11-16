@@ -31,7 +31,7 @@ export default function ProductGrid() {
       <div className="container">
         <header className="section-header">
           <span className="kicker">Catálogo Oficial</span>
-          <h2>Linha Dry Box &amp; Dry Box Station</h2>
+          <h2>Linha Dry Box</h2>
           <p>
             A NIX transforma o armazenamento de filamentos em uma experiência mais prática, funcional e eficiente. Descubra a Dry Box ideal para o seu setup.
 

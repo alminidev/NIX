@@ -19,10 +19,7 @@ export default function Diferenciais() {
             </p>
             <div className="features-badge-box">
               <strong>Padrão Estúdio Maker</strong>
-              <span>
-                Dry Box para diferentes setups de impressão 3D. Dry Box Station com integração
-                exclusiva para Bambu Lab A1 e A2L.
-              </span>
+              <span>Dry Box para diferentes setups de impressão 3D.</span>
             </div>
           </div>
 
