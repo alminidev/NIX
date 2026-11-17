@@ -131,9 +131,9 @@ export default function Header({ homePath = '' }: { homePath?: string }) {
             <Image
               src="/images/carrinho_vetorizado.svg"
               alt=""
-              width={21}
-              height={17}
-              className="block h-[17px] w-[21px] object-contain"
+              width={23}
+              height={19}
+              className="block h-[19px] w-[23px] object-contain"
             />
             {isReady && itemCount > 0 ? (
               <span className="rounded-pill bg-brand-blue px-1.5 text-xs text-white">
