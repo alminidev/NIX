@@ -106,7 +106,7 @@ export default function Header({ homePath = '' }: { homePath?: string }) {
                 <li key={href}>
                   <a
                     href={`${homePath}${href}`}
-                    className={`text-sm font-medium transition-colors hover:text-brand-blue ${isActive ? 'text-brand-blue' : 'text-ink-secondary'}`}
+                    className={`text-base font-medium transition-colors hover:text-brand-blue ${isActive ? 'text-brand-blue' : 'text-ink-secondary'}`}
                   >
                     {label}
                   </a>
@@ -181,7 +181,7 @@ export default function Header({ homePath = '' }: { homePath?: string }) {
               <li key={href}>
                 <a
                   href={`${homePath}${href}`}
-                  className="block py-2 text-[1.0625rem] font-semibold text-ink-primary transition-colors hover:text-brand-blue"
+                  className="block py-2 text-lg font-semibold text-ink-primary transition-colors hover:text-brand-blue"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {label}

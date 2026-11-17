@@ -279,7 +279,7 @@ h3 {
 }
 
 .nav-link {
-  font-size: 0.875rem;
+  font-size: 1rem;
   font-weight: 500;
   color: var(--color-ink-secondary);
 }
@@ -1189,7 +1189,7 @@ h3 {
   }
 
   .mobile-nav-link {
-    font-size: 1.0625rem;
+    font-size: 1.125rem;
     font-weight: 600;
     color: var(--color-ink-primary);
     padding: 8px 0;
