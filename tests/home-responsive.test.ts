@@ -21,7 +21,7 @@ describe("hero responsiva igual à migracao-nextjs", () => {
 
   it("mantém o título h1 proporcional e legível no mobile", () => {
     assert.match(hero, /<h1/);
-    assert.match(hero, /clamp\(1\.25rem/);
+    assert.match(hero, /clamp\(1\.375rem/);
     assert.doesNotMatch(hero, /max-\[768px\]:hidden/);
   });
 });
