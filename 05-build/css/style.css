@@ -279,7 +279,7 @@ h3 {
 }
 
 .nav-link {
-  font-size: 0.875rem;
+  font-size: 1rem;
   font-weight: 500;
   color: var(--color-ink-secondary);
 }
@@ -425,7 +425,7 @@ h3 {
   position: relative;
   z-index: 2;
   width: 100%;
-  padding-top: clamp(14px, 2.2vw, 36px);
+  padding-top: clamp(16px, 2.4vw, 36px);
   pointer-events: none;
 }
 
@@ -438,12 +438,21 @@ h3 {
 
 .hero-title {
   color: #000000;
-  font-size: clamp(2.1rem, 3.72vw, 3.48rem);
+  font-size: clamp(1.375rem, 4.2vw, 3.85rem);
   font-weight: 700;
-  line-height: 1.22;
+  line-height: 1.2;
   letter-spacing: -0.025em;
   margin: 0 auto;
   text-shadow: none;
+}
+
+.hero-subtitle {
+  color: #000000;
+  font-size: clamp(0.9375rem, 1.4vw, 1.2rem);
+  font-weight: 500;
+  line-height: 1.5;
+  margin: 14px auto 0;
+  max-width: 900px;
 }
 
 .hero-media-wrapper {
@@ -1189,7 +1198,7 @@ h3 {
   }
 
   .mobile-nav-link {
-    font-size: 1.0625rem;
+    font-size: 1.125rem;
     font-weight: 600;
     color: var(--color-ink-primary);
     padding: 8px 0;
@@ -1308,8 +1317,12 @@ h3 {
     left: auto;
   }
 
-  /* Texto da Hero ocultado exclusivamente na versão mobile */
+  /* Título da Hero proporcional no mobile; subtítulo oculto no mobile */
   .hero-stage .hero-container {
+    padding-top: 20px;
+  }
+
+  .hero-subtitle {
     display: none;
   }
 }

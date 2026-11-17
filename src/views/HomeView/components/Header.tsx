@@ -106,7 +106,7 @@ export default function Header({ homePath = '' }: { homePath?: string }) {
                 <li key={href}>
                   <a
                     href={`${homePath}${href}`}
-                    className={`text-sm font-medium transition-colors hover:text-brand-blue ${isActive ? 'text-brand-blue' : 'text-ink-secondary'}`}
+                    className={`text-base font-medium transition-colors hover:text-brand-blue ${isActive ? 'text-brand-blue' : 'text-ink-secondary'}`}
                   >
                     {label}
                   </a>
@@ -131,9 +131,9 @@ export default function Header({ homePath = '' }: { homePath?: string }) {
             <Image
               src="/images/carrinho_vetorizado.svg"
               alt=""
-              width={21}
-              height={17}
-              className="block h-[17px] w-[21px] object-contain"
+              width={23}
+              height={19}
+              className="block h-[19px] w-[23px] object-contain"
             />
             {isReady && itemCount > 0 ? (
               <span className="rounded-pill bg-brand-blue px-1.5 text-xs text-white">
@@ -181,7 +181,7 @@ export default function Header({ homePath = '' }: { homePath?: string }) {
               <li key={href}>
                 <a
                   href={`${homePath}${href}`}
-                  className="block py-2 text-[1.0625rem] font-semibold text-ink-primary transition-colors hover:text-brand-blue"
+                  className="block py-2 text-lg font-semibold text-ink-primary transition-colors hover:text-brand-blue"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {label}

@@ -19,9 +19,9 @@ describe("hero responsiva igual à migracao-nextjs", () => {
     assert.match(hero, /max-\[768px\]:object-bottom/);
   });
 
-  it("até 768px esconde o título só visualmente, sem tirar o h1", () => {
-    assert.match(hero, /max-\[768px\]:sr-only/);
+  it("mantém o título h1 proporcional e legível no mobile", () => {
     assert.match(hero, /<h1/);
+    assert.match(hero, /clamp\(1\.375rem/);
     assert.doesNotMatch(hero, /max-\[768px\]:hidden/);
   });
 });

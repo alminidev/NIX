@@ -17,18 +17,24 @@ export default function HeroStage() {
           alt="Linha completa NIX em estúdio showroom com estufas Dry Box e estações de impressão 3D"
           fill
           preload
+          unoptimized
           sizes="100vw"
-          className="object-cover object-center max-[768px]:object-contain max-[768px]:object-bottom"
+          className="object-cover object-bottom max-[768px]:object-contain max-[768px]:object-bottom"
         />
       </div>
 
-      <div className="pointer-events-none relative z-[2] mx-auto w-full max-w-[1200px] px-4 pt-[clamp(14px,2.2vw,36px)] min-[640px]:px-6 max-[768px]:sr-only">
+      <div className="pointer-events-none relative z-[2] mx-auto w-full max-w-[1200px] px-4 pt-5 min-[640px]:pt-[clamp(16px,2.4vw,36px)]">
         <div className="pointer-events-auto mx-auto max-w-[1100px] text-center">
-          <h1 className="mx-auto text-[clamp(2.1rem,3.72vw,3.48rem)] leading-[1.22] font-bold tracking-[-0.025em] text-black">
+          <h1 className="mx-auto text-[clamp(1.375rem,4.2vw,3.85rem)] leading-[1.2] font-bold tracking-[-0.025em] text-black">
             A evolução definitiva do seu
             <br />
             setup de impressão 3D.
           </h1>
+          <p className="mx-auto mt-2 hidden max-w-[900px] text-[clamp(0.9375rem,1.4vw,1.2rem)] leading-relaxed font-medium text-black min-[768px]:block min-[640px]:mt-3.5">
+            Dry Box com controle de temperatura e desumidificação ativa.
+            <br />
+            Proteja seus filamentos e imprima sem falhas por umidade.
+          </p>
         </div>
       </div>
     </section>
