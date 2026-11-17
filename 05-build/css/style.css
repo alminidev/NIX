@@ -438,9 +438,9 @@ h3 {
 
 .hero-title {
   color: #000000;
-  font-size: clamp(1.05rem, 3.72vw, 3.48rem);
+  font-size: clamp(1.25rem, 4vw, 3.48rem);
   font-weight: 700;
-  line-height: 1.22;
+  line-height: 1.2;
   letter-spacing: -0.025em;
   margin: 0 auto;
   text-shadow: none;
@@ -1310,7 +1310,7 @@ h3 {
 
   /* Título da Hero proporcional no mobile */
   .hero-stage .hero-container {
-    padding-top: 12px;
+    padding-top: 32px;
   }
 }
 
