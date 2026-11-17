@@ -17,8 +17,9 @@ export default function HeroStage() {
           alt="Linha completa NIX em estúdio showroom com estufas Dry Box e estações de impressão 3D"
           fill
           preload
+          unoptimized
           sizes="100vw"
-          className="object-cover object-center max-[768px]:object-contain max-[768px]:object-bottom"
+          className="object-cover object-bottom max-[768px]:object-contain max-[768px]:object-bottom"
         />
       </div>
 
