@@ -449,7 +449,7 @@ h3 {
 .hero-subtitle {
   color: var(--color-ink-secondary);
   font-size: clamp(0.9375rem, 1.4vw, 1.2rem);
-  font-weight: 400;
+  font-weight: 500;
   line-height: 1.5;
   margin: 14px auto 0;
   max-width: 900px;

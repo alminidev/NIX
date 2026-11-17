@@ -30,7 +30,7 @@ export default function HeroStage() {
             <br />
             setup de impressão 3D.
           </h1>
-          <p className="mx-auto mt-2 hidden max-w-[900px] text-[clamp(0.9375rem,1.4vw,1.2rem)] leading-relaxed font-normal text-ink-secondary min-[768px]:block min-[640px]:mt-3.5">
+          <p className="mx-auto mt-2 hidden max-w-[900px] text-[clamp(0.9375rem,1.4vw,1.2rem)] leading-relaxed font-medium text-ink-secondary min-[768px]:block min-[640px]:mt-3.5">
             Dry Box com controle de temperatura e desumidificação ativa.
             <br />
             Proteja seus filamentos e imprima sem falhas por umidade.
