@@ -1317,14 +1317,13 @@ h3 {
     left: auto;
   }
 
-  /* Título e subtítulo da Hero proporcional no mobile */
+  /* Título da Hero proporcional no mobile; subtítulo oculto no mobile */
   .hero-stage .hero-container {
-    padding-top: 12px;
+    padding-top: 20px;
   }
 
   .hero-subtitle {
-    margin-top: 6px;
-    line-height: 1.35;
+    display: none;
   }
 }
 
