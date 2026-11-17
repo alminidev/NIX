@@ -425,7 +425,7 @@ h3 {
   position: relative;
   z-index: 2;
   width: 100%;
-  padding-top: clamp(28px, 3.8vw, 56px);
+  padding-top: clamp(20px, 3vw, 44px);
   pointer-events: none;
 }
 
@@ -1310,7 +1310,7 @@ h3 {
 
   /* Título da Hero proporcional no mobile */
   .hero-stage .hero-container {
-    padding-top: 32px;
+    padding-top: 20px;
   }
 }
 
