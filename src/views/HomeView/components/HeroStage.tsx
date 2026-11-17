@@ -31,9 +31,9 @@ export default function HeroStage() {
             setup de impressão 3D.
           </h1>
           <p className="mx-auto mt-2 hidden max-w-[850px] text-[clamp(0.875rem,1.25vw,1.0625rem)] leading-relaxed font-normal text-ink-secondary min-[768px]:block min-[640px]:mt-3">
-            Estufas com controle de temperatura e umidade para guardar e secar seu filamento.
+            Dry Box com controle de temperatura e desumidificação ativa.
             <br />
-            Menos bolhas, menos fios, mais impressões que dão certo.
+            Proteja seus filamentos e imprima sem falhas por umidade.
           </p>
         </div>
       </div>
