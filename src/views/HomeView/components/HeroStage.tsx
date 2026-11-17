@@ -23,9 +23,9 @@ export default function HeroStage() {
         />
       </div>
 
-      <div className="pointer-events-none relative z-[2] mx-auto w-full max-w-[1200px] px-4 pt-[clamp(14px,2.2vw,36px)] min-[640px]:px-6 max-[768px]:sr-only">
+      <div className="pointer-events-none relative z-[2] mx-auto w-full max-w-[1200px] px-4 pt-3 min-[640px]:pt-[clamp(28px,3.8vw,56px)]">
         <div className="pointer-events-auto mx-auto max-w-[1100px] text-center">
-          <h1 className="mx-auto text-[clamp(2.1rem,3.72vw,3.48rem)] leading-[1.22] font-bold tracking-[-0.025em] text-black">
+          <h1 className="mx-auto text-[clamp(1.05rem,3.72vw,3.48rem)] leading-[1.22] font-bold tracking-[-0.025em] text-black">
             A evolução definitiva do seu
             <br />
             setup de impressão 3D.

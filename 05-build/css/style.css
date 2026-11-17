@@ -425,7 +425,7 @@ h3 {
   position: relative;
   z-index: 2;
   width: 100%;
-  padding-top: clamp(14px, 2.2vw, 36px);
+  padding-top: clamp(28px, 3.8vw, 56px);
   pointer-events: none;
 }
 
@@ -438,7 +438,7 @@ h3 {
 
 .hero-title {
   color: #000000;
-  font-size: clamp(2.1rem, 3.72vw, 3.48rem);
+  font-size: clamp(1.05rem, 3.72vw, 3.48rem);
   font-weight: 700;
   line-height: 1.22;
   letter-spacing: -0.025em;
@@ -1308,9 +1308,9 @@ h3 {
     left: auto;
   }
 
-  /* Texto da Hero ocultado exclusivamente na versão mobile */
+  /* Título da Hero proporcional no mobile */
   .hero-stage .hero-container {
-    display: none;
+    padding-top: 12px;
   }
 }
 
