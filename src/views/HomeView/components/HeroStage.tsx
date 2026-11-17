@@ -23,13 +23,16 @@ export default function HeroStage() {
         />
       </div>
 
-      <div className="pointer-events-none relative z-[2] mx-auto w-full max-w-[1200px] px-4 pt-5 min-[640px]:pt-[clamp(20px,3vw,44px)]">
+      <div className="pointer-events-none relative z-[2] mx-auto w-full max-w-[1200px] px-4 pt-3 min-[640px]:pt-[clamp(16px,2.4vw,36px)]">
         <div className="pointer-events-auto mx-auto max-w-[1100px] text-center">
           <h1 className="mx-auto text-[clamp(1.25rem,4vw,3.48rem)] leading-[1.2] font-bold tracking-[-0.025em] text-black">
             A evolução definitiva do seu
             <br />
             setup de impressão 3D.
           </h1>
+          <p className="mx-auto mt-2 max-w-[760px] text-[clamp(0.75rem,1.4vw,1.0625rem)] leading-snug font-normal text-ink-secondary min-[640px]:mt-3 min-[640px]:leading-relaxed">
+            Estufas com controle de temperatura e umidade para guardar e secar seu filamento. Menos bolhas, menos fios, mais impressões que dão certo.
+          </p>
         </div>
       </div>
     </section>

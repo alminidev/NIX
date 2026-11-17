@@ -425,7 +425,7 @@ h3 {
   position: relative;
   z-index: 2;
   width: 100%;
-  padding-top: clamp(20px, 3vw, 44px);
+  padding-top: clamp(16px, 2.4vw, 36px);
   pointer-events: none;
 }
 
@@ -444,6 +444,15 @@ h3 {
   letter-spacing: -0.025em;
   margin: 0 auto;
   text-shadow: none;
+}
+
+.hero-subtitle {
+  color: var(--color-ink-secondary);
+  font-size: clamp(0.75rem, 1.4vw, 1.0625rem);
+  font-weight: 400;
+  line-height: 1.5;
+  margin: 12px auto 0;
+  max-width: 760px;
 }
 
 .hero-media-wrapper {
@@ -1308,9 +1317,14 @@ h3 {
     left: auto;
   }
 
-  /* Título da Hero proporcional no mobile */
+  /* Título e subtítulo da Hero proporcional no mobile */
   .hero-stage .hero-container {
-    padding-top: 20px;
+    padding-top: 12px;
+  }
+
+  .hero-subtitle {
+    margin-top: 6px;
+    line-height: 1.35;
   }
 }
 
