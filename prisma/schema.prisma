@@ -101,6 +101,10 @@ model Product {
   price          Decimal        @db.Decimal(10, 2)
   installments   String
   description    String
+  // null ou 0 não aparece na vitrine
+  productionDays Int?
+  // texto só deste produto; vazio usa o modelo global em shop_settings
+  productionTimeTemplate String?
   featured       Boolean        @default(false)
   active         Boolean        @default(true)
   stock          Int            @default(0)
@@ -116,6 +120,16 @@ model Product {
   @@index([categoryId])
   @@index([active, sortOrder])
   @@map("product")
+}
+
+// Linha única da loja. O id 1 guarda o modelo do tempo de produção e o provedor de frete.
+model ShopSettings {
+  id                     Int    @id @default(1)
+  productionTimeTemplate String @default("Após a compra o tempo de produção do produto é de {dias}.")
+  // melhor_envio ou central_do_frete. Sem a linha, a loja usa o Melhor Envio.
+  shippingProvider       String @default("melhor_envio")
+
+  @@map("shop_settings")
 }
 
 model Specification {

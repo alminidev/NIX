@@ -21,21 +21,28 @@ describe("textos da home portados da migracao-nextjs", () => {
   });
 
   it("atualiza o catálogo, as seções e o aviso das imagens", () => {
-    assert.equal(catalogIntro.title, "Linha Dry Box & Dry Box Station");
+    assert.equal(catalogIntro.title, "Linha Dry Box");
     assert.match(catalogIntro.description, /experiência mais prática/);
     assert.equal(catalogSectionCopy.armarios.title, "DRY BOX");
     assert.equal(catalogSectionCopy.stations.title, "DRY BOX STATION");
     assert.match(catalogDisclaimer, /AMS/);
   });
 
-  it("traz as sete perguntas da migracao-nextjs", () => {
-    assert.equal(faqItems.length, 7);
+  it("traz as perguntas da migracao-nextjs sem a compatibilidade da Station", () => {
+    assert.equal(faqItems.length, 6);
     assert.equal(
       faqItems[0]?.pergunta,
       "Quais filamentos posso armazenar na Dry Box?",
     );
-    assert.match(faqItems[4]?.resposta ?? "", /InfinitePay/);
-    assert.match(faqItems[4]?.resposta ?? "", /desconto no Pix/);
+    assert.equal(
+      faqItems.some((item) =>
+        item.pergunta.includes("compatível com quais impressoras"),
+      ),
+      false,
+    );
+    const pagamento = faqItems.find((item) => /pagamento/i.test(item.pergunta));
+    assert.match(pagamento?.resposta ?? "", /InfinitePay/);
+    assert.match(pagamento?.resposta ?? "", /desconto no Pix/);
   });
 
   it("atualiza o texto do CTA e do rodapé", () => {

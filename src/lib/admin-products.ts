@@ -52,6 +52,8 @@ function toAdminProduct(product: TProductRecord): IAdminProduct {
     featured: product.featured,
     active: product.active,
     sortOrder: product.sortOrder,
+    productionDays: product.productionDays,
+    productionTimeTemplate: product.productionTimeTemplate,
   };
 }
 

@@ -3,10 +3,13 @@
 import { useAuthContext } from "@/contexts/AuthContext";
 import {
   Boxes,
+  CircleUser,
   ClipboardList,
   LayoutDashboard,
   LogOut,
   Package,
+  Settings,
+  Tags,
   type LucideIcon,
 } from "lucide-react";
 import Image from "next/image";
@@ -40,7 +43,25 @@ const navItems: INavItem[] = [
     exact: false,
   },
   { href: "/admin/products", label: "Produtos", icon: Package, exact: false },
+  {
+    href: "/admin/categories",
+    label: "Categorias",
+    icon: Tags,
+    exact: false,
+  },
   { href: "/admin/stock", label: "Estoque", icon: Boxes, exact: true },
+  {
+    href: "/admin/settings",
+    label: "Configurações",
+    icon: Settings,
+    exact: true,
+  },
+  {
+    href: "/admin/profile",
+    label: "Meu perfil",
+    icon: CircleUser,
+    exact: true,
+  },
 ];
 
 function isCurrent(pathname: string, href: string, exact: boolean) {
@@ -51,10 +72,12 @@ function isCurrent(pathname: string, href: string, exact: boolean) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function isProductEditor(pathname: string) {
+function isEditor(pathname: string) {
   return (
     pathname === "/admin/products/new" ||
-    /^\/admin\/products\/\d+$/.test(pathname)
+    /^\/admin\/products\/\d+$/.test(pathname) ||
+    pathname === "/admin/categories/new" ||
+    /^\/admin\/categories\/\d+$/.test(pathname)
   );
 }
 
@@ -64,7 +87,7 @@ export default function AdminShell({ user, children }: IAdminShellProps) {
   const pathname = usePathname();
   const [signingOut, setSigningOut] = useState(false);
   const inicial = user.name.trim().charAt(0).toUpperCase() || "A";
-  const editor = isProductEditor(pathname);
+  const editor = isEditor(pathname);
 
   async function handleSignOut() {
     setSigningOut(true);
@@ -92,7 +115,7 @@ export default function AdminShell({ user, children }: IAdminShellProps) {
           </Link>
 
           <nav
-            className="order-3 grid w-full grid-cols-3 gap-1 min-[720px]:grid-cols-5 min-[861px]:order-none min-[861px]:mt-3 min-[861px]:flex min-[861px]:flex-col"
+            className="order-3 grid w-full grid-cols-3 gap-1 min-[720px]:grid-cols-4 min-[861px]:order-none min-[861px]:mt-3 min-[861px]:flex min-[861px]:flex-col"
             aria-label="Painel administrativo"
           >
             <p className="mx-2 mb-2 hidden text-[0.6875rem] font-semibold tracking-wider text-ink-muted uppercase min-[861px]:block">

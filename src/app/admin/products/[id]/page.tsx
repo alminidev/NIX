@@ -1,5 +1,6 @@
 import FreshNavigation from "@/components/FreshNavigation";
 import { getAdminCategories, getAdminProduct } from "@/lib/admin-products";
+import { getProductionTimeTemplate } from "@/lib/shop-settings";
 import { getSession } from "@/lib/session";
 import { ProductEditor } from "@/views/AdminProductsView/components/ProductEditor";
 import type { Metadata } from "next";
@@ -28,9 +29,10 @@ async function EditProduct({ params }: IEditProductPageProps) {
   if (!/^\d+$/.test(rawId)) notFound();
   const id = Number(rawId);
 
-  const [categories, product] = await Promise.all([
+  const [categories, product, productionTimeTemplate] = await Promise.all([
     getAdminCategories(),
     getAdminProduct(id),
+    getProductionTimeTemplate(),
   ]);
 
   if (!product) notFound();
@@ -40,6 +42,7 @@ async function EditProduct({ params }: IEditProductPageProps) {
       categories={categories}
       product={product}
       nextSortOrder={product.sortOrder}
+      productionTimeTemplate={productionTimeTemplate}
     />
   );
 }

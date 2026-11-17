@@ -1,7 +1,7 @@
 import { formatCurrency } from "@/lib/cart-calculation";
 import type { IShippingOption, IShippingQuote } from "@/types/cart";
 
-/** Id reservado: não existe no Melhor Envio. O preço é sempre zero. */
+/** Id reservado: não existe na cotação. O preço é sempre zero. */
 export const localPickupServiceId = 0;
 
 export const localPickupOption: IShippingOption = {
@@ -34,7 +34,7 @@ export function formatShippingAmount(price: number) {
 
 /**
  * Cotação só da retirada no local. O valor não vem do navegador nem do
- * Melhor Envio: a retirada é sempre grátis.
+ * provedor de frete: a retirada é sempre grátis.
  */
 export function localPickupQuote(
   carriers: IShippingOption[] = [],
@@ -144,22 +144,50 @@ function choice(
 }
 
 /**
+ * Uma cotação por prazo: a mais cara. Empate de preço fica com o menor
+ * serviceId. A ordem dos prazos não importa; quem chama ordena de novo.
+ */
+function onePricePerDeadline(options: IShippingOption[]) {
+  const byDeadline = new Map<number, IShippingOption>();
+
+  for (const option of options) {
+    const current = byDeadline.get(option.deliveryDays);
+    const samePrice =
+      current !== undefined && cents(option.price) === cents(current.price);
+    if (
+      !current ||
+      cents(option.price) > cents(current.price) ||
+      (samePrice && option.serviceId < current.serviceId)
+    ) {
+      byDeadline.set(option.deliveryDays, option);
+    }
+  }
+
+  return [...byDeadline.values()];
+}
+
+/**
  * Opções que a pessoa escolhe no checkout.
  *
- * A cotação só define valor e prazo: a entrega é feita por fora, então o
- * nome da transportadora não aparece. No máximo duas opções:
- * - a de preço intermediário, com o maior prazo, já vem primeiro;
- * - a mais cara, com o menor prazo.
+ * Antes de escolher, cada prazo fica com uma só cotação: a mais cara
+ * (empate de preço fica com o menor serviceId). Em seguida vale a regra
+ * de sempre: a intermediária mais próxima do centro de preço, rotulada
+ * com o maior prazo, e a mais cara, rotulada com o menor prazo. No máximo
+ * duas entregas. A cotação só define valor e prazo — o nome da
+ * transportadora não aparece.
  *
- * Com uma única cotação, só ela aparece. Com duas, a mais barata faz o
- * papel da intermediária.
+ * Se todas as cotações tiverem o mesmo prazo, só a mais cara aparece. Com
+ * uma única cotação, só ela aparece. Com duas, a mais barata faz o papel
+ * da intermediária. A retirada no local não entra aqui: ela é acrescentada
+ * depois, no fim.
  */
 export function presentShippingChoices(
   options: IShippingOption[],
 ): IShippingOption[] {
-  if (options.length === 0) return [];
+  const distinct = onePricePerDeadline(options);
+  if (distinct.length === 0) return [];
 
-  const sorted = [...options].sort(byPrice);
+  const sorted = [...distinct].sort(byPrice);
   const cheapestPrice = sorted[0].price;
   const highestPrice = sorted[sorted.length - 1].price;
   const maxDays = Math.max(...sorted.map((option) => option.deliveryDays));
@@ -175,5 +203,6 @@ export function presentShippingChoices(
 
   if (standard.price === highestPrice) return [standard];
 
-  return [standard, choice(sorted[sorted.length - 1], minDays)];
+  const express = choice(sorted[sorted.length - 1], minDays);
+  return [standard, express];
 }

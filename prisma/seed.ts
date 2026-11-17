@@ -1,25 +1,25 @@
-import { MissingEnvironmentVariableError } from '../src/app/_errors/missing-environment-variable.error';
-import { uploadProductImage } from '../src/lib/storage';
-import { randomUUID } from 'node:crypto';
-import { readFile } from 'node:fs/promises';
-import path from 'node:path';
-import { hashPassword } from 'better-auth/crypto';
-import { config } from 'dotenv';
-import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient } from '../src/generated/prisma/client';
-import { CATEGORIES, PRODUCTS } from './catalog';
+import { PrismaPg } from "@prisma/adapter-pg";
+import { hashPassword } from "better-auth/crypto";
+import { config } from "dotenv";
+import { randomUUID } from "node:crypto";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import { MissingEnvironmentVariableError } from "../src/app/_errors/missing-environment-variable.error";
+import { PrismaClient } from "../src/generated/prisma/client";
+import { uploadProductImage } from "../src/lib/storage";
+import { CATEGORIES, PRODUCTS } from "./catalog";
 
-config({ path: '.env' });
-config({ path: '.env.local', override: true });
+config({ path: ".env" });
+config({ path: ".env.local", override: true });
 
-const ADMIN_EMAIL = 'admin@admin.com';
-const ADMIN_PASSWORD = 'admin';
-const ADMIN_NAME = 'Administrador';
+const ADMIN_EMAIL = "admin@admin.com";
+const ADMIN_PASSWORD = "admin";
+const ADMIN_NAME = "Administrador";
 
 const connectionString = process.env.DATABASE_URL;
 
 if (!connectionString) {
-  throw new MissingEnvironmentVariableError('DATABASE_URL');
+  throw new MissingEnvironmentVariableError("DATABASE_URL");
 }
 
 const prisma = new PrismaClient({
@@ -37,13 +37,13 @@ async function seedAdmin() {
       where: { id: existing.id },
       data: {
         name: ADMIN_NAME,
-        role: 'admin',
+        role: "admin",
         emailVerified: true,
       },
     });
 
     const account = await prisma.account.findFirst({
-      where: { userId: existing.id, providerId: 'credential' },
+      where: { userId: existing.id, providerId: "credential" },
     });
 
     if (account) {
@@ -61,7 +61,7 @@ async function seedAdmin() {
       data: {
         id: randomUUID(),
         accountId: existing.id,
-        providerId: 'credential',
+        providerId: "credential",
         userId: existing.id,
         password: passwordHash,
       },
@@ -77,12 +77,12 @@ async function seedAdmin() {
       name: ADMIN_NAME,
       email: ADMIN_EMAIL,
       emailVerified: true,
-      role: 'admin',
+      role: "admin",
       accounts: {
         create: {
           id: randomUUID(),
           accountId: userId,
-          providerId: 'credential',
+          providerId: "credential",
           password: passwordHash,
         },
       },
@@ -96,12 +96,21 @@ async function catalogImageUrl(sitePath: string) {
   const cached = catalogUrls.get(sitePath);
   if (cached) return cached;
 
-  const filename = sitePath.startsWith('/images/') ? sitePath.slice('/images/'.length) : '';
-  if (!filename || filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+  const filename = sitePath.startsWith("/images/")
+    ? sitePath.slice("/images/".length)
+    : "";
+  if (
+    !filename ||
+    filename.includes("..") ||
+    filename.includes("/") ||
+    filename.includes("\\")
+  ) {
     throw new Error(`Caminho de imagem do catálogo inválido: ${sitePath}`);
   }
 
-  const bytes = await readFile(path.join(process.cwd(), 'public', 'images', filename));
+  const bytes = await readFile(
+    path.join(process.cwd(), "public", "images", filename),
+  );
   const uploaded = await uploadProductImage(new Uint8Array(bytes), {
     path: `catalog/${filename}`,
     upsert: true,
@@ -116,7 +125,7 @@ async function catalogImageUrl(sitePath: string) {
 }
 
 async function main() {
-  await seedAdmin();
+  // await seedAdmin();
 
   for (const category of CATEGORIES) {
     await prisma.category.upsert({

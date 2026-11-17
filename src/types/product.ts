@@ -38,7 +38,7 @@ export interface IProduct {
   formattedPrice: string;
   /** Texto de parcelamento (ex: 'Até 3x sem juros') */
   installments: string;
-  /** Descrição curta do produto */
+  /** Descrição exibida no detalhe do produto */
   description: string;
   /** Lista de especificações técnicas exibidas no card */
   specifications: string[];
@@ -50,4 +50,8 @@ export interface IProduct {
   inStock: boolean;
   /** true = exibe badge "Mais Escolhido" */
   featured: boolean;
+  /** Dias de produção cadastrados. null ou 0 não geram texto. */
+  productionDays: number | null;
+  /** Frase já formatada para o card e o detalhe. null quando não deve aparecer. */
+  productionTimeText: string | null;
 }

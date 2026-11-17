@@ -230,7 +230,10 @@ O carrinho fica em **`/cart`**. O navegador guarda apenas `productId` e `quantit
 | `src/lib/cart-calculation.ts` | Regras puras: limite por estoque, subtotal e total em centavos |
 | `src/lib/cart-input.ts` | Validação da entrada vinda do navegador e do CEP |
 | `src/lib/viacep.ts` | `lookupPostalCode`: consulta o CEP na ViaCEP (nunca lança; devolve `IPostalCodeLookup`) |
-| `src/lib/shipping.ts` | **Ponto de integração do frete** (`calculateShipping`) |
+| `src/lib/shipping.ts` | Facade do frete (`calculateShipping`): escolhe o provedor ativo e devolve a cotação |
+| `src/lib/shipping-melhor-envio.ts` | Cotação no Melhor Envio |
+| `src/lib/shipping-central-do-frete.ts` | Cotação na Central do Frete |
+| `src/lib/shop-settings.ts` | Configuração da loja: tempo de produção e provedor de frete |
 | `src/lib/checkout-shipping.ts` | Frete gravado no pedido, o mesmo no checkout do cliente e no painel (`quoteOrderShipping`) |
 | `src/lib/orders.ts` | `createOrder` (baixa o estoque) e `markOrderPaid` (confirma o pagamento) |
 | `src/lib/infinitepay.ts` | Cliente do Checkout Integrado (`createCheckoutLink`, `checkPayment`) |
@@ -253,7 +256,8 @@ O carrinho fica em **`/cart`**. O navegador guarda apenas `productId` e `quantit
 
 - **Estoque:** a quantidade nunca passa do estoque cadastrado nem de 99 por produto. A conferência acontece ao adicionar, ao abrir o carrinho, ao alterar a quantidade e antes de seguir para o checkout.
 - **CEP e endereço:** o CEP é pedido no formulário de entrega (`CheckoutForm`). O botão _"Calcular"_ (ou Enter no campo) chama `lookupAddress` e `quoteShipping`: a primeira consulta `https://viacep.com.br/ws/{cep}/json/` no servidor (timeout de 5 s) e preenche rua, bairro, cidade e UF; a segunda atualiza o frete. Enquanto o CEP não for consultado com sucesso, os campos de endereço e o botão _"Ir para o checkout"_ ficam desabilitados; mudar o CEP desfaz o preenchimento. Os campos continuam editáveis depois da consulta (ex.: CEP geral de cidade pequena, que vem sem rua). Erros tratados: CEP inválido (`invalid`), CEP inexistente (`erro` da ViaCEP, `not-found`) e ViaCEP fora do ar, lenta ou com resposta inesperada (`unavailable`). No servidor, `placeOrder` confere o formato do CEP e os campos obrigatórios e depois consulta a ViaCEP de novo (`checkAddressPostalCode`): CEP inexistente, ou cidade/UF diferentes das do CEP (comparadas sem acento e sem diferença de maiúsculas), recusam o pedido com uma mensagem e destacam o campo. Se a ViaCEP falhar (rede, timeout, resposta inválida) o endereço é aceito como veio, para que uma queda dela não impeça pedidos. Rua e bairro não são comparados, porque o CEP de cidades pequenas não traz rua.
-- **Frete (Melhor Envio):** `calculateShipping` em `src/lib/shipping.ts` é o único ponto que fala com o Melhor Envio. Ela chama `POST /api/v2/me/shipment/calculate` com o CEP de origem (`MELHOR_ENVIO_FROM_POSTAL_CODE`), o CEP de destino e, por item, as dimensões (cm), o peso (kg) e o preço. O token fica só no servidor. Opções que voltam com `error` são ignoradas. A mais barata entra no total; a pessoa pode escolher outra transportadora na lista. O prazo usa `custom_delivery_time` (ou `delivery_time`) e o valor usa `custom_price` (ou `price`). Timeout, token inválido, CEP sem cobertura ou resposta inesperada viram uma mensagem amigável, sem derrubar a página. A etiqueta não é comprada. Variáveis em [Frete (Melhor Envio)](#frete-melhor-envio).
+- **Frete:** `calculateShipping` em `src/lib/shipping.ts` escolhe o provedor ativo e cota no servidor. O padrão, inclusive sem registro em `shop_settings`, é o Melhor Envio (`POST /api/v2/me/shipment/calculate`). A Central do Frete (`POST /v1/quotation`, token no `Authorization` sem `Bearer`) entra no lugar dele quando o admin escolhe em `/admin/settings`. Os dois conjuntos de variáveis podem coexistir; só um provedor fica ativo. A pessoa vê no máximo duas entregas (preço intermediário com o maior prazo, e a mais cara com o menor prazo) e, em seguida, a Retirada no local. O nome da transportadora não aparece. O preço do navegador não entra no pedido: o checkout recota. Timeout, token inválido, CEP sem cobertura ou resposta inesperada viram uma mensagem amigável, sem derrubar a página. Se o provedor escolhido não estiver configurado, a cotação fica indisponível e a retirada no local continua no mesmo critério de hoje. A etiqueta não é comprada. Variáveis em [Frete (Melhor Envio)](#frete-melhor-envio) e [Frete (Central do Frete)](#frete-central-do-frete).
+- **Configurações (`/admin/settings`):** somente admin. Guarda o texto do tempo de produção e o provedor de frete (`melhor_envio` ou `central_do_frete`). A tela avisa se faltam variáveis, sem mostrar token nem URL.
 - **Pedidos:** o botão _"Ir para o checkout"_ envia os dados de entrega e chama a server action `placeOrder`, que confere o carrinho no servidor e grava `Order` e `OrderItem` (status `AWAITING_PAYMENT`, origem `SITE`) numa única transação. Cada item guarda o preço unitário do momento do pedido. O estoque é baixado na mesma transação com `UPDATE ... WHERE stock >= quantidade`, então nunca fica negativo, nem com compras simultâneas; se faltar estoque, nada é gravado e a mensagem diz qual produto. Pedidos feitos pelo WhatsApp ou Instagram usam `OrderSource` (`WHATSAPP`, `INSTAGRAM`). Na hora de gravar, `placeOrder` **cota o frete de novo no servidor** e grava `Order.shipping`, o serviço (`shippingService`, ex.: `Correios · PAC`) e o prazo (`deliveryDays`). O valor enviado pelo navegador não é usado. Sem cotação válida o pedido não é criado e a pessoa vê a mensagem de erro.
 - **Expiração:** todo pedido nasce com `expiresAt` (agora + `ORDER_EXPIRATION_MINUTES`, padrão 60). Passado o prazo sem pagamento, ele vira `EXPIRED` e o estoque volta. `cancelOrder` (pedido aguardando pagamento ou pago, ainda sem produção) também devolve o estoque e deixa o pedido `CANCELLED`. Expirar e cancelar são idempotentes: a troca de status é um `updateMany` condicional na mesma transação da devolução, e só quem de fato mudou o pedido devolve o estoque (chamadas repetidas ou simultâneas não devolvem duas vezes). Variáveis, agendamento e funcionamento estão em [Expiração de pedidos](#expiração-de-pedidos).
 - **Checkout (InfinitePay):** `placeOrder` gera, no servidor, um link do Checkout Integrado com os itens, o frete e o total do pedido, grava `checkoutUrl` e o navegador segue para esse link. Se o link não for gerado, o pedido é cancelado, o estoque volta e a pessoa vê uma mensagem para tentar de novo. O pagamento só vira `PAID` depois do `payment_check`. Detalhes, variáveis e o que a documentação ainda não confirma estão em [Checkout (InfinitePay)](#checkout-infinitepay).
@@ -279,9 +283,24 @@ A cotação usa a API do Melhor Envio. A entrega continua fora da plataforma: aq
 
 O peso de cada produto (kg) entra na cotação. Ele é cadastrado no admin, no formulário do produto, e o seed em `prisma/catalog.ts` já traz um peso por item. Depois de atualizar o banco (`npm run db:migrate`), rode `npm run db:seed` para gravar esses pesos nos produtos do catálogo.
 
+### Frete (Central do Frete)
+
+A Central do Frete cota no mesmo lugar do Melhor Envio quando está ativa em **Configurações**. A entrega continua fora da plataforma: a loja não contrata o frete, não envia XML de NF-e e não baixa etiqueta. O token nunca vai para o navegador. O cabeçalho é `Authorization: <token>`, sem `Bearer`.
+
+O corpo da cotação manda o CEP de destino, o CEP de origem, o subtotal do carrinho em `invoice_amount` e um volume por linha (`quantity`, medidas em cm e peso em kg). A resposta traz `prices[]`. O NIX lê `id`, `price` e `delivery_time`. Hosts permitidos: `api.centraldofrete.com` e `sandbox.centraldofrete.com`. O sandbox devolve exemplos fixos.
+
+**Variáveis de ambiente** (modelo em `.env.example`; só no servidor):
+
+| Variável | Para que serve |
+| --- | --- |
+| `CENTRAL_DO_FRETE_TOKEN` | Token da conta. Vai no `Authorization` sem `Bearer`. |
+| `CENTRAL_DO_FRETE_BASE_URL` | `https://sandbox.centraldofrete.com` para testar, ou `https://api.centraldofrete.com` em produção. |
+| `CENTRAL_DO_FRETE_FROM_POSTAL_CODE` | CEP de origem da loja, 8 dígitos. |
+| `CENTRAL_DO_FRETE_CARGO_TYPES` | Opcional. Ids de tipo de carga separados por vírgula. Vazio usa o padrão da conta. |
+
 ### Checkout (InfinitePay)
 
-A InfinitePay só cobra. O frete continua sendo a cotação do Melhor Envio, enviada como um item _"Frete"_ porque a documentação não descreve um campo próprio de frete. O preço sai do pedido gravado no servidor, em centavos (`Math.round(reais * 100)`).
+A InfinitePay só cobra. O frete continua sendo a cotação do provedor ativo, enviada como um item _"Frete"_ porque a documentação não descreve um campo próprio de frete. O preço sai do pedido gravado no servidor, em centavos (`Math.round(reais * 100)`).
 
 Depois do pagamento a pessoa cai em `/pedido/obrigado`. Essa página e o webhook (`POST /api/payments/infinitepay/webhook`) chamam `POST /payment_check` e só então `markOrderPaid`. Parâmetros da URL e o corpo do webhook não provam pagamento. A comparação usa `amount`. No cartão ele precisa ser o total do pedido; `paid_amount` pode ser maior quando a taxa de parcelamento fica com o cliente. No Pix, `amount` pode vir já com o desconto, ou continuar no total e o desconto aparecer em `paid_amount`. Os dois casos viram `PAID` e gravam `discount`. Um valor fora dessa conta vai para `paymentReview`.
 
@@ -447,7 +466,7 @@ O componente **`src/components/ProductLightbox.tsx`** é responsável pela exper
 
 1. Crie uma conta em [vercel.com](https://vercel.com) e importe o repositório.
 2. Defina o **Root Directory** como `nix-nextjs`.
-3. Adicione as variáveis de ambiente do `.env.example` (banco do pooler, as três variáveis do Supabase, InfinitePay, Melhor Envio e `NEXT_PUBLIC_SITE_URL`) nas configurações do projeto. A `SUPABASE_SERVICE_ROLE_KEY` fica sem o prefixo `NEXT_PUBLIC_`. Em Production e em Preview, também a `DIRECT_URL` (veja [Migrations no deploy](#migrations-no-deploy)). Antes do primeiro deploy: `supabase db push`. O corpo de cada Server Action aceita 4,5 MB, dentro do limite de 4,5 MB das funções da Vercel, para uma foto de 4 MB.
+3. Adicione as variáveis de ambiente do `.env.example` (banco do pooler, as três variáveis do Supabase, InfinitePay, Melhor Envio, Central do Frete e `NEXT_PUBLIC_SITE_URL`) nas configurações do projeto. A `SUPABASE_SERVICE_ROLE_KEY` fica sem o prefixo `NEXT_PUBLIC_`. Em Production e em Preview, também a `DIRECT_URL` (veja [Migrations no deploy](#migrations-no-deploy)). Antes do primeiro deploy: `supabase db push`. O corpo de cada Server Action aceita 4,5 MB, dentro do limite de 4,5 MB das funções da Vercel, para uma foto de 4 MB.
 4. Clique em **Deploy**. A Vercel executará `npm run build`, que aplica as migrations no banco do ambiente (Production ou Preview), e configurará CDN global e SSL automaticamente.
 
 ### Migrations no deploy

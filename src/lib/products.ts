@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+import { catalogProductionTime } from "@/lib/production-time";
+import { getProductionTimeTemplate } from "@/lib/shop-settings";
 import type { IProduct } from "@/types/product";
 import { cacheLife, cacheTag } from "next/cache";
 
@@ -7,20 +9,25 @@ const currency = new Intl.NumberFormat("pt-BR", {
   currency: "BRL",
 });
 
-export async function getProducts(): Promise<IProduct[]> {
+async function getCachedProducts(): Promise<IProduct[]> {
   "use cache";
   cacheLife("hours");
   cacheTag("products");
 
-  const products = await prisma.product.findMany({
-    where: { active: true },
-    orderBy: { sortOrder: "asc" },
-    include: {
-      category: true,
-      specifications: { orderBy: { sortOrder: "asc" } },
-      images: { orderBy: { sortOrder: "asc" } },
-    },
-  });
+  // O modelo global entra neste cache de horas. saveShopSettings chama
+  // updateTag("products"), então a vitrine troca a frase quando Configurações muda.
+  const [products, globalTemplate] = await Promise.all([
+    prisma.product.findMany({
+      where: { active: true },
+      orderBy: { sortOrder: "asc" },
+      include: {
+        category: true,
+        specifications: { orderBy: { sortOrder: "asc" } },
+        images: { orderBy: { sortOrder: "asc" } },
+      },
+    }),
+    getProductionTimeTemplate(),
+  ]);
 
   return products.map((product) => {
     const primary =
@@ -50,6 +57,16 @@ export async function getProducts(): Promise<IProduct[]> {
       images: urls.length > 1 ? urls : undefined,
       inStock: product.stock > 0,
       featured: product.featured,
+      productionDays: product.productionDays,
+      productionTimeText: catalogProductionTime(
+        product.productionDays,
+        product.productionTimeTemplate,
+        globalTemplate,
+      ).productionTimeText,
     };
   });
+}
+
+export async function getProducts(): Promise<IProduct[]> {
+  return getCachedProducts();
 }

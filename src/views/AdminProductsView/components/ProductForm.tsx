@@ -4,6 +4,7 @@ import {
   saveProduct,
   uploadProductImageAction,
 } from "@/app/admin/products/actions";
+import ProductionTimeText from "@/components/ProductionTimeText";
 import {
   detectProductImage,
   productImageLimitBytes,
@@ -17,6 +18,14 @@ import {
   parseDimension,
 } from "@/lib/product-dimensions";
 import { productFieldLimits } from "@/lib/product-input";
+import {
+  parseProductionDays,
+  productionDaysHint,
+  productionTimeLimits,
+  productionTimeOverrideHint,
+  productionTimePlaceholder,
+  productionTimePreview,
+} from "@/lib/production-time";
 import {
   productFormInitialState,
   type IAdminCategory,
@@ -54,6 +63,7 @@ interface IProductFormProps {
   categories: IAdminCategory[];
   product?: IAdminProduct;
   nextSortOrder: number;
+  productionTimeTemplate: string;
 }
 
 const fieldClass =
@@ -82,6 +92,7 @@ export default function ProductForm({
   categories,
   product,
   nextSortOrder,
+  productionTimeTemplate,
 }: IProductFormProps) {
   const [state, action, pending] = useActionState(
     saveProduct,
@@ -124,6 +135,12 @@ export default function ProductForm({
   const [weight, setWeight] = useState(
     product ? formatWeightInput(product.weight) : "",
   );
+  const [productionDays, setProductionDays] = useState(
+    product?.productionDays == null ? "" : String(product.productionDays),
+  );
+  const [productionTemplate, setProductionTemplate] = useState(
+    product?.productionTimeTemplate ?? "",
+  );
   const [description, setDescription] = useState(product?.description ?? "");
   const [active, setActive] = useState(product?.active ?? true);
   const [featured, setFeatured] = useState(product?.featured ?? false);
@@ -163,6 +180,24 @@ export default function ProductForm({
         })
       : "";
   const title = name.trim() || (product ? "Editar produto" : "Novo produto");
+  const parsedProductionDays = parseProductionDays(productionDays);
+  const productionDayCount =
+    "value" in parsedProductionDays ? parsedProductionDays.value : null;
+  const productionTemplateSource =
+    productionTemplate.trim() || productionTimeTemplate;
+  const templateReady = productionTemplateSource.includes(
+    productionTimePlaceholder,
+  );
+  const hasPositiveProductionDays =
+    productionDayCount !== null && productionDayCount > 0;
+  const storeProductionTime = hasPositiveProductionDays
+    ? productionTimePreview(productionDayCount, productionTemplateSource)
+    : null;
+  const templatePreview = hasPositiveProductionDays
+    ? productionTimePreview(productionDayCount, productionTemplateSource)
+    : productionDayCount === 0
+      ? null
+      : productionTimePreview(5, productionTemplateSource);
 
   useEffect(() => {
     const live = livePreviews.current;
@@ -599,7 +634,7 @@ export default function ProductForm({
           <Section
             index="03"
             title="Ficha"
-            description="O texto curto e as medidas que aparecem no card."
+            description="A descrição abre no detalhe do produto. Capacidade, medidas, tempo de produção e especificações ficam no card."
           >
             <div className="space-y-2">
               <Field
@@ -700,6 +735,77 @@ export default function ProductForm({
               </Field>
 
               <Field
+                label="Tempo de produção (dias)"
+                error={errors.productionDays}
+                errorId="production-days-error"
+                hint={productionDaysHint}
+                hintId="production-days-hint"
+              >
+                <input
+                  name="productionDays"
+                  value={productionDays}
+                  onChange={(event) => setProductionDays(event.target.value)}
+                  placeholder="5"
+                  inputMode="numeric"
+                  maxLength={3}
+                  disabled={pending}
+                  aria-invalid={Boolean(errors.productionDays)}
+                  aria-describedby={
+                    errors.productionDays
+                      ? "production-days-error"
+                      : "production-days-hint"
+                  }
+                  className={controlClass(Boolean(errors.productionDays))}
+                />
+              </Field>
+
+              <Field
+                label="Texto do tempo de produção"
+                error={errors.productionTimeTemplate}
+                errorId="production-template-error"
+                className="min-[760px]:col-span-2"
+              >
+                <textarea
+                  name="productionTimeTemplate"
+                  value={productionTemplate}
+                  onChange={(event) =>
+                    setProductionTemplate(event.target.value)
+                  }
+                  placeholder={productionTimeTemplate}
+                  rows={3}
+                  maxLength={productionTimeLimits.template}
+                  disabled={pending}
+                  aria-invalid={Boolean(errors.productionTimeTemplate)}
+                  aria-describedby={
+                    errors.productionTimeTemplate
+                      ? "production-template-hint production-template-error"
+                      : "production-template-hint"
+                  }
+                  className={`${controlClass(Boolean(errors.productionTimeTemplate))} min-h-24 resize-y`}
+                />
+                <span
+                  id="production-template-hint"
+                  className="text-[0.8125rem] font-normal text-ink-muted"
+                >
+                  {productionTimeOverrideHint}
+                </span>
+                <span className="text-[0.8125rem] leading-relaxed text-ink-secondary">
+                  {!templateReady ? (
+                    "Inclua {dias} para ver a prévia."
+                  ) : templatePreview ? (
+                    <>
+                      {hasPositiveProductionDays
+                        ? "Prévia: "
+                        : "Prévia (exemplo): "}
+                      {templatePreview}
+                    </>
+                  ) : (
+                    "Com 0 dias, a loja não mostra o texto."
+                  )}
+                </span>
+              </Field>
+
+              <Field
                 label="Descrição"
                 error={errors.description}
                 errorId="description-error"
@@ -781,7 +887,7 @@ export default function ProductForm({
           <Section
             index="05"
             title="Imagens"
-            description="A foto principal é a que abre o card. JPEG, PNG ou WebP, até 4 MB. A foto aparece na hora e sobe ao salvar."
+            description="A foto principal é a do card. JPEG, PNG ou WebP, até 4 MB. A foto aparece na hora e sobe ao salvar."
           >
             <div className="grid gap-4 min-[760px]:grid-cols-2">
               {images.map((image, index) => {
@@ -896,7 +1002,7 @@ export default function ProductForm({
             installments={installments}
             capacity={capacity}
             dimensions={dimensions}
-            description={description}
+            productionTimeText={storeProductionTime}
             image={shownImage(primaryImage)}
             active={active}
             featured={featured}
@@ -1083,7 +1189,7 @@ function Preview({
   installments,
   capacity,
   dimensions,
-  description,
+  productionTimeText,
   image,
   active,
   featured,
@@ -1096,7 +1202,7 @@ function Preview({
   installments: string;
   capacity: string;
   dimensions: string;
-  description: string;
+  productionTimeText: string | null;
   image: string;
   active: boolean;
   featured: boolean;
@@ -1150,15 +1256,14 @@ function Preview({
         <h2 className="mt-1 text-xl leading-tight font-semibold tracking-[-0.02em] text-ink-primary">
           {name}
         </h2>
-        <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-ink-secondary">
-          {description.trim() || "A descrição curta aparece aqui."}
-        </p>
 
         {dimensions.trim() ? (
           <p className="mt-3 rounded-input bg-surface-canvas-fog px-3 py-2 text-[0.8125rem] font-semibold text-ink-primary">
             {dimensions}
           </p>
         ) : null}
+
+        <ProductionTimeText text={productionTimeText} className="mt-3" />
 
         {specifications.length > 0 ? (
           <ul className="mt-3 flex list-none flex-col gap-1 border-t border-border-hairline pt-3">

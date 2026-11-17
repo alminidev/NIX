@@ -36,6 +36,10 @@ export interface IAdminProduct {
   featured: boolean;
   active: boolean;
   sortOrder: number;
+  /** null quando o admin deixou o campo vazio */
+  productionDays: number | null;
+  /** Override só deste produto. null usa o modelo de Configurações. */
+  productionTimeTemplate: string | null;
 }
 
 export interface IProductFieldErrors {
@@ -51,6 +55,8 @@ export interface IProductFieldErrors {
   specifications?: string;
   images?: string;
   sortOrder?: string;
+  productionDays?: string;
+  productionTimeTemplate?: string;
 }
 
 export interface IProductFormState {

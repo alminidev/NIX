@@ -79,6 +79,47 @@ describe("readProductForm dimensions", () => {
     }
   });
 
+  it("reads production days and an optional template", () => {
+    const empty = readProductForm(form());
+    assert.equal(empty.fieldErrors.productionDays, undefined);
+    assert.equal(empty.input?.productionDays, null);
+    assert.equal(empty.input?.productionTimeTemplate, null);
+
+    const filled = readProductForm(
+      form({
+        productionDays: "7",
+        productionTimeTemplate: " Prazo: {dias}. ",
+      }),
+    );
+    assert.equal(filled.input?.productionDays, 7);
+    assert.equal(filled.input?.productionTimeTemplate, "Prazo: {dias}.");
+
+    const zero = readProductForm(form({ productionDays: "0" }));
+    assert.equal(zero.input?.productionDays, 0);
+    assert.equal(zero.fieldErrors.productionDays, undefined);
+  });
+
+  it("rejects a production time that is not a whole number within the cap", () => {
+    for (const bad of ["abc", "-1", "1,5", "1.5", "366", "7 dias"]) {
+      const { input, fieldErrors } = readProductForm(
+        form({ productionDays: bad }),
+      );
+
+      assert.equal(input, null);
+      assert.ok(fieldErrors.productionDays);
+      assert.equal(fieldErrors.dimensions, undefined);
+    }
+  });
+
+  it("rejects a product template without {dias}", () => {
+    const { input, fieldErrors } = readProductForm(
+      form({ productionTimeTemplate: "Sem o prazo." }),
+    );
+
+    assert.equal(input, null);
+    assert.match(fieldErrors.productionTimeTemplate ?? "", /\{dias\}/);
+  });
+
   it("rejects a missing or invalid side", () => {
     for (const key of ["dimensionLength", "dimensionWidth", "dimensionHeight"]) {
       for (const bad of ["", "0", "abc", "-1", "1,25"]) {
