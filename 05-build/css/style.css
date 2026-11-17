@@ -447,7 +447,7 @@ h3 {
 }
 
 .hero-subtitle {
-  color: var(--color-ink-secondary);
+  color: #000000;
   font-size: clamp(0.9375rem, 1.4vw, 1.2rem);
   font-weight: 500;
   line-height: 1.5;
