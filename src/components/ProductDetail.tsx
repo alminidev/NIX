@@ -273,7 +273,7 @@ function ProductDetailContent({
 
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-7 py-5">
             {product.description.trim() ? (
-              <p className="text-[0.9375rem] leading-[1.6] whitespace-pre-wrap text-ink-secondary">
+              <p className="text-[0.9375rem] leading-[1.6] break-words whitespace-pre-wrap text-ink-secondary">
                 {product.description}
               </p>
             ) : null}
@@ -363,7 +363,7 @@ function ProductDetailContent({
                         <h3 className="text-xs font-semibold tracking-[0.05em] text-ink-muted uppercase">
                           Descrição
                         </h3>
-                        <p className="mt-1.5 text-[0.9375rem] leading-[1.55] whitespace-pre-wrap text-ink-secondary">
+                        <p className="mt-1.5 text-[0.9375rem] leading-[1.55] break-words whitespace-pre-wrap text-ink-secondary">
                           {product.description}
                         </p>
                       </div>

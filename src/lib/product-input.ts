@@ -50,7 +50,6 @@ export const productFieldLimits = {
   name: 160,
   capacity: 120,
   installments: 120,
-  description: 1000,
   specification: 240,
   specifications: 30,
   image: 500,
@@ -158,8 +157,6 @@ export function readProductForm(formData: FormData): IParsedProductForm {
 
   if (!description) {
     fieldErrors.description = "Informe a descrição.";
-  } else if (description.length > productFieldLimits.description) {
-    fieldErrors.description = `A descrição pode ter no máximo ${productFieldLimits.description} caracteres.`;
   }
 
   if (!/^\d+$/.test(sortRaw) || Number(sortRaw) > productFieldLimits.sortOrder) {
