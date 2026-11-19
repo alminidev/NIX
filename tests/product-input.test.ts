@@ -131,3 +131,33 @@ describe("readProductForm dimensions", () => {
     }
   });
 });
+
+describe("readProductForm description", () => {
+  it("aceita descrição longa, sem limite de caracteres", () => {
+    const paragraph = "Mantém os filamentos secos e prontos para imprimir. ";
+    const description = `${paragraph.repeat(120)}\n\nSegundo parágrafo com mais detalhes.`.trim();
+    assert.ok(description.length > 5000);
+
+    const { input, fieldErrors } = readProductForm(form({ description }));
+
+    assert.equal(fieldErrors.description, undefined);
+    assert.equal(input?.description, description);
+  });
+
+  it("continua exigindo a descrição", () => {
+    for (const bad of ["", "   \n  "]) {
+      const { input, fieldErrors } = readProductForm(form({ description: bad }));
+
+      assert.equal(input, null);
+      assert.equal(fieldErrors.description, "Informe a descrição.");
+    }
+  });
+
+  it("remove espaços nas pontas e mantém as quebras de linha internas", () => {
+    const { input } = readProductForm(
+      form({ description: "  Linha um.\nLinha dois.  " }),
+    );
+
+    assert.equal(input?.description, "Linha um.\nLinha dois.");
+  });
+});

@@ -817,7 +817,6 @@ export default function ProductForm({
                   onChange={(event) => setDescription(event.target.value)}
                   required
                   rows={4}
-                  maxLength={productFieldLimits.description}
                   disabled={pending}
                   aria-invalid={Boolean(errors.description)}
                   aria-describedby={
