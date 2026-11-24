@@ -19,6 +19,7 @@ import {
   markOrderPaid,
   type IPaymentRecord,
 } from "@/lib/orders";
+import { deletedProductLabel } from "@/lib/delete-product";
 import { paidOrderStatuses } from "@/lib/order-status";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@/generated/prisma/client";
@@ -481,7 +482,7 @@ async function loadCheckoutOrder(orderId: number): Promise<ICheckoutOrder | null
     city: order.city,
     state: order.state,
     items: order.items.map((item) => ({
-      name: item.product.name,
+      name: item.product?.name ?? deletedProductLabel,
       quantity: item.quantity,
       unitPrice: Number(item.unitPrice),
     })),

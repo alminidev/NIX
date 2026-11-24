@@ -150,6 +150,10 @@ async function releaseOrder(
     });
 
     for (const item of items) {
+      if (item.productId === null) {
+        throw new Error("Item de pedido sem produto.");
+      }
+
       await tx.product.update({
         where: { id: item.productId },
         data: { stock: { increment: item.quantity } },
@@ -412,6 +416,8 @@ async function payExpiredOrder(
       });
 
       for (const item of items) {
+        if (item.productId === null) throw new StockShortError();
+
         const reserved = await tx.product.updateMany({
           where: { id: item.productId, stock: { gte: item.quantity } },
           data: { stock: { decrement: item.quantity } },

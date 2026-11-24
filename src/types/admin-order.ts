@@ -47,11 +47,13 @@ export interface IAdminOrderPage {
   pageCount: number;
 }
 
-/** Item do pedido, com o produto e o preço congelados na hora da compra. */
+/** Item do pedido, com o preço congelado na hora da compra. */
 export interface IAdminOrderItem {
   id: number;
-  productId: number;
+  /** Null quando o produto já foi excluído */
+  productId: number | null;
   name: string;
+  /** Vazio quando o produto já foi excluído */
   sku: string;
   /** Foto principal do produto; vazio quando não há */
   image: string;

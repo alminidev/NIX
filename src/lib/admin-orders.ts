@@ -4,6 +4,7 @@ import {
   getOrderDateRange,
   parseOrderIdSearch,
 } from "@/lib/admin-order-filters";
+import { deletedProductLabel } from "@/lib/delete-product";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@/generated/prisma/client";
 import type {
@@ -109,16 +110,17 @@ export async function getAdminOrder(
   if (!order) return null;
 
   const items = order.items.map((item) => {
-    const primary =
-      item.product.images.find((image) => image.isPrimary) ??
-      item.product.images[0];
+    const primary = item.product
+      ? (item.product.images.find((image) => image.isPrimary) ??
+        item.product.images[0])
+      : undefined;
     const unitPrice = Number(item.unitPrice);
 
     return {
       id: item.id,
       productId: item.productId,
-      name: item.product.name,
-      sku: item.product.sku,
+      name: item.product?.name ?? deletedProductLabel,
+      sku: item.product?.sku ?? "",
       image: primary?.url ?? "",
       quantity: item.quantity,
       unitPrice,

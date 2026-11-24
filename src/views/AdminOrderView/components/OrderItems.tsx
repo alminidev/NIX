@@ -42,15 +42,23 @@ export default function OrderItems({ order }: IOrderItemsProps) {
 
             <div className="flex min-w-0 flex-1 flex-col gap-2 min-[640px]:flex-row min-[640px]:items-start min-[640px]:justify-between min-[640px]:gap-4">
               <div className="min-w-0">
-                <Link
-                  href={`/admin/products/${item.productId}`}
-                  className="inline-block py-0.5 text-[0.9375rem] leading-snug font-semibold text-ink-primary transition-colors hover:text-brand-blue"
-                >
-                  {item.name}
-                </Link>
-                <p className="mt-1 text-[0.8125rem] text-ink-muted">
-                  {item.sku}
-                </p>
+                {item.productId === null ? (
+                  <p className="py-0.5 text-[0.9375rem] leading-snug font-semibold text-ink-primary">
+                    {item.name}
+                  </p>
+                ) : (
+                  <Link
+                    href={`/admin/products/${item.productId}`}
+                    className="inline-block py-0.5 text-[0.9375rem] leading-snug font-semibold text-ink-primary transition-colors hover:text-brand-blue"
+                  >
+                    {item.name}
+                  </Link>
+                )}
+                {item.sku ? (
+                  <p className="mt-1 text-[0.8125rem] text-ink-muted">
+                    {item.sku}
+                  </p>
+                ) : null}
                 <p className="mt-1 text-[0.8125rem] text-ink-secondary">
                   {item.quantity} × {currencyFormat.format(item.unitPrice)}
                 </p>
