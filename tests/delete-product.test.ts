@@ -26,7 +26,6 @@ const blockingStatuses: OrderStatus[] = [
   "PAID",
   "IN_PRODUCTION",
   "READY",
-  "EXPIRED",
 ];
 
 function orderInput(items: IOrderInput["items"]): IOrderInput {
@@ -151,6 +150,19 @@ describe(
         assert.equal(detail?.items[0].quantity, 1);
         assert.equal(detail?.items[0].unitPrice, 100);
       }
+    });
+
+    it("deletes a product whose only order is expired", async () => {
+      const product = await createProduct("Expirado");
+      const created = await orderFor(product.id);
+      await setStatus(created.id, "EXPIRED");
+
+      assert.deepEqual(await deleteProductById(product.id), { ok: true });
+
+      const detail = await getAdminOrder(created.id);
+      assert.equal(detail?.status, "EXPIRED");
+      assert.equal(detail?.items[0].productId, null);
+      assert.equal(detail?.items[0].name, deletedProductLabel);
     });
 
     it("deletes a product whose only order is already shipped", async () => {

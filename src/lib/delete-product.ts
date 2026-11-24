@@ -22,23 +22,30 @@ function prismaCode(error: unknown) {
 }
 
 /**
- * Exclui o produto. Pedidos cancelados ou enviados soltam o item (productId
- * nulo) e continuam no histórico. Qualquer outro status mantém o vínculo e
- * a exclusão falha, com a transação desfeita. A chave estrangeira em
- * RESTRICT cobre um pedido novo que entre no meio do caminho.
+ * Exclui o produto. Pedidos cancelados, expirados ou enviados soltam o item
+ * (productId nulo) e continuam no histórico. Qualquer outro status mantém o
+ * vínculo e a exclusão falha, com a transação desfeita. A chave estrangeira
+ * em RESTRICT cobre um pedido novo que entre no meio do caminho.
  */
 export async function deleteProductById(
   id: number,
 ): Promise<TDeleteProductResult> {
   try {
     await prisma.$transaction(async (tx) => {
-      await tx.orderItem.updateMany({
+      const items = await tx.orderItem.findMany({
         where: {
           productId: id,
           order: { status: { in: productDeletionOrderStatuses } },
         },
-        data: { productId: null },
+        select: { id: true },
       });
+
+      for (const item of items) {
+        await tx.orderItem.update({
+          where: { id: item.id },
+          data: { product: { disconnect: true } },
+        });
+      }
 
       await tx.product.delete({ where: { id } });
     });

@@ -34,13 +34,13 @@ export const paidOrderStatuses: OrderStatus[] = [
 ];
 
 /**
- * Pedidos que não travam a exclusão do produto: cancelado, ou enviado
- * (estágio final do ciclo). O item perde o vínculo e a tela mostra que o
- * produto foi excluído. Expirado fica de fora: um pagamento atrasado ainda
- * pode baixar o estoque desse produto.
+ * Pedidos que não travam a exclusão do produto: cancelado, expirado ou
+ * enviado (estágio final). O item perde o vínculo. Um pagamento que chegar
+ * depois, num pedido expirado sem produto, fica em revisão e não baixa estoque.
  */
 export const productDeletionOrderStatuses: OrderStatus[] = [
   "CANCELLED",
+  "EXPIRED",
   "SHIPPED",
 ];
 
