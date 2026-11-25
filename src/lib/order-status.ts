@@ -33,6 +33,17 @@ export const paidOrderStatuses: OrderStatus[] = [
   "SHIPPED",
 ];
 
+/**
+ * Pedidos que não travam a exclusão do produto: cancelado, expirado ou
+ * enviado (estágio final). O item perde o vínculo. Um pagamento que chegar
+ * depois, num pedido expirado sem produto, fica em revisão e não baixa estoque.
+ */
+export const productDeletionOrderStatuses: OrderStatus[] = [
+  "CANCELLED",
+  "EXPIRED",
+  "SHIPPED",
+];
+
 export function isOrderStatus(value: unknown): value is OrderStatus {
   return orderStatuses.includes(value as OrderStatus);
 }

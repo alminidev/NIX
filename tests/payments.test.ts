@@ -68,6 +68,7 @@ describe(
     let handleInfinitePayWebhook: typeof import("../src/lib/payments").handleInfinitePayWebhook;
     let readThankYou: typeof import("../src/lib/payments").readThankYou;
     let startCheckout: typeof import("../src/lib/payments").startCheckout;
+    let deleteProductById: typeof import("../src/lib/delete-product").deleteProductById;
     let categoryId: number;
     let counter = 0;
     let fetchMock: ReturnType<typeof mock.method>;
@@ -177,6 +178,7 @@ describe(
         await import("../src/lib/orders"));
       ({ confirmPayment, handleInfinitePayWebhook, readThankYou, startCheckout } =
         await import("../src/lib/payments"));
+      ({ deleteProductById } = await import("../src/lib/delete-product"));
 
       const category = await prisma.category.create({
         data: { slug: runId.toLowerCase(), name: runId },
@@ -399,6 +401,36 @@ describe(
       assert.equal(order.paymentReview, true);
       assert.equal(order.paymentReviewReason, paymentReviewReasons.expiredStock);
       assert.equal(await stockOf(product.id), 0);
+    });
+
+    it("keeps an expired order for review when the product was deleted", async () => {
+      const product = await createProduct(4, 30);
+      const created = await createOrder(
+        orderInput([{ productId: product.id, quantity: 1 }]),
+      );
+      await expireNow(created.id);
+      assert.equal(await stockOf(product.id), 4);
+      assert.deepEqual(await deleteProductById(product.id), { ok: true });
+
+      paidCheck(4000, 0);
+      const result = await confirmPayment(notice(created.id));
+
+      assert.equal(result.status, "review");
+      const order = await prisma.order.findUniqueOrThrow({
+        where: { id: created.id },
+      });
+      assert.equal(order.status, "EXPIRED");
+      assert.equal(order.paymentReview, true);
+      assert.equal(order.paymentReviewReason, paymentReviewReasons.expiredProduct);
+      assert.equal(
+        (
+          await prisma.orderItem.findFirstOrThrow({
+            where: { orderId: created.id },
+          })
+        ).productId,
+        null,
+      );
+      await prisma.order.delete({ where: { id: created.id } });
     });
 
     it("does not reactivate a cancelled order", async () => {

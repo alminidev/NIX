@@ -1,6 +1,10 @@
 "use server";
 
 import { MissingEnvironmentVariableError } from "@/app/_errors/missing-environment-variable.error";
+import {
+  deleteProductById,
+  productHasOpenOrdersMessage,
+} from "@/lib/delete-product";
 import { prisma } from "@/lib/prisma";
 import { productImageLimitBytes, productImageMessages } from "@/lib/product-image";
 import { readProductForm } from "@/lib/product-input";
@@ -212,20 +216,15 @@ export async function deleteProduct(
     select: { url: true },
   });
 
-  try {
-    await prisma.product.delete({ where: { id } });
-  } catch (error) {
-    if (prismaCode(error) === "P2025") {
-      return { status: "error", message: "Este produto não existe mais." };
-    }
-    if (prismaCode(error) === "P2003") {
-      return {
-        status: "error",
-        message:
-          "Este produto tem pedidos e não pode ser excluído. Desative-o para tirá-lo da vitrine.",
-      };
-    }
-    throw error;
+  const removed = await deleteProductById(id);
+  if (!removed.ok) {
+    return {
+      status: "error",
+      message:
+        removed.reason === "not-found"
+          ? "Este produto não existe mais."
+          : productHasOpenOrdersMessage,
+    };
   }
 
   await deleteRemovedProductImages(

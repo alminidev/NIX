@@ -150,6 +150,10 @@ async function releaseOrder(
     });
 
     for (const item of items) {
+      if (item.productId === null) {
+        throw new Error("Item de pedido sem produto.");
+      }
+
       await tx.product.update({
         where: { id: item.productId },
         data: { stock: { increment: item.quantity } },
@@ -244,6 +248,7 @@ export async function changeOrderStatus(
 export const paymentReviewReasons = {
   amount: "valor do pagamento diferente do total do pedido",
   expiredStock: "pago após expirar, sem estoque",
+  expiredProduct: "pago após expirar, produto excluído",
   cancelled: "pago em pedido cancelado",
 } as const;
 
@@ -294,6 +299,13 @@ class StockShortError extends Error {
   constructor() {
     super("Sem estoque para reativar o pedido.");
     this.name = "StockShortError";
+  }
+}
+
+class DeletedProductError extends Error {
+  constructor() {
+    super("Produto do pedido expirado foi excluído.");
+    this.name = "DeletedProductError";
   }
 }
 
@@ -372,6 +384,7 @@ export async function flagPaymentAmountMismatch(
 async function flagExpiredWithoutStock(
   orderId: number,
   payment: IPaymentRecord,
+  reason: string = paymentReviewReasons.expiredStock,
 ): Promise<TMarkOrderPaid> {
   try {
     const updated = await prisma.order.updateMany({
@@ -379,12 +392,12 @@ async function flagExpiredWithoutStock(
       data: {
         ...paymentData(payment),
         paymentReview: true,
-        paymentReviewReason: paymentReviewReasons.expiredStock,
+        paymentReviewReason: reason,
       },
     });
 
     if (updated.count === 1) {
-      return { result: "review", reason: paymentReviewReasons.expiredStock };
+      return { result: "review", reason };
     }
   } catch (error) {
     if (!isUniqueConstraint(error)) throw error;
@@ -412,6 +425,8 @@ async function payExpiredOrder(
       });
 
       for (const item of items) {
+        if (item.productId === null) throw new DeletedProductError();
+
         const reserved = await tx.product.updateMany({
           where: { id: item.productId, stock: { gte: item.quantity } },
           data: { stock: { decrement: item.quantity } },
@@ -435,6 +450,14 @@ async function payExpiredOrder(
 
     return { result: "paid", stockChanged: true };
   } catch (error) {
+    if (error instanceof DeletedProductError) {
+      return flagExpiredWithoutStock(
+        orderId,
+        payment,
+        paymentReviewReasons.expiredProduct,
+      );
+    }
+
     if (error instanceof StockShortError) {
       return flagExpiredWithoutStock(orderId, payment);
     }
