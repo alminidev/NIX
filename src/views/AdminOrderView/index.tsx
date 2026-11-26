@@ -10,6 +10,7 @@ import OrderCustomer from "@/views/AdminOrderView/components/OrderCustomer";
 import OrderDates from "@/views/AdminOrderView/components/OrderDates";
 import OrderItems from "@/views/AdminOrderView/components/OrderItems";
 import OrderPayment from "@/views/AdminOrderView/components/OrderPayment";
+import OrderPdfLink from "@/views/AdminOrderView/components/OrderPdfLink";
 import OrderStatusForm from "@/views/AdminOrderView/components/OrderStatusForm";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -32,21 +33,26 @@ export function AdminOrderView({ order }: IAdminOrderViewProps) {
         <p className="mb-2 text-xs leading-[1.4] font-bold tracking-[0.08em] text-brand-blue-hover uppercase">
           Vendas
         </p>
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-          <h1 className="text-[1.75rem] leading-[1.15] font-semibold tracking-[-0.02em] text-ink-primary">
-            Pedido nº {order.id}
-          </h1>
-          <span className={statusBadgeClasses[order.status]}>
-            {orderStatusLabels[order.status]}
-          </span>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+              <h1 className="text-[1.75rem] leading-[1.15] font-semibold tracking-[-0.02em] text-ink-primary">
+                Pedido nº {order.id}
+              </h1>
+              <span className={statusBadgeClasses[order.status]}>
+                {orderStatusLabels[order.status]}
+              </span>
+            </div>
+            <p className="mt-2 max-w-140 text-[0.9375rem] text-ink-secondary">
+              Feito em{" "}
+              <time dateTime={order.createdAt.toISOString()}>
+                {formatOrderDate(order.createdAt)}
+              </time>{" "}
+              · {orderSourceLabels[order.source]}
+            </p>
+          </div>
+          <OrderPdfLink orderId={order.id} status={order.status} />
         </div>
-        <p className="mt-2 max-w-140 text-[0.9375rem] text-ink-secondary">
-          Feito em{" "}
-          <time dateTime={order.createdAt.toISOString()}>
-            {formatOrderDate(order.createdAt)}
-          </time>{" "}
-          · {orderSourceLabels[order.source]}
-        </p>
       </header>
 
       {order.payment.review ? (

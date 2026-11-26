@@ -58,6 +58,14 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "4.5mb",
     },
   },
+  outputFileTracingIncludes: {
+    "/admin/orders/[id]/pdf": [
+      "./src/assets/fonts/Arimo-Regular.ttf",
+      "./src/assets/fonts/Arimo-Bold.ttf",
+      "./src/assets/fonts/Arimo-BoldItalic.ttf",
+      "./public/images/logo-nix.png",
+    ],
+  },
   images: {
     remotePatterns: supabaseProductImages(),
     // O Storage local fica em 127.0.0.1. O otimizador bloqueia IP local;

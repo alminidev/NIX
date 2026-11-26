@@ -175,6 +175,8 @@ describe(
         assert.equal(order.items.length, 2);
         assert.equal(order.items[0].name, first.name);
         assert.equal(order.items[0].sku, first.sku);
+        assert.equal(order.items[0].capacity, first.capacity);
+        assert.equal(order.items[1].capacity, second.capacity);
         assert.equal(order.items[0].quantity, 3);
         assert.equal(order.items[0].voltage, null);
         assert.equal(order.items[1].voltage, null);

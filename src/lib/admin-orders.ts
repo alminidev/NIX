@@ -96,6 +96,7 @@ export async function getAdminOrder(
             select: {
               name: true,
               sku: true,
+              capacity: true,
               images: {
                 orderBy: { sortOrder: "asc" },
                 select: { url: true, isPrimary: true },
@@ -121,6 +122,7 @@ export async function getAdminOrder(
       productId: item.productId,
       name: item.product?.name ?? deletedProductLabel,
       sku: item.product?.sku ?? "",
+      capacity: item.product?.capacity ?? "",
       image: primary?.url ?? "",
       quantity: item.quantity,
       voltage: item.voltage,

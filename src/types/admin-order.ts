@@ -56,6 +56,8 @@ export interface IAdminOrderItem {
   name: string;
   /** Vazio quando o produto já foi excluído */
   sku: string;
+  /** Capacidade atual do produto; vazia quando o produto já foi excluído */
+  capacity: string;
   /** Foto principal do produto; vazio quando não há */
   image: string;
   quantity: number;
