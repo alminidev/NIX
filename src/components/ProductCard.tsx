@@ -27,7 +27,7 @@ export default function ProductCard({
   function openFromCard(event: MouseEvent<HTMLElement>) {
     const target = event.target;
     if (!(target instanceof Element)) return;
-    if (target.closest("a, button")) return;
+    if (target.closest("a, button, label, input, select, fieldset")) return;
     onOpenDetail(product);
   }
 

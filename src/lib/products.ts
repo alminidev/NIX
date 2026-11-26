@@ -13,6 +13,7 @@ async function getCachedProducts(): Promise<IProduct[]> {
   "use cache";
   cacheLife("hours");
   cacheTag("products");
+  // O card só pede 110V/220V quando requiresVoltage está ligado.
 
   // O modelo global entra neste cache de horas. saveShopSettings chama
   // updateTag("products"), então a vitrine troca a frase quando Configurações muda.
@@ -57,6 +58,7 @@ async function getCachedProducts(): Promise<IProduct[]> {
       images: urls.length > 1 ? urls : undefined,
       inStock: product.stock > 0,
       featured: product.featured,
+      requiresVoltage: product.requiresVoltage,
       productionDays: product.productionDays,
       productionTimeText: catalogProductionTime(
         product.productionDays,

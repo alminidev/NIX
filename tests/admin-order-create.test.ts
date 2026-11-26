@@ -91,7 +91,11 @@ describe(
     const infinitePayBodies: { items?: { price: number; quantity: number }[] }[] =
       [];
 
-    async function createProduct(stock: number, price = 100) {
+    async function createProduct(
+      stock: number,
+      price = 100,
+      requiresVoltage = false,
+    ) {
       counter += 1;
       return prisma.product.create({
         data: {
@@ -107,6 +111,7 @@ describe(
           description: "Produto criado pelos testes de pedido do admin.",
           stock,
           active: true,
+          requiresVoltage,
           categoryId,
         },
       });
@@ -490,6 +495,71 @@ describe(
       assert.equal(Number(order.paymentAmount), 80);
       assert.equal(Number(order.paidAmount), 80);
       assert.equal(await stockOf(product.id), 1);
+    });
+
+    it("requires voltage only when the product has the option", async () => {
+      const withVoltage = await createProduct(5, 50, true);
+      const plain = await createProduct(4, 40);
+      const email = `voltagem-${runId}@example.com`;
+
+      const missing = await submitAdminOrder(
+        "admin",
+        form({
+          items: [{ productId: withVoltage.id, quantity: 1 }],
+          email,
+          shippingServiceId: "0",
+        }),
+      );
+      assert.equal(missing.status, "error");
+      assert.match(missing.message, /voltagem/i);
+      assert.equal(await stockOf(withVoltage.id), 5);
+
+      const unexpected = await submitAdminOrder(
+        "admin",
+        form({
+          items: [{ productId: plain.id, quantity: 1, voltage: "V110" }],
+          email,
+          shippingServiceId: "0",
+        }),
+      );
+      assert.equal(unexpected.status, "error");
+      assert.match(unexpected.message, /não tem variação de voltagem/);
+      assert.equal(await stockOf(plain.id), 4);
+
+      const created = await submitAdminOrder(
+        "admin",
+        form({
+          items: [
+            { productId: withVoltage.id, quantity: 1, voltage: "V110" },
+            { productId: withVoltage.id, quantity: 2, voltage: "V220" },
+            { productId: plain.id, quantity: 1 },
+          ],
+          email,
+          source: "INSTAGRAM",
+          shippingServiceId: "0",
+        }),
+      );
+
+      assert.equal(created.status, "success");
+      const order = await prisma.order.findUniqueOrThrow({
+        where: { id: created.orderId ?? 0 },
+        include: { items: { orderBy: { id: "asc" } } },
+      });
+      assert.equal(order.source, "INSTAGRAM");
+      assert.deepEqual(
+        order.items.map((item) => ({
+          productId: item.productId,
+          quantity: item.quantity,
+          voltage: item.voltage,
+        })),
+        [
+          { productId: withVoltage.id, quantity: 1, voltage: "V110" },
+          { productId: withVoltage.id, quantity: 2, voltage: "V220" },
+          { productId: plain.id, quantity: 1, voltage: null },
+        ],
+      );
+      assert.equal(await stockOf(withVoltage.id), 2);
+      assert.equal(await stockOf(plain.id), 3);
     });
   },
 );

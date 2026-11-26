@@ -2,6 +2,11 @@
 
 import PaymentTerms from "@/components/PaymentTerms";
 import { useCartContext, type TAddItemResult } from "@/contexts/CartContext";
+import {
+  productVoltages,
+  voltageLabels,
+  type TProductVoltage,
+} from "@/lib/voltage";
 import type { IProduct } from "@/types/product";
 import { Lock, ShoppingCart } from "lucide-react";
 import Link from "next/link";
@@ -27,10 +32,25 @@ export default function ProductPurchaseActions({
   const { addItem } = useCartContext();
   const [adding, setAdding] = useState(false);
   const [result, setResult] = useState<TAddItemResult | null>(null);
+  const [voltage, setVoltage] = useState<TProductVoltage | null>(null);
+  const [trackedId, setTrackedId] = useState(product.id);
+
+  if (trackedId !== product.id) {
+    setTrackedId(product.id);
+    setVoltage(null);
+    setResult(null);
+  }
+
+  const needsVoltage = product.requiresVoltage && !voltage;
 
   async function handleAdd() {
+    if (needsVoltage) {
+      setResult("voltage");
+      return;
+    }
+
     setAdding(true);
-    setResult(await addItem(product.id));
+    setResult(await addItem(product.id, product.requiresVoltage ? voltage : null));
     setAdding(false);
   }
 
@@ -38,24 +58,68 @@ export default function ProductPurchaseActions({
     added: "Produto adicionado ao carrinho.",
     limit: "Você já tem todas as unidades disponíveis no carrinho.",
     unavailable: "Este produto está indisponível no momento.",
+    voltage: "Escolha a voltagem (110V ou 220V).",
     error: "Não foi possível adicionar. Tente novamente.",
   };
 
   const purchase = (
     <>
+      {product.requiresVoltage ? (
+        <fieldset className="mb-3.5">
+          <legend className="mb-2 text-xs font-semibold tracking-[0.04em] text-ink-muted uppercase">
+            Voltagem
+          </legend>
+          <div className="grid grid-cols-2 gap-2">
+            {productVoltages.map((value) => {
+              const selected = voltage === value;
+              return (
+                <label
+                  key={value}
+                  className={`flex min-h-11 cursor-pointer items-center justify-center rounded-input border text-sm font-semibold transition-colors ${
+                    selected
+                      ? "border-brand-blue bg-brand-blue-subtle text-brand-blue-hover"
+                      : "border-border-hairline bg-white text-ink-primary"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name={`voltage-${product.id}`}
+                    value={value}
+                    checked={selected}
+                    onChange={() => {
+                      setVoltage(value);
+                      setResult(null);
+                    }}
+                    className="sr-only"
+                  />
+                  {voltageLabels[value]}
+                </label>
+              );
+            })}
+          </div>
+          {needsVoltage ? (
+            <p className="mt-2 text-xs font-medium text-ink-secondary">
+              Escolha a voltagem (110V ou 220V).
+            </p>
+          ) : null}
+        </fieldset>
+      ) : null}
+
       <PaymentTerms className="mb-3.5" />
 
       <button
         type="button"
         onClick={handleAdd}
-        disabled={!product.inStock || adding}
+        disabled={!product.inStock || adding || needsVoltage}
         className="inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-button bg-brand-blue px-6 py-3 text-[0.9375rem] font-semibold text-ink-inverse transition-all duration-200 ease-nix hover:-translate-y-px hover:bg-brand-blue-hover disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
         data-sku={product.sku}
         data-id={product.id}
         aria-label={
-          product.inStock
-            ? `Adicionar ${product.name} ao carrinho`
-            : `${product.name} indisponível`
+          !product.inStock
+            ? `${product.name} indisponível`
+            : needsVoltage
+              ? `Escolha a voltagem de ${product.name} antes de adicionar ao carrinho`
+              : `Adicionar ${product.name}${voltage ? ` ${voltageLabels[voltage]}` : ""} ao carrinho`
         }
       >
         {product.inStock ? "Adicionar ao carrinho" : "Indisponível"}

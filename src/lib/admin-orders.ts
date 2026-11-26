@@ -123,6 +123,7 @@ export async function getAdminOrder(
       sku: item.product?.sku ?? "",
       image: primary?.url ?? "",
       quantity: item.quantity,
+      voltage: item.voltage,
       unitPrice,
       // Centavos inteiros para não acumular erro de ponto flutuante.
       lineTotal: Math.round(unitPrice * 100 * item.quantity) / 100,

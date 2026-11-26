@@ -51,6 +51,7 @@ function toAdminProduct(product: TProductRecord): IAdminProduct {
     image: primary?.url ?? "",
     featured: product.featured,
     active: product.active,
+    requiresVoltage: product.requiresVoltage,
     sortOrder: product.sortOrder,
     productionDays: product.productionDays,
     productionTimeTemplate: product.productionTimeTemplate,

@@ -161,6 +161,20 @@ export async function placeOrder(
   if ((await expireOverdueOrders()) > 0) updateTag("products");
 
   const summary = await resolveCart(items);
+  const voltageNotice = summary.notices.find((notice) =>
+    notice.toLowerCase().includes("voltagem"),
+  );
+
+  if (voltageNotice) {
+    return {
+      status: "error",
+      message: voltageNotice,
+      fieldErrors: { items: voltageNotice },
+      orderId: null,
+      checkoutUrl: null,
+    };
+  }
+
   // A retirada não consulta a transportadora: o frete é zero no servidor.
   // Preço e prazo exibidos são opcionais; se vierem e divergirem, a recotação recusa.
   const quote = await quoteOrderShipping({

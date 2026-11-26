@@ -51,7 +51,12 @@ describe(
     let categoryId: number;
     let counter = 0;
 
-    async function createProduct(stock: number, price = 1190.5, active = true) {
+    async function createProduct(
+      stock: number,
+      price = 1190.5,
+      active = true,
+      requiresVoltage = false,
+    ) {
       counter += 1;
       return prisma.product.create({
         data: {
@@ -67,6 +72,7 @@ describe(
           description: "Produto criado pelos testes de pedido.",
           stock,
           active,
+          requiresVoltage,
           categoryId,
         },
       });
@@ -506,6 +512,66 @@ describe(
     it("returns false for an order that does not exist", async () => {
       assert.equal(await cancelOrder(2_000_000_000), false);
       assert.equal(await expireOrder(2_000_000_000), false);
+    });
+
+    it("stores the voltage snapshot and shares one stock balance", async () => {
+      const product = await createProduct(5, 100, true, true);
+
+      await assert.rejects(
+        createOrder(orderInput([{ productId: product.id, quantity: 1 }])),
+        /Escolha a voltagem/,
+      );
+      await assert.rejects(
+        createOrder(
+          orderInput([{ productId: product.id, quantity: 1, voltage: "V380" as "V110" }]),
+        ),
+        /Escolha a voltagem/,
+      );
+
+      const plain = await createProduct(4, 80);
+      await assert.rejects(
+        createOrder(
+          orderInput([{ productId: plain.id, quantity: 1, voltage: "V110" }]),
+        ),
+        /não tem variação de voltagem/,
+      );
+      assert.equal(await stockOf(plain.id), 4);
+
+      await assert.rejects(
+        createOrder(
+          orderInput([
+            { productId: product.id, quantity: 3, voltage: "V110" },
+            { productId: product.id, quantity: 3, voltage: "V220" },
+          ]),
+        ),
+        InsufficientStockError,
+      );
+      assert.equal(await stockOf(product.id), 5);
+
+      const created = await createOrder(
+        orderInput([
+          { productId: product.id, quantity: 2, voltage: "V220" },
+          { productId: product.id, quantity: 2, voltage: "V110" },
+        ]),
+      );
+
+      const items = await prisma.orderItem.findMany({
+        where: { orderId: created.id },
+        orderBy: { voltage: "asc" },
+      });
+
+      assert.deepEqual(
+        items.map((item) => ({
+          voltage: item.voltage,
+          quantity: item.quantity,
+          unitPrice: Number(item.unitPrice),
+        })),
+        [
+          { voltage: "V110", quantity: 2, unitPrice: 100 },
+          { voltage: "V220", quantity: 2, unitPrice: 100 },
+        ],
+      );
+      assert.equal(await stockOf(product.id), 1);
     });
   },
 );

@@ -24,6 +24,7 @@ export async function resolveCart(items: ICartItem[]): Promise<ICartSummary> {
       price: true,
       stock: true,
       active: true,
+      requiresVoltage: true,
       images: {
         orderBy: { sortOrder: "asc" },
         select: { url: true, isPrimary: true },
@@ -52,6 +53,7 @@ export async function resolveCart(items: ICartItem[]): Promise<ICartSummary> {
       price: Number(record.price),
       stock: record.stock,
       active: record.active,
+      requiresVoltage: record.requiresVoltage,
     });
   }
 

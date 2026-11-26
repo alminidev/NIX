@@ -1,19 +1,27 @@
 import { maxCartProducts, maxCartQuantity } from "@/lib/cart-calculation";
+import { isProductVoltage, type TProductVoltage } from "@/lib/voltage";
 import type { ICartItem } from "@/types/cart";
 
 /**
  * Valida os itens recebidos do navegador. Devolve null quando o formato é
- * inválido; quantidades repetidas do mesmo produto são somadas.
+ * inválido. Quantidades da mesma voltagem do mesmo produto são somadas;
+ * 110V e 220V permanecem em linhas separadas. Voltagem ausente continua
+ * válida aqui — a conferência com o cadastro do produto fica no carrinho
+ * e na criação do pedido.
  */
 export function parseCartItems(raw: unknown): ICartItem[] | null {
   if (!Array.isArray(raw) || raw.length > maxCartProducts * 2) return null;
 
-  const quantities = new Map<number, number>();
+  const quantities = new Map<
+    string,
+    { productId: number; voltage: TProductVoltage | null; quantity: number }
+  >();
 
   for (const entry of raw) {
     if (typeof entry !== "object" || entry === null) return null;
 
-    const { productId, quantity } = entry as Record<string, unknown>;
+    const record = entry as Record<string, unknown>;
+    const { productId, quantity } = record;
 
     if (
       typeof productId !== "number" ||
@@ -27,18 +35,33 @@ export function parseCartItems(raw: unknown): ICartItem[] | null {
       return null;
     }
 
-    quantities.set(
+    const rawVoltage = record.voltage;
+    if (
+      rawVoltage !== undefined &&
+      rawVoltage !== null &&
+      !isProductVoltage(rawVoltage)
+    ) {
+      return null;
+    }
+
+    const voltage = isProductVoltage(rawVoltage) ? rawVoltage : null;
+    const key = `${productId}:${voltage ?? ""}`;
+    const current = quantities.get(key);
+
+    quantities.set(key, {
       productId,
-      Math.min((quantities.get(productId) ?? 0) + quantity, maxCartQuantity),
-    );
+      voltage,
+      quantity: Math.min((current?.quantity ?? 0) + quantity, maxCartQuantity),
+    });
   }
 
   if (quantities.size > maxCartProducts) return null;
 
-  return [...quantities].map(([productId, quantity]) => ({
-    productId,
-    quantity,
-  }));
+  return [...quantities.values()].map((item) =>
+    item.voltage
+      ? { productId: item.productId, quantity: item.quantity, voltage: item.voltage }
+      : { productId: item.productId, quantity: item.quantity },
+  );
 }
 
 /** Mantém só os 8 dígitos do CEP, ou devolve null se não forem exatamente 8. */

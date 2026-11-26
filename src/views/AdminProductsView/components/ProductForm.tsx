@@ -144,6 +144,9 @@ export default function ProductForm({
   const [description, setDescription] = useState(product?.description ?? "");
   const [active, setActive] = useState(product?.active ?? true);
   const [featured, setFeatured] = useState(product?.featured ?? false);
+  const [requiresVoltage, setRequiresVoltage] = useState(
+    product?.requiresVoltage ?? false,
+  );
   const [specs, setSpecs] = useState<ISpecRow[]>(() =>
     initialSpecs.map((value, index) => ({ key: `spec-${index}`, value })),
   );
@@ -627,6 +630,16 @@ export default function ProductForm({
                 disabled={pending}
                 title="Destaque"
                 description="Ganha o selo Mais Escolhido."
+              />
+            </div>
+            <div className="mt-3">
+              <Toggle
+                name="requiresVoltage"
+                checked={requiresVoltage}
+                onChange={setRequiresVoltage}
+                disabled={pending}
+                title="Este produto tem variação de voltagem (110V/220V)"
+                description="O cliente escolhe 110V ou 220V antes de comprar. O estoque do produto continua único."
               />
             </div>
           </Section>

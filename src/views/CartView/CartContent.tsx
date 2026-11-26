@@ -2,6 +2,7 @@
 
 import { getCartSummary, placeOrder } from "@/app/cart/actions";
 import { isInfinitePayCheckoutUrl } from "@/lib/checkout-url";
+import { toStoredCartItems } from "@/lib/cart-calculation";
 import { useCartContext } from "@/contexts/CartContext";
 import type { ICartSummary, IShippingQuote } from "@/types/cart";
 import { checkoutFormInitialState } from "@/types/order";
@@ -64,12 +65,7 @@ export default function CartContent() {
         setFailed(false);
         setSummary(next);
         if (next.notices.length > 0) setNotices(next.notices);
-        replaceItems(
-          next.lines.map((line) => ({
-            productId: line.productId,
-            quantity: line.quantity,
-          })),
-        );
+        replaceItems(toStoredCartItems(next.lines));
       })
       .catch(() => {
         if (!cancelled) setFailed(true);
@@ -95,14 +91,21 @@ export default function CartContent() {
   const lines = summary?.lines ?? [];
   const isEmpty = isReady && items.length === 0 && !orderPlaced;
 
-  function changeQuantity(productId: number, quantity: number) {
+  function changeQuantity(
+    productId: number,
+    quantity: number,
+    voltage: (typeof lines)[number]["voltage"] = null,
+  ) {
     setNotices([]);
-    setQuantity(productId, quantity);
+    setQuantity(productId, quantity, voltage);
   }
 
-  function remove(productId: number) {
+  function remove(
+    productId: number,
+    voltage: (typeof lines)[number]["voltage"] = null,
+  ) {
     setNotices([]);
-    removeItem(productId);
+    removeItem(productId, voltage);
   }
 
   return (
@@ -188,7 +191,7 @@ export default function CartContent() {
                 <ul className="flex flex-col gap-4">
                   {lines.map((line) => (
                     <CartLineItem
-                      key={line.productId}
+                      key={`${line.productId}-${line.voltage ?? "sem"}`}
                       line={line}
                       onChangeQuantity={changeQuantity}
                       onRemove={remove}

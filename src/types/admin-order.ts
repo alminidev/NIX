@@ -7,6 +7,7 @@
 
 import type { OrderSource, OrderStatus } from "@/generated/prisma/enums";
 import type { TCustomerKind } from "@/lib/tax-id";
+import type { TProductVoltage } from "@/lib/voltage";
 import type { ICheckoutFieldErrors } from "@/types/order";
 
 export interface IAdminOrder {
@@ -58,6 +59,8 @@ export interface IAdminOrderItem {
   /** Foto principal do produto; vazio quando não há */
   image: string;
   quantity: number;
+  /** Snapshot da voltagem. Null nos pedidos antigos e nos produtos sem a opção. */
+  voltage: TProductVoltage | null;
   /** Preço unitário em reais, o do momento do pedido */
   unitPrice: number;
   /** unitPrice vezes quantity */
@@ -164,6 +167,8 @@ export interface IAdminOrderProductOption {
   price: number;
   formattedPrice: string;
   stock: number;
+  /** true quando a linha do pedido manual precisa de 110V ou 220V */
+  requiresVoltage: boolean;
 }
 
 export interface IAdminOrderFieldErrors extends ICheckoutFieldErrors {

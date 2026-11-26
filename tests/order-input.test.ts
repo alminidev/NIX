@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import { readAdminOrderForm, todayInBrazil } from "../src/lib/admin-order-form";
 import { readCheckoutForm } from "../src/lib/order-input";
 
 function checkoutForm(overrides: Record<string, string> = {}) {
@@ -147,6 +148,36 @@ describe("readCheckoutForm", () => {
     );
   });
 
+  it("keeps the chosen voltage and items that have none", () => {
+    const { input, fieldErrors } = readCheckoutForm(
+      checkoutForm({
+        items: JSON.stringify([
+          { productId: 1, quantity: 1, voltage: "V110" },
+          { productId: 1, quantity: 2, voltage: "V220" },
+          { productId: 2, quantity: 1 },
+        ]),
+      }),
+    );
+
+    assert.deepEqual(fieldErrors, {});
+    assert.deepEqual(input?.items, [
+      { productId: 1, quantity: 1, voltage: "V110" },
+      { productId: 1, quantity: 2, voltage: "V220" },
+      { productId: 2, quantity: 1 },
+    ]);
+  });
+
+  it("rejects an invalid voltage in the checkout payload", () => {
+    const { input, fieldErrors } = readCheckoutForm(
+      checkoutForm({
+        items: JSON.stringify([{ productId: 1, quantity: 1, voltage: "380V" }]),
+      }),
+    );
+
+    assert.equal(input, null);
+    assert.equal(fieldErrors.items, "Seu carrinho está vazio.");
+  });
+
   it("limits field lengths", () => {
     const { fieldErrors } = readCheckoutForm(
       checkoutForm({ name: "a".repeat(161), complement: "b".repeat(81) }),
@@ -154,5 +185,41 @@ describe("readCheckoutForm", () => {
 
     assert.ok(fieldErrors.name);
     assert.ok(fieldErrors.complement);
+  });
+});
+
+describe("readAdminOrderForm voltage", () => {
+  it("keeps voltage on a manual order and accepts items without it", () => {
+    const data = checkoutForm({
+      items: JSON.stringify([
+        { productId: 1, quantity: 1, voltage: "V110" },
+        { productId: 2, quantity: 1 },
+      ]),
+      source: "WHATSAPP",
+      paymentChoice: "external",
+      paymentMethod: "pix",
+      paidOn: todayInBrazil(),
+      shippingServiceId: "0",
+    });
+    const parsed = readAdminOrderForm(data);
+
+    assert.deepEqual(parsed.fieldErrors, {});
+    assert.deepEqual(parsed.input?.items, [
+      { productId: 1, quantity: 1, voltage: "V110" },
+      { productId: 2, quantity: 1 },
+    ]);
+  });
+
+  it("rejects an invalid voltage before the order is created", () => {
+    const data = checkoutForm({
+      items: JSON.stringify([{ productId: 1, quantity: 1, voltage: "12V" }]),
+      source: "INSTAGRAM",
+      paymentChoice: "link",
+      shippingServiceId: "0",
+    });
+    const parsed = readAdminOrderForm(data);
+
+    assert.equal(parsed.input, null);
+    assert.equal(parsed.fieldErrors.items, "Adicione ao menos um produto.");
   });
 });

@@ -1018,6 +1018,7 @@ const orderLine: ICartLine = {
   formattedUnitPrice: "",
   quantity: 2,
   maxQuantity: 2,
+  voltage: null,
   lineTotal: 2381,
   formattedLineTotal: "",
 };

@@ -2,6 +2,7 @@ import {
   formatDeliveryDays,
   formatShippingAmount,
 } from "@/lib/shipping-display";
+import { voltageLabel } from "@/lib/voltage";
 import type { IAdminOrderDetail } from "@/types/admin-order";
 import { currencyFormat } from "@/views/AdminOrdersView/components/order-display";
 import OrderCard from "@/views/AdminOrderView/components/OrderCard";
@@ -57,6 +58,11 @@ export default function OrderItems({ order }: IOrderItemsProps) {
                 {item.sku ? (
                   <p className="mt-1 text-[0.8125rem] text-ink-muted">
                     {item.sku}
+                  </p>
+                ) : null}
+                {voltageLabel(item.voltage) ? (
+                  <p className="mt-1 text-[0.8125rem] font-medium text-ink-secondary">
+                    {voltageLabel(item.voltage)}
                   </p>
                 ) : null}
                 <p className="mt-1 text-[0.8125rem] text-ink-secondary">

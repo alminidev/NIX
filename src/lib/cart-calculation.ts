@@ -1,5 +1,10 @@
 import type { ICartItem, ICartLine, ICartSummary } from "@/types/cart";
 import type { IProductDimensions } from "@/types/product";
+import {
+  voltageIssue,
+  voltageLabels,
+  type TProductVoltage,
+} from "@/lib/voltage";
 
 /** Maior quantidade de um mesmo produto por pedido. */
 export const maxCartQuantity = 99;
@@ -32,6 +37,8 @@ export interface ICartProductData {
   weight: number;
   price: number;
   stock: number;
+  /** Ausente nos testes antigos; tratado como produto sem voltagem. */
+  requiresVoltage?: boolean;
 }
 
 /**
@@ -45,8 +52,9 @@ export function getMaxQuantity(stock: number): number {
 export function buildCartLine(
   product: ICartProductData,
   requested: number,
+  voltage: TProductVoltage | null = null,
+  maxQuantity = getMaxQuantity(product.stock),
 ): ICartLine | null {
-  const maxQuantity = getMaxQuantity(product.stock);
   if (maxQuantity === 0) return null;
 
   const quantity = Math.min(Math.max(1, requested), maxQuantity);
@@ -64,9 +72,27 @@ export function buildCartLine(
     formattedUnitPrice: formatCurrency(product.price),
     quantity,
     maxQuantity,
+    voltage,
     lineTotal,
     formattedLineTotal: formatCurrency(lineTotal),
   };
+}
+
+function lineName(name: string, voltage: TProductVoltage | null) {
+  return voltage ? `${name} (${voltageLabels[voltage]})` : name;
+}
+
+/** Itens que o navegador pode guardar de novo, sem voltagem quando ela não existe. */
+export function toStoredCartItems(lines: ICartLine[]): ICartItem[] {
+  return lines.map((line) =>
+    line.voltage
+      ? {
+          productId: line.productId,
+          quantity: line.quantity,
+          voltage: line.voltage,
+        }
+      : { productId: line.productId, quantity: line.quantity },
+  );
 }
 
 /**
@@ -82,6 +108,12 @@ export function summarizeCart(
   const notices: string[] = [];
   let missing = 0;
 
+  const candidates: {
+    product: ICartProductData & { active: boolean };
+    voltage: TProductVoltage | null;
+    requested: number;
+  }[] = [];
+
   for (const item of items) {
     const product = products.get(item.productId);
 
@@ -90,20 +122,76 @@ export function summarizeCart(
       continue;
     }
 
-    const line = buildCartLine(product, item.quantity);
+    const issue = voltageIssue(Boolean(product.requiresVoltage), item.voltage ?? null);
 
-    if (!line) {
-      notices.push(`${product.name} está sem estoque e saiu do carrinho.`);
+    if (issue === "missing" || issue === "invalid") {
+      notices.push(
+        `Escolha a voltagem de ${product.name} (110V ou 220V). O item saiu do carrinho.`,
+      );
       continue;
     }
 
-    if (line.quantity < item.quantity) {
+    if (issue === "unexpected") {
       notices.push(
-        `A quantidade de ${product.name} foi ajustada para ${line.quantity}, o máximo disponível.`,
+        `${product.name} não tem variação de voltagem e saiu do carrinho.`,
+      );
+      continue;
+    }
+
+    candidates.push({
+      product,
+      voltage: item.voltage ?? null,
+      requested: item.quantity,
+    });
+  }
+
+  const taken = new Map<number, number>();
+  const accepted: {
+    product: ICartProductData & { active: boolean };
+    voltage: TProductVoltage | null;
+    requested: number;
+    quantity: number;
+  }[] = [];
+
+  for (const candidate of candidates) {
+    const used = taken.get(candidate.product.id) ?? 0;
+    const room = Math.max(
+      0,
+      getMaxQuantity(candidate.product.stock) - used,
+    );
+    const label = lineName(candidate.product.name, candidate.voltage);
+
+    if (room === 0) {
+      notices.push(`${label} está sem estoque e saiu do carrinho.`);
+      continue;
+    }
+
+    const quantity = Math.min(candidate.requested, room);
+    taken.set(candidate.product.id, used + quantity);
+
+    if (quantity < candidate.requested) {
+      notices.push(
+        `A quantidade de ${label} foi ajustada para ${quantity}, o máximo disponível.`,
       );
     }
 
-    lines.push(line);
+    accepted.push({ ...candidate, quantity });
+  }
+
+  for (const row of accepted) {
+    const others = (taken.get(row.product.id) ?? 0) - row.quantity;
+    const maxQuantity = Math.max(
+      0,
+      getMaxQuantity(row.product.stock) - others,
+    );
+    const line = buildCartLine(
+      row.product,
+      row.quantity,
+      row.voltage,
+      maxQuantity,
+    );
+
+    if (line) lines.push(line);
   }
 
   if (missing > 0) {

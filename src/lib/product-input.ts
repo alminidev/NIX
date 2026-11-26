@@ -32,6 +32,8 @@ export interface IProductInput {
   images: IProductImageInput[];
   featured: boolean;
   active: boolean;
+  /** Desligado por padrão. Ligado exige 110V ou 220V na compra. */
+  requiresVoltage: boolean;
   sortOrder: number;
   /** null quando o campo vem vazio */
   productionDays: number | null;
@@ -246,6 +248,7 @@ export function readProductForm(formData: FormData): IParsedProductForm {
       images,
       featured: formData.get("featured") === "on",
       active: formData.get("active") === "on",
+      requiresVoltage: formData.get("requiresVoltage") === "on",
       sortOrder: Number(sortRaw),
       productionDays: productionDays.value,
       productionTimeTemplate: productionTimeTemplate.value,

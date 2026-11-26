@@ -176,6 +176,8 @@ describe(
         assert.equal(order.items[0].name, first.name);
         assert.equal(order.items[0].sku, first.sku);
         assert.equal(order.items[0].quantity, 3);
+        assert.equal(order.items[0].voltage, null);
+        assert.equal(order.items[1].voltage, null);
         assert.equal(order.items[0].unitPrice, 49.9);
         assert.equal(order.items[0].lineTotal, 149.7);
         assert.equal(order.items[0].image, "/b.png");
