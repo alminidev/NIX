@@ -38,10 +38,29 @@ export interface ICartLine {
   formattedLineTotal: string;
 }
 
+export type TCartNoticeCode =
+  | "VOLTAGE_REQUIRED"
+  | "VOLTAGE_INVALID"
+  | "VOLTAGE_NOT_ALLOWED"
+  | "OUT_OF_STOCK"
+  | "QUANTITY_ADJUSTED"
+  | "UNAVAILABLE";
+
+/**
+ * Aviso do carrinho. O checkout decide pelo code; message só é exibido.
+ * productId falta no aviso agregado de produtos que saíram do catálogo.
+ */
+export interface ICartNotice {
+  code: TCartNoticeCode;
+  productId?: number;
+  voltage?: TProductVoltage | null;
+  message: string;
+}
+
 export interface ICartSummary {
   lines: ICartLine[];
   /** Avisos sobre itens removidos ou com quantidade reduzida */
-  notices: string[];
+  notices: ICartNotice[];
   itemCount: number;
   subtotal: number;
   formattedSubtotal: string;

@@ -561,5 +561,46 @@ describe(
       assert.equal(await stockOf(withVoltage.id), 2);
       assert.equal(await stockOf(plain.id), 3);
     });
+
+    it("does not block the other items when a sold-out name contains voltagem", async () => {
+      const soldOut = await createProduct(0, 50);
+      await prisma.product.update({
+        where: { id: soldOut.id },
+        data: { name: "Secador de voltagem" },
+      });
+      const other = await createProduct(3, 40);
+      const email = `estoque-voltagem-${runId}@example.com`;
+
+      const mixed = await submitAdminOrder(
+        "admin",
+        form({
+          items: [
+            { productId: soldOut.id, quantity: 1 },
+            { productId: other.id, quantity: 1 },
+          ],
+          email,
+          shippingServiceId: "0",
+        }),
+      );
+
+      assert.equal(mixed.status, "error");
+      assert.doesNotMatch(mixed.message, /escolha a voltagem|não tem variação de voltagem/i);
+      assert.match(mixed.message, /não está disponível na quantidade/);
+      assert.equal(await stockOf(soldOut.id), 0);
+      assert.equal(await stockOf(other.id), 3);
+
+      const created = await submitAdminOrder(
+        "admin",
+        form({
+          items: [{ productId: other.id, quantity: 1 }],
+          email,
+          shippingServiceId: "0",
+        }),
+      );
+
+      assert.equal(created.status, "success");
+      assert.equal(await stockOf(other.id), 2);
+      assert.equal(await stockOf(soldOut.id), 0);
+    });
   },
 );

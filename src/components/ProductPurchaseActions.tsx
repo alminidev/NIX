@@ -3,6 +3,7 @@
 import PaymentTerms from "@/components/PaymentTerms";
 import { useCartContext, type TAddItemResult } from "@/contexts/CartContext";
 import {
+  formatItemLabel,
   productVoltages,
   voltageLabels,
   type TProductVoltage,
@@ -65,17 +66,17 @@ export default function ProductPurchaseActions({
   const purchase = (
     <>
       {product.requiresVoltage ? (
-        <fieldset className="mb-3.5">
+        <fieldset className="mb-3.5 min-w-0">
           <legend className="mb-2 text-xs font-semibold tracking-[0.04em] text-ink-muted uppercase">
             Voltagem
           </legend>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid min-w-0 grid-cols-2 gap-2">
             {productVoltages.map((value) => {
               const selected = voltage === value;
               return (
                 <label
                   key={value}
-                  className={`flex min-h-11 cursor-pointer items-center justify-center rounded-input border text-sm font-semibold transition-colors ${
+                  className={`flex min-h-11 min-w-0 cursor-pointer items-center justify-center rounded-input border text-sm font-semibold whitespace-nowrap transition-colors ${
                     selected
                       ? "border-brand-blue bg-brand-blue-subtle text-brand-blue-hover"
                       : "border-border-hairline bg-white text-ink-primary"
@@ -119,7 +120,7 @@ export default function ProductPurchaseActions({
             ? `${product.name} indisponível`
             : needsVoltage
               ? `Escolha a voltagem de ${product.name} antes de adicionar ao carrinho`
-              : `Adicionar ${product.name}${voltage ? ` ${voltageLabels[voltage]}` : ""} ao carrinho`
+              : `Adicionar ${formatItemLabel(product.name, voltage)} ao carrinho`
         }
       >
         {product.inStock ? "Adicionar ao carrinho" : "Indisponível"}

@@ -140,8 +140,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             sameCartVoltage(entry.voltage, selected),
         );
         if (!line) {
-          const needsVoltage = summary.notices.some((notice) =>
-            notice.startsWith("Escolha a voltagem"),
+          const needsVoltage = summary.notices.some(
+            (notice) =>
+              notice.code === "VOLTAGE_REQUIRED" ||
+              notice.code === "VOLTAGE_INVALID",
           );
           return needsVoltage ? "voltage" : "unavailable";
         }

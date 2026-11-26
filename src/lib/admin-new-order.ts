@@ -1,6 +1,7 @@
 import { AppError } from "@/app/_errors/app.error";
 import { readAdminOrderForm } from "@/lib/admin-order-form";
 import { resolveCart } from "@/lib/cart";
+import { blockingVoltageNotice } from "@/lib/cart-calculation";
 import { quoteOrderShipping } from "@/lib/checkout-shipping";
 import {
   cancelOrder,
@@ -217,12 +218,14 @@ export async function submitAdminOrder(
   let stockChanged = expired > 0;
   const summary = await resolveCart(items);
 
-  const voltageNotice = summary.notices.find((notice) =>
-    notice.toLowerCase().includes("voltagem"),
-  );
+  const voltageNotice = blockingVoltageNotice(summary.notices);
 
   if (voltageNotice) {
-    return failure(voltageNotice, { items: voltageNotice }, stockChanged);
+    return failure(
+      voltageNotice.message,
+      { items: voltageNotice.message },
+      stockChanged,
+    );
   }
 
   if (!quantitiesMatch(items, summary.lines)) {

@@ -1,8 +1,13 @@
-import type { ICartItem, ICartLine, ICartSummary } from "@/types/cart";
+import type {
+  ICartItem,
+  ICartLine,
+  ICartNotice,
+  ICartSummary,
+} from "@/types/cart";
 import type { IProductDimensions } from "@/types/product";
 import {
+  formatItemLabel,
   voltageIssue,
-  voltageLabels,
   type TProductVoltage,
 } from "@/lib/voltage";
 
@@ -78,10 +83,6 @@ export function buildCartLine(
   };
 }
 
-function lineName(name: string, voltage: TProductVoltage | null) {
-  return voltage ? `${name} (${voltageLabels[voltage]})` : name;
-}
-
 /** Itens que o navegador pode guardar de novo, sem voltagem quando ela não existe. */
 export function toStoredCartItems(lines: ICartLine[]): ICartItem[] {
   return lines.map((line) =>
@@ -105,7 +106,7 @@ export function summarizeCart(
   products: Map<number, ICartProductData & { active: boolean }>,
 ): ICartSummary {
   const lines: ICartLine[] = [];
-  const notices: string[] = [];
+  const notices: ICartNotice[] = [];
   let missing = 0;
 
   const candidates: {
@@ -125,16 +126,21 @@ export function summarizeCart(
     const issue = voltageIssue(Boolean(product.requiresVoltage), item.voltage ?? null);
 
     if (issue === "missing" || issue === "invalid") {
-      notices.push(
-        `Escolha a voltagem de ${product.name} (110V ou 220V). O item saiu do carrinho.`,
-      );
+      notices.push({
+        code: issue === "missing" ? "VOLTAGE_REQUIRED" : "VOLTAGE_INVALID",
+        productId: product.id,
+        message: `Escolha a voltagem de ${product.name} (110V ou 220V). O item saiu do carrinho.`,
+      });
       continue;
     }
 
     if (issue === "unexpected") {
-      notices.push(
-        `${product.name} não tem variação de voltagem e saiu do carrinho.`,
-      );
+      notices.push({
+        code: "VOLTAGE_NOT_ALLOWED",
+        productId: product.id,
+        voltage: item.voltage ?? null,
+        message: `${product.name} não tem variação de voltagem e saiu do carrinho.`,
+      });
       continue;
     }
 
@@ -159,10 +165,15 @@ export function summarizeCart(
       0,
       getMaxQuantity(candidate.product.stock) - used,
     );
-    const label = lineName(candidate.product.name, candidate.voltage);
+    const label = formatItemLabel(candidate.product.name, candidate.voltage);
 
     if (room === 0) {
-      notices.push(`${label} está sem estoque e saiu do carrinho.`);
+      notices.push({
+        code: "OUT_OF_STOCK",
+        productId: candidate.product.id,
+        voltage: candidate.voltage,
+        message: `${label} está sem estoque e saiu do carrinho.`,
+      });
       continue;
     }
 
@@ -170,9 +181,12 @@ export function summarizeCart(
     taken.set(candidate.product.id, used + quantity);
 
     if (quantity < candidate.requested) {
-      notices.push(
-        `A quantidade de ${label} foi ajustada para ${quantity}, o máximo disponível.`,
-      );
+      notices.push({
+        code: "QUANTITY_ADJUSTED",
+        productId: candidate.product.id,
+        voltage: candidate.voltage,
+        message: `A quantidade de ${label} foi ajustada para ${quantity}, o máximo disponível.`,
+      });
     }
 
     accepted.push({ ...candidate, quantity });
@@ -195,11 +209,13 @@ export function summarizeCart(
   }
 
   if (missing > 0) {
-    notices.push(
-      missing === 1
-        ? "Um produto não está mais disponível e saiu do carrinho."
-        : `${missing} produtos não estão mais disponíveis e saíram do carrinho.`,
-    );
+    notices.push({
+      code: "UNAVAILABLE",
+      message:
+        missing === 1
+          ? "Um produto não está mais disponível e saiu do carrinho."
+          : `${missing} produtos não estão mais disponíveis e saíram do carrinho.`,
+    });
   }
 
   const subtotal = calculateSubtotal(lines);
@@ -211,6 +227,20 @@ export function summarizeCart(
     subtotal,
     formattedSubtotal: formatCurrency(subtotal),
   };
+}
+
+const blockingVoltageCodes = new Set<ICartNotice["code"]>([
+  "VOLTAGE_REQUIRED",
+  "VOLTAGE_INVALID",
+  "VOLTAGE_NOT_ALLOWED",
+]);
+
+/**
+ * Aviso de voltagem que impede o pedido. Estoque não entra aqui: o nome do
+ * produto pode conter a palavra "voltagem" sem ser um problema de escolha.
+ */
+export function blockingVoltageNotice(notices: ICartNotice[]) {
+  return notices.find((notice) => blockingVoltageCodes.has(notice.code));
 }
 
 /** Soma de preço unitário x quantidade, em reais. */

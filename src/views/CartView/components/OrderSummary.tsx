@@ -1,6 +1,6 @@
 import PaymentTerms from "@/components/PaymentTerms";
 import { calculateTotal, formatCurrency } from "@/lib/cart-calculation";
-import { formatLineName } from "@/lib/voltage";
+import { formatItemLabel } from "@/lib/voltage";
 import { pixCheckoutDiscount, pixDiscountPercent } from "@/lib/payment-terms";
 import {
   formatShippingAmount,
@@ -69,7 +69,7 @@ export default function OrderSummary({
               className="flex items-start justify-between gap-3"
             >
               <span className="min-w-0">
-                {formatLineName(line.name, line.voltage)}
+                {formatItemLabel(line.name, line.voltage)}
                 <span className="text-ink-muted"> × {line.quantity}</span>
               </span>
               <span className="shrink-0 font-medium text-ink-primary tabular-nums">

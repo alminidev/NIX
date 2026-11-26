@@ -1,5 +1,5 @@
 import { formatDimensions } from "@/lib/product-dimensions";
-import { formatLineName, type TProductVoltage } from "@/lib/voltage";
+import { formatItemLabel, type TProductVoltage } from "@/lib/voltage";
 import type { ICartLine } from "@/types/cart";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import Image from "next/image";
@@ -23,7 +23,7 @@ export default function CartLineItem({
   onRemove,
 }: ICartLineItemProps) {
   const atLimit = line.quantity >= line.maxQuantity;
-  const title = formatLineName(line.name, line.voltage);
+  const title = formatItemLabel(line.name, line.voltage);
 
   return (
     <li
@@ -41,7 +41,7 @@ export default function CartLineItem({
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <h2 className="text-lg leading-[1.25] font-semibold tracking-[-0.01em] text-ink-primary">
+        <h2 className="text-lg leading-[1.25] font-semibold tracking-[-0.01em] break-words text-ink-primary">
           {title}
         </h2>
         <p className="text-[0.8125rem] text-ink-muted">

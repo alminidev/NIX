@@ -33,7 +33,7 @@ export default function ProductCard({
 
   return (
     <article
-      className="group relative flex cursor-pointer flex-col rounded-card border border-border-hairline bg-surface-card p-6 transition-[translate,box-shadow,border-color] duration-[250ms] ease-nix hover:-translate-y-[3px] hover:border-[rgba(23,107,255,0.3)] hover:shadow-card-hover"
+      className="group relative flex min-w-0 cursor-pointer flex-col rounded-card border border-border-hairline bg-surface-card p-6 transition-[translate,box-shadow,border-color] duration-[250ms] ease-nix hover:-translate-y-[3px] hover:border-[rgba(23,107,255,0.3)] hover:shadow-card-hover"
       data-sku={product.sku}
       data-id={product.id}
       onClick={openFromCard}

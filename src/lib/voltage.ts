@@ -29,7 +29,7 @@ export function voltageLabel(
 }
 
 /** Nome exibido quando a linha tem voltagem. Sem voltagem, devolve só o nome. */
-export function formatLineName(
+export function formatItemLabel(
   name: string,
   voltage: TProductVoltage | null | undefined,
 ) {

@@ -2,7 +2,7 @@ import {
   formatDeliveryDays,
   formatShippingAmount,
 } from "@/lib/shipping-display";
-import { voltageLabel } from "@/lib/voltage";
+import { formatItemLabel } from "@/lib/voltage";
 import type { IAdminOrderDetail } from "@/types/admin-order";
 import { currencyFormat } from "@/views/AdminOrdersView/components/order-display";
 import OrderCard from "@/views/AdminOrderView/components/OrderCard";
@@ -45,24 +45,19 @@ export default function OrderItems({ order }: IOrderItemsProps) {
               <div className="min-w-0">
                 {item.productId === null ? (
                   <p className="py-0.5 text-[0.9375rem] leading-snug font-semibold text-ink-primary">
-                    {item.name}
+                    {formatItemLabel(item.name, item.voltage)}
                   </p>
                 ) : (
                   <Link
                     href={`/admin/products/${item.productId}`}
                     className="inline-block py-0.5 text-[0.9375rem] leading-snug font-semibold text-ink-primary transition-colors hover:text-brand-blue"
                   >
-                    {item.name}
+                    {formatItemLabel(item.name, item.voltage)}
                   </Link>
                 )}
                 {item.sku ? (
                   <p className="mt-1 text-[0.8125rem] text-ink-muted">
                     {item.sku}
-                  </p>
-                ) : null}
-                {voltageLabel(item.voltage) ? (
-                  <p className="mt-1 text-[0.8125rem] font-medium text-ink-secondary">
-                    {voltageLabel(item.voltage)}
                   </p>
                 ) : null}
                 <p className="mt-1 text-[0.8125rem] text-ink-secondary">

@@ -26,7 +26,7 @@ import {
 } from "@/lib/shipping-display";
 import { maskDocument, type TCustomerKind } from "@/lib/tax-id";
 import {
-  formatLineName,
+  formatItemLabel,
   productVoltages,
   voltageLabels,
   type TProductVoltage,
@@ -938,7 +938,7 @@ export default function NewOrderForm({ customers, products }: INewOrderFormProps
                   className="flex items-start justify-between gap-3"
                 >
                   <span className="min-w-0">
-                    {formatLineName(product?.name ?? "Produto", item.voltage)}
+                    {formatItemLabel(product?.name ?? "Produto", item.voltage)}
                     <span className="text-ink-muted"> × {item.quantity}</span>
                   </span>
                   <span className="shrink-0 font-medium text-ink-primary tabular-nums">
