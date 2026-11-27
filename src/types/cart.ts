@@ -3,11 +3,17 @@
  * e totais vêm sempre do servidor (getCartSummary em app/cart/actions.ts).
  */
 
+import type { TProductVoltage } from "@/lib/voltage";
 import type { IProductDimensions } from "@/types/product";
 
 export interface ICartItem {
   productId: number;
   quantity: number;
+  /**
+   * Voltagem escolhida. Ausente quando o produto não tem essa opção.
+   * Itens antigos guardados no navegador também vêm sem este campo.
+   */
+  voltage?: TProductVoltage;
 }
 
 export interface ICartLine {
@@ -22,18 +28,39 @@ export interface ICartLine {
   /** Preço unitário em reais */
   unitPrice: number;
   formattedUnitPrice: string;
-  /** Quantidade já limitada ao estoque */
+  /** Quantidade já limitada ao estoque compartilhado do produto */
   quantity: number;
-  /** Maior quantidade que o estoque atual permite */
+  /** Maior quantidade que o estoque atual ainda permite nesta linha */
   maxQuantity: number;
+  /** Null quando o produto não tem variação de voltagem */
+  voltage: TProductVoltage | null;
   lineTotal: number;
   formattedLineTotal: string;
+}
+
+export type TCartNoticeCode =
+  | "VOLTAGE_REQUIRED"
+  | "VOLTAGE_INVALID"
+  | "VOLTAGE_NOT_ALLOWED"
+  | "OUT_OF_STOCK"
+  | "QUANTITY_ADJUSTED"
+  | "UNAVAILABLE";
+
+/**
+ * Aviso do carrinho. O checkout decide pelo code; message só é exibido.
+ * productId falta no aviso agregado de produtos que saíram do catálogo.
+ */
+export interface ICartNotice {
+  code: TCartNoticeCode;
+  productId?: number;
+  voltage?: TProductVoltage | null;
+  message: string;
 }
 
 export interface ICartSummary {
   lines: ICartLine[];
   /** Avisos sobre itens removidos ou com quantidade reduzida */
-  notices: string[];
+  notices: ICartNotice[];
   itemCount: number;
   subtotal: number;
   formattedSubtotal: string;

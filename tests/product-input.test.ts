@@ -132,6 +132,16 @@ describe("readProductForm dimensions", () => {
   });
 });
 
+describe("readProductForm voltage", () => {
+  it("leaves the voltage option off unless the toggle is checked", () => {
+    assert.equal(readProductForm(form()).input?.requiresVoltage, false);
+
+    const data = form();
+    data.set("requiresVoltage", "on");
+    assert.equal(readProductForm(data).input?.requiresVoltage, true);
+  });
+});
+
 describe("readProductForm description", () => {
   it("aceita descrição longa, sem limite de caracteres", () => {
     const paragraph = "Mantém os filamentos secos e prontos para imprimir. ";

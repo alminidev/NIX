@@ -108,6 +108,8 @@ model Product {
   featured       Boolean        @default(false)
   active         Boolean        @default(true)
   stock          Int            @default(0)
+  // ligado quando o cliente precisa escolher 110V ou 220V; o estoque continua único
+  requiresVoltage Boolean       @default(false)
   sortOrder      Int            @default(0)
   categoryId     Int
   category       Category       @relation(fields: [categoryId], references: [id])
@@ -182,6 +184,13 @@ enum CustomerKind {
   @@map("customer_kind")
 }
 
+enum ProductVoltage {
+  V110
+  V220
+
+  @@map("product_voltage")
+}
+
 model Order {
   id            Int         @id @default(autoincrement())
   status        OrderStatus @default(AWAITING_PAYMENT)
@@ -252,6 +261,8 @@ model OrderItem {
   // nulo só depois da exclusão do produto (pedido cancelado ou já enviado)
   productId Int?
   product   Product? @relation(fields: [productId], references: [id], onDelete: Restrict)
+  // snapshot da voltagem escolhida; null nos pedidos antigos e nos produtos sem a opção
+  voltage   ProductVoltage?
 
   @@index([orderId])
   @@index([productId])

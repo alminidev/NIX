@@ -112,6 +112,7 @@ export async function saveProduct(
         description: input.description,
         featured: input.featured,
         active: input.active,
+        requiresVoltage: input.requiresVoltage,
         sortOrder: input.sortOrder,
         categoryId: input.categoryId,
         productionDays: input.productionDays,

@@ -1,11 +1,13 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  blockingVoltageNotice,
   calculateTotal,
   maxCartQuantity,
   summarizeCart,
   type ICartProductData,
 } from "../src/lib/cart-calculation";
+import { formatItemLabel } from "../src/lib/voltage";
 import {
   maskPostalCode,
   parseCartItems,
@@ -60,6 +62,22 @@ describe("parseCartItems", () => {
     );
   });
 
+  it("merges only the same voltage and keeps lines apart", () => {
+    assert.deepEqual(
+      parseCartItems([
+        { productId: 1, quantity: 2, voltage: "V110" },
+        { productId: 1, quantity: 1, voltage: "V220" },
+        { productId: 1, quantity: 3, voltage: "V110" },
+        { productId: 2, quantity: 1 },
+      ]),
+      [
+        { productId: 1, quantity: 5, voltage: "V110" },
+        { productId: 1, quantity: 1, voltage: "V220" },
+        { productId: 2, quantity: 1 },
+      ],
+    );
+  });
+
   it("rejects malformed input", () => {
     for (const bad of [
       null,
@@ -73,6 +91,8 @@ describe("parseCartItems", () => {
       [{ productId: 1, quantity: -2 }],
       [{ productId: 1, quantity: maxCartQuantity + 1 }],
       [{ productId: 1, quantity: Number.NaN }],
+      [{ productId: 1, quantity: 1, voltage: "110" }],
+      [{ productId: 1, quantity: 1, voltage: "380V" }],
       Array.from({ length: 51 }, (_, index) => ({
         productId: index + 1,
         quantity: 1,
@@ -138,11 +158,123 @@ describe("summarizeCart", () => {
     assert.equal(summary.notices.length, 2);
   });
 
+  it("removes a stored item when the product now requires a voltage", () => {
+    const summary = summarizeCart(
+      [{ productId: 1, quantity: 2 }],
+      new Map([[1, product(1, { requiresVoltage: true })]]),
+    );
+
+    assert.equal(summary.lines.length, 0);
+    assert.equal(summary.notices[0]?.code, "VOLTAGE_REQUIRED");
+    assert.equal(summary.notices[0]?.productId, 1);
+    assert.match(summary.notices[0]?.message ?? "", /voltagem/i);
+  });
+
+  it("keeps an old item when the product does not require voltage", () => {
+    const summary = summarizeCart(
+      [{ productId: 1, quantity: 2 }],
+      new Map([[1, product(1)]]),
+    );
+
+    assert.equal(summary.lines.length, 1);
+    assert.equal(summary.lines[0]?.voltage, null);
+    assert.equal(summary.notices.length, 0);
+  });
+
+  it("refuses a voltage sent for a product that does not have one", () => {
+    const summary = summarizeCart(
+      [{ productId: 1, quantity: 1, voltage: "V110" }],
+      new Map([[1, product(1)]]),
+    );
+
+    assert.equal(summary.lines.length, 0);
+    assert.equal(summary.notices[0]?.code, "VOLTAGE_NOT_ALLOWED");
+    assert.equal(summary.notices[0]?.voltage, "V110");
+    assert.match(summary.notices[0]?.message ?? "", /não tem variação de voltagem/);
+  });
+
+  it("splits voltages and shares one stock balance", () => {
+    const summary = summarizeCart(
+      [
+        { productId: 1, quantity: 3, voltage: "V110" },
+        { productId: 1, quantity: 3, voltage: "V220" },
+      ],
+      new Map([[1, product(1, { stock: 5, requiresVoltage: true, price: 10 })]]),
+    );
+
+    assert.deepEqual(
+      summary.lines.map((line) => ({
+        voltage: line.voltage,
+        quantity: line.quantity,
+        maxQuantity: line.maxQuantity,
+      })),
+      [
+        { voltage: "V110", quantity: 3, maxQuantity: 3 },
+        { voltage: "V220", quantity: 2, maxQuantity: 2 },
+      ],
+    );
+    assert.equal(summary.subtotal, 50);
+    assert.equal(summary.notices.length, 1);
+    assert.equal(summary.notices[0]?.code, "QUANTITY_ADJUSTED");
+    assert.equal(
+      summary.notices[0]?.message,
+      "A quantidade de Produto 1 · 220V foi ajustada para 2, o máximo disponível.",
+    );
+    assert.equal(summary.notices[0]?.message.includes("(220V)"), false);
+  });
+
+  it("does not block the other items when a sold-out name contains voltagem", () => {
+    const summary = summarizeCart(
+      [
+        { productId: 1, quantity: 1 },
+        { productId: 2, quantity: 2 },
+      ],
+      new Map([
+        [1, product(1, { name: "Secador de voltagem", stock: 0 })],
+        [2, product(2, { stock: 4, price: 10 })],
+      ]),
+    );
+
+    assert.deepEqual(
+      summary.lines.map((line) => line.productId),
+      [2],
+    );
+    assert.equal(blockingVoltageNotice(summary.notices), undefined);
+    assert.equal(summary.notices[0]?.code, "OUT_OF_STOCK");
+    assert.equal(summary.notices[0]?.productId, 1);
+    assert.equal(
+      summary.notices[0]?.message,
+      "Secador de voltagem está sem estoque e saiu do carrinho.",
+    );
+    assert.equal(summary.subtotal, 20);
+  });
+
+  it("rejects an invalid voltage by code, not by the product name", () => {
+    const summary = summarizeCart(
+      [{ productId: 1, quantity: 1, voltage: "V380" as "V110" }],
+      new Map([[1, product(1, { name: "Secador de voltagem", requiresVoltage: true })]]),
+    );
+
+    assert.equal(summary.lines.length, 0);
+    assert.equal(summary.notices[0]?.code, "VOLTAGE_INVALID");
+    assert.equal(blockingVoltageNotice(summary.notices)?.code, "VOLTAGE_INVALID");
+  });
+
   it("returns an empty summary for an empty cart", () => {
     const summary = summarizeCart([], new Map());
 
     assert.equal(summary.lines.length, 0);
     assert.equal(summary.subtotal, 0);
+  });
+});
+
+describe("formatItemLabel", () => {
+  it("joins the voltage with a middle dot and omits it when absent", () => {
+    assert.equal(formatItemLabel("Armário Dry Box", "V110"), "Armário Dry Box · 110V");
+    assert.equal(formatItemLabel("Armário Dry Box", "V220"), "Armário Dry Box · 220V");
+    assert.equal(formatItemLabel("Armário Dry Box", null), "Armário Dry Box");
+    assert.equal(formatItemLabel("Armário Dry Box", undefined), "Armário Dry Box");
+    assert.equal(formatItemLabel("Armário Dry Box", "V110").includes("(110V)"), false);
   });
 });
 

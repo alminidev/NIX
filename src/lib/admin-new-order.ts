@@ -1,6 +1,7 @@
 import { AppError } from "@/app/_errors/app.error";
 import { readAdminOrderForm } from "@/lib/admin-order-form";
 import { resolveCart } from "@/lib/cart";
+import { blockingVoltageNotice } from "@/lib/cart-calculation";
 import { quoteOrderShipping } from "@/lib/checkout-shipping";
 import {
   cancelOrder,
@@ -21,7 +22,8 @@ import type {
   IAdminOrderFormState,
   IAdminOrderProductOption,
 } from "@/types/admin-order";
-import type { ICartItem } from "@/types/cart";
+import type { ICartItem, ICartLine } from "@/types/cart";
+import { sameCartVoltage } from "@/lib/voltage";
 import "server-only";
 
 const currency = new Intl.NumberFormat("pt-BR", {
@@ -54,18 +56,24 @@ function failure(
   };
 }
 
-function quantitiesMatch(
-  items: ICartItem[],
-  lines: { productId: number; quantity: number }[],
-) {
+function quantitiesMatch(items: ICartItem[], lines: ICartLine[]) {
   if (lines.length !== items.length) return false;
 
-  return items.every((item) =>
-    lines.some(
-      (line) =>
-        line.productId === item.productId && line.quantity === item.quantity,
-    ),
-  );
+  const used = new Set<number>();
+
+  return items.every((item) => {
+    const index = lines.findIndex(
+      (line, lineIndex) =>
+        !used.has(lineIndex) &&
+        line.productId === item.productId &&
+        line.quantity === item.quantity &&
+        sameCartVoltage(line.voltage, item.voltage),
+    );
+
+    if (index < 0) return false;
+    used.add(index);
+    return true;
+  });
 }
 
 /** Clientes e produtos ativos para o formulário de novo pedido. */
@@ -90,7 +98,14 @@ export async function getAdminNewOrderOptions(): Promise<IAdminNewOrderOptions> 
     prisma.product.findMany({
       where: { active: true },
       orderBy: { name: "asc" },
-      select: { id: true, name: true, sku: true, price: true, stock: true },
+      select: {
+        id: true,
+        name: true,
+        sku: true,
+        price: true,
+        stock: true,
+        requiresVoltage: true,
+      },
     }),
   ]);
 
@@ -164,6 +179,7 @@ export async function getAdminNewOrderOptions(): Promise<IAdminNewOrderOptions> 
         price,
         formattedPrice: currency.format(price),
         stock: product.stock,
+        requiresVoltage: product.requiresVoltage,
       };
     }),
   };
@@ -201,6 +217,16 @@ export async function submitAdminOrder(
   const expired = await expireOverdueOrders();
   let stockChanged = expired > 0;
   const summary = await resolveCart(items);
+
+  const voltageNotice = blockingVoltageNotice(summary.notices);
+
+  if (voltageNotice) {
+    return failure(
+      voltageNotice.message,
+      { items: voltageNotice.message },
+      stockChanged,
+    );
+  }
 
   if (!quantitiesMatch(items, summary.lines)) {
     return failure(

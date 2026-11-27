@@ -1,5 +1,6 @@
 import PaymentTerms from "@/components/PaymentTerms";
 import { calculateTotal, formatCurrency } from "@/lib/cart-calculation";
+import { formatItemLabel } from "@/lib/voltage";
 import { pixCheckoutDiscount, pixDiscountPercent } from "@/lib/payment-terms";
 import {
   formatShippingAmount,
@@ -59,6 +60,25 @@ export default function OrderSummary({
       <h2 className="mb-5 text-xl font-semibold tracking-[-0.01em] text-ink-primary">
         Resumo do pedido
       </h2>
+
+      {summary && summary.lines.length > 0 ? (
+        <ul className="mb-4 flex flex-col gap-2 text-[0.8125rem] text-ink-secondary">
+          {summary.lines.map((line) => (
+            <li
+              key={`${line.productId}-${line.voltage ?? "sem"}`}
+              className="flex items-start justify-between gap-3"
+            >
+              <span className="min-w-0">
+                {formatItemLabel(line.name, line.voltage)}
+                <span className="text-ink-muted"> × {line.quantity}</span>
+              </span>
+              <span className="shrink-0 font-medium text-ink-primary tabular-nums">
+                {line.formattedLineTotal}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
 
       <dl className="mb-5 flex flex-col gap-3 border-t border-border-hairline pt-5 text-[0.9375rem]">
         <div className="flex items-baseline justify-between gap-2">

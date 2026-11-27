@@ -2,6 +2,7 @@
 
 import { AppError } from "@/app/_errors/app.error";
 import { resolveCart } from "@/lib/cart";
+import { blockingVoltageNotice } from "@/lib/cart-calculation";
 import { parseCartItems, parsePostalCode } from "@/lib/cart-input";
 import { readCheckoutForm } from "@/lib/order-input";
 import { startCheckout } from "@/lib/payments";
@@ -161,6 +162,18 @@ export async function placeOrder(
   if ((await expireOverdueOrders()) > 0) updateTag("products");
 
   const summary = await resolveCart(items);
+  const voltageNotice = blockingVoltageNotice(summary.notices);
+
+  if (voltageNotice) {
+    return {
+      status: "error",
+      message: voltageNotice.message,
+      fieldErrors: { items: voltageNotice.message },
+      orderId: null,
+      checkoutUrl: null,
+    };
+  }
+
   // A retirada não consulta a transportadora: o frete é zero no servidor.
   // Preço e prazo exibidos são opcionais; se vierem e divergirem, a recotação recusa.
   const quote = await quoteOrderShipping({

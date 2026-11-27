@@ -1,12 +1,17 @@
 import { formatDimensions } from "@/lib/product-dimensions";
+import { formatItemLabel, type TProductVoltage } from "@/lib/voltage";
 import type { ICartLine } from "@/types/cart";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import Image from "next/image";
 
 interface ICartLineItemProps {
   line: ICartLine;
-  onChangeQuantity: (productId: number, quantity: number) => void;
-  onRemove: (productId: number) => void;
+  onChangeQuantity: (
+    productId: number,
+    quantity: number,
+    voltage: TProductVoltage | null,
+  ) => void;
+  onRemove: (productId: number, voltage: TProductVoltage | null) => void;
 }
 
 const controlClass =
@@ -18,6 +23,7 @@ export default function CartLineItem({
   onRemove,
 }: ICartLineItemProps) {
   const atLimit = line.quantity >= line.maxQuantity;
+  const title = formatItemLabel(line.name, line.voltage);
 
   return (
     <li
@@ -35,8 +41,8 @@ export default function CartLineItem({
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <h2 className="text-lg leading-[1.25] font-semibold tracking-[-0.01em] text-ink-primary">
-          {line.name}
+        <h2 className="text-lg leading-[1.25] font-semibold tracking-[-0.01em] break-words text-ink-primary">
+          {title}
         </h2>
         <p className="text-[0.8125rem] text-ink-muted">
           {line.capacity} · {formatDimensions(line.dimensions)}
@@ -55,14 +61,16 @@ export default function CartLineItem({
         <div
           className="inline-flex items-center overflow-hidden rounded-pill border border-border-hairline bg-white"
           role="group"
-          aria-label={`Quantidade de ${line.name}`}
+          aria-label={`Quantidade de ${title}`}
         >
           <button
             type="button"
             className={controlClass}
-            onClick={() => onChangeQuantity(line.productId, line.quantity - 1)}
+            onClick={() =>
+              onChangeQuantity(line.productId, line.quantity - 1, line.voltage)
+            }
             disabled={line.quantity <= 1}
-            aria-label={`Diminuir quantidade de ${line.name}`}
+            aria-label={`Diminuir quantidade de ${title}`}
           >
             <Minus size={16} aria-hidden />
           </button>
@@ -75,9 +83,11 @@ export default function CartLineItem({
           <button
             type="button"
             className={controlClass}
-            onClick={() => onChangeQuantity(line.productId, line.quantity + 1)}
+            onClick={() =>
+              onChangeQuantity(line.productId, line.quantity + 1, line.voltage)
+            }
             disabled={atLimit}
-            aria-label={`Aumentar quantidade de ${line.name}`}
+            aria-label={`Aumentar quantidade de ${title}`}
           >
             <Plus size={16} aria-hidden />
           </button>
@@ -89,9 +99,9 @@ export default function CartLineItem({
 
         <button
           type="button"
-          onClick={() => onRemove(line.productId)}
+          onClick={() => onRemove(line.productId, line.voltage)}
           className="inline-flex min-h-11 cursor-pointer items-center gap-1.5 text-sm font-medium text-ink-secondary transition-colors hover:text-[#9b1c1c]"
-          aria-label={`Remover ${line.name} do carrinho`}
+          aria-label={`Remover ${title} do carrinho`}
         >
           <Trash2 size={16} aria-hidden />
           Remover

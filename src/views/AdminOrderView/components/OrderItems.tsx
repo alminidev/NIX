@@ -2,6 +2,7 @@ import {
   formatDeliveryDays,
   formatShippingAmount,
 } from "@/lib/shipping-display";
+import { formatItemLabel } from "@/lib/voltage";
 import type { IAdminOrderDetail } from "@/types/admin-order";
 import { currencyFormat } from "@/views/AdminOrdersView/components/order-display";
 import OrderCard from "@/views/AdminOrderView/components/OrderCard";
@@ -44,14 +45,14 @@ export default function OrderItems({ order }: IOrderItemsProps) {
               <div className="min-w-0">
                 {item.productId === null ? (
                   <p className="py-0.5 text-[0.9375rem] leading-snug font-semibold text-ink-primary">
-                    {item.name}
+                    {formatItemLabel(item.name, item.voltage)}
                   </p>
                 ) : (
                   <Link
                     href={`/admin/products/${item.productId}`}
                     className="inline-block py-0.5 text-[0.9375rem] leading-snug font-semibold text-ink-primary transition-colors hover:text-brand-blue"
                   >
-                    {item.name}
+                    {formatItemLabel(item.name, item.voltage)}
                   </Link>
                 )}
                 {item.sku ? (

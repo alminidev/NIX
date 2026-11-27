@@ -4,6 +4,7 @@ import { calculateSubtotal, calculateTotal } from "@/lib/cart-calculation";
 import { calculateExpiresAt } from "@/lib/order-expiration";
 import { getPreviousOrderStatuses, paidOrderStatuses } from "@/lib/order-status";
 import { prisma } from "@/lib/prisma";
+import { voltageIssue, voltageIssueMessage } from "@/lib/voltage";
 import type { OrderStatus } from "@/generated/prisma/enums";
 import type { IOrderCreated, IOrderInput } from "@/types/order";
 import "server-only";
@@ -23,11 +24,37 @@ import "server-only";
  */
 export async function createOrder(input: IOrderInput): Promise<IOrderCreated> {
   // Ordem fixa por produto: evita deadlock entre pedidos simultâneos.
-  const items = [...input.items].sort((a, b) => a.productId - b.productId);
+  // Duas voltagens do mesmo produto passam juntas pelo mesmo saldo.
+  const items = [...input.items].sort((a, b) => {
+    if (a.productId !== b.productId) return a.productId - b.productId;
+    return (a.voltage ?? "").localeCompare(b.voltage ?? "");
+  });
 
   const expiresAt = calculateExpiresAt(new Date());
 
   return prisma.$transaction(async (tx) => {
+    const catalog = await tx.product.findMany({
+      where: { id: { in: [...new Set(items.map((item) => item.productId))] } },
+      select: {
+        id: true,
+        name: true,
+        price: true,
+        active: true,
+        requiresVoltage: true,
+      },
+    });
+    const byId = new Map(catalog.map((product) => [product.id, product]));
+
+    for (const item of items) {
+      const product = byId.get(item.productId);
+      if (!product || !product.active) continue;
+
+      const issue = voltageIssue(product.requiresVoltage, item.voltage ?? null);
+      if (issue) {
+        throw new AppError(voltageIssueMessage(product.name, issue), 409);
+      }
+    }
+
     for (const item of items) {
       const reserved = await tx.product.updateMany({
         where: {
@@ -55,17 +82,17 @@ export async function createOrder(input: IOrderInput): Promise<IOrderCreated> {
       throw new InsufficientStockError(product.name, product.stock);
     }
 
-    const products = await tx.product.findMany({
-      where: { id: { in: items.map((item) => item.productId) } },
-      select: { id: true, price: true },
-    });
-    const prices = new Map(
-      products.map((product) => [product.id, product.price]),
-    );
     const orderItems = items.flatMap((item) => {
-      const unitPrice = prices.get(item.productId);
-      return unitPrice
-        ? [{ productId: item.productId, quantity: item.quantity, unitPrice }]
+      const product = byId.get(item.productId);
+      return product
+        ? [
+            {
+              productId: item.productId,
+              quantity: item.quantity,
+              unitPrice: product.price,
+              voltage: item.voltage ?? null,
+            },
+          ]
         : [];
     });
 

@@ -26,6 +26,12 @@ import {
 } from "@/lib/shipping-display";
 import { maskDocument, type TCustomerKind } from "@/lib/tax-id";
 import {
+  formatItemLabel,
+  productVoltages,
+  voltageLabels,
+  type TProductVoltage,
+} from "@/lib/voltage";
+import {
   adminOrderFormInitialState,
   type IAdminCustomerOption,
   type IAdminOrderFieldErrors,
@@ -47,6 +53,7 @@ interface IProductLine {
   key: string;
   productId: string;
   quantity: string;
+  voltage: "" | TProductVoltage;
 }
 
 type TField = Exclude<
@@ -74,18 +81,38 @@ function toCartItems(
   products: IAdminOrderProductOption[],
 ): ICartItem[] {
   const items: ICartItem[] = [];
+  const reserved = new Map<number, number>();
 
   for (const line of lines) {
     const product = products.find((item) => String(item.id) === line.productId);
     const quantity = Number(line.quantity);
     if (!product || product.stock < 1) continue;
     if (!Number.isInteger(quantity) || quantity < 1) continue;
-    if (items.some((item) => item.productId === product.id)) continue;
 
-    items.push({
-      productId: product.id,
-      quantity: Math.min(quantity, product.stock, maxCartQuantity),
-    });
+    const voltage = line.voltage === "V110" || line.voltage === "V220" ? line.voltage : null;
+    if (product.requiresVoltage && !voltage) continue;
+    if (!product.requiresVoltage && line.voltage) continue;
+    if (
+      items.some(
+        (item) =>
+          item.productId === product.id &&
+          (item.voltage ?? null) === (product.requiresVoltage ? voltage : null),
+      )
+    ) {
+      continue;
+    }
+
+    const already = reserved.get(product.id) ?? 0;
+    const room = Math.min(product.stock, maxCartQuantity) - already;
+    if (room < 1) continue;
+
+    const nextQuantity = Math.min(quantity, room);
+    reserved.set(product.id, already + nextQuantity);
+    items.push(
+      product.requiresVoltage && voltage
+        ? { productId: product.id, quantity: nextQuantity, voltage }
+        : { productId: product.id, quantity: nextQuantity },
+    );
   }
 
   return items;
@@ -114,8 +141,9 @@ export default function NewOrderForm({ customers, products }: INewOrderFormProps
   const [document, setDocument] = useState("");
   const [source, setSource] = useState("");
   const [lines, setLines] = useState<IProductLine[]>([
-    { key: "line-1", productId: "", quantity: "1" },
+    { key: "line-1", productId: "", quantity: "1", voltage: "" },
   ]);
+  const [itemsMessage, setItemsMessage] = useState("");
   const lineCounter = useRef(1);
   const [addressFound, setAddressFound] = useState(false);
   const [looking, setLooking] = useState(false);
@@ -245,6 +273,23 @@ export default function NewOrderForm({ customers, products }: INewOrderFormProps
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const missingVoltage = lines.some((line) => {
+      const product = products.find((item) => String(item.id) === line.productId);
+      return (
+        Boolean(product?.requiresVoltage) &&
+        line.voltage !== "V110" &&
+        line.voltage !== "V220"
+      );
+    });
+
+    if (missingVoltage) {
+      const message = "Escolha a voltagem (110V ou 220V).";
+      setItemsMessage(message);
+      toast.error(message);
+      return;
+    }
+
+    setItemsMessage("");
     const formData = new FormData(event.currentTarget);
     startTransition(() => action(formData));
   }
@@ -475,27 +520,42 @@ export default function NewOrderForm({ customers, products }: INewOrderFormProps
 
       <section className="rounded-card border border-border-hairline bg-surface-card p-5 min-[640px]:p-6">
         <h2 className="text-lg font-semibold text-ink-primary">Produtos</h2>
-        {errors.items ? (
+        {errors.items || itemsMessage ? (
           <p className="mt-2 text-xs text-[#9b1c1c]" role="alert">
-            {errors.items}
+            {errors.items ?? itemsMessage}
           </p>
         ) : null}
         <div className="mt-4 flex flex-col gap-3">
           {lines.map((line, index) => {
-            const taken = new Set(
-              lines
-                .filter((item) => item.key !== line.key && item.productId)
-                .map((item) => item.productId),
-            );
             const product = products.find((item) => String(item.id) === line.productId);
-            const max = product
-              ? Math.min(product.stock, maxCartQuantity)
+            const usedByOthers = lines.reduce((sum, item) => {
+              if (item.key === line.key || item.productId !== line.productId) return sum;
+              const quantity = Number(item.quantity);
+              return sum + (Number.isInteger(quantity) && quantity > 0 ? quantity : 0);
+            }, 0);
+            const remaining = product
+              ? Math.max(0, Math.min(product.stock, maxCartQuantity) - usedByOthers)
               : maxCartQuantity;
+            const max = product ? Math.max(remaining, 1) : maxCartQuantity;
+            const takenVoltages = new Set(
+              lines
+                .filter(
+                  (item) =>
+                    item.key !== line.key &&
+                    item.productId === line.productId &&
+                    item.voltage,
+                )
+                .map((item) => item.voltage),
+            );
 
             return (
               <div
                 key={line.key}
-                className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_7.5rem_auto]"
+                className={`grid grid-cols-1 gap-2 min-[640px]:items-center ${
+                  product?.requiresVoltage
+                    ? "min-[640px]:grid-cols-[minmax(0,1fr)_7rem_6.5rem_auto]"
+                    : "min-[640px]:grid-cols-[minmax(0,1fr)_6.5rem_auto]"
+                }`}
               >
                 <label className="sr-only" htmlFor={`order-product-${line.key}`}>
                   Produto {index + 1}
@@ -507,7 +567,12 @@ export default function NewOrderForm({ customers, products }: INewOrderFormProps
                     setLines((current) =>
                       current.map((item) =>
                         item.key === line.key
-                          ? { ...item, productId: event.target.value, quantity: "1" }
+                          ? {
+                              ...item,
+                              productId: event.target.value,
+                              quantity: "1",
+                              voltage: "",
+                            }
                           : item,
                       ),
                     )
@@ -515,19 +580,64 @@ export default function NewOrderForm({ customers, products }: INewOrderFormProps
                   className={fieldClass}
                 >
                   <option value="">Selecione o produto</option>
-                  {products.map((item) => (
-                    <option
-                      key={item.id}
-                      value={item.id}
-                      disabled={item.stock < 1 || taken.has(String(item.id))}
-                    >
-                      {item.name} · {item.formattedPrice}
-                      {item.stock < 1
-                        ? " · sem estoque"
-                        : ` · ${item.stock} em estoque`}
-                    </option>
-                  ))}
+                  {products.map((item) => {
+                    const siblings = lines.filter(
+                      (entry) =>
+                        entry.key !== line.key && entry.productId === String(item.id),
+                    );
+                    const blocked = item.requiresVoltage
+                      ? siblings.filter((entry) => entry.voltage).length >= productVoltages.length
+                      : siblings.length > 0;
+
+                    return (
+                      <option
+                        key={item.id}
+                        value={item.id}
+                        disabled={item.stock < 1 || blocked}
+                      >
+                        {item.name} · {item.formattedPrice}
+                        {item.requiresVoltage ? " · 110V/220V" : ""}
+                        {item.stock < 1
+                          ? " · sem estoque"
+                          : ` · ${item.stock} em estoque`}
+                      </option>
+                    );
+                  })}
                 </select>
+                {product?.requiresVoltage ? (
+                  <>
+                    <label className="sr-only" htmlFor={`order-voltage-${line.key}`}>
+                      Voltagem do produto {index + 1}
+                    </label>
+                    <select
+                      id={`order-voltage-${line.key}`}
+                      value={line.voltage}
+                      onChange={(event) => {
+                        const next = event.target.value;
+                        const voltage =
+                          next === "V110" || next === "V220" ? next : "";
+                        setLines((current) =>
+                          current.map((item) =>
+                            item.key === line.key ? { ...item, voltage } : item,
+                          ),
+                        );
+                        setItemsMessage("");
+                      }}
+                      className={fieldClass}
+                    >
+                      <option value="">Voltagem</option>
+                      {productVoltages.map((value) => (
+                        <option
+                          key={value}
+                          value={value}
+                          disabled={takenVoltages.has(value)}
+                        >
+                          {voltageLabels[value]}
+                        </option>
+                      ))}
+                    </select>
+                  </>
+                ) : null}
                 <label className="sr-only" htmlFor={`order-qty-${line.key}`}>
                   Quantidade do produto {index + 1}
                 </label>
@@ -576,7 +686,12 @@ export default function NewOrderForm({ customers, products }: INewOrderFormProps
             lineCounter.current += 1;
             setLines((current) => [
               ...current,
-              { key: `line-${lineCounter.current}`, productId: "", quantity: "1" },
+              {
+                key: `line-${lineCounter.current}`,
+                productId: "",
+                quantity: "1",
+                voltage: "",
+              },
             ]);
           }}
           className="mt-4 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand-blue-hover"
@@ -812,6 +927,27 @@ export default function NewOrderForm({ customers, products }: INewOrderFormProps
               ) : null}
             </div>
           </div>
+        ) : null}
+        {items.length > 0 ? (
+          <ul className="mt-5 flex flex-col gap-1.5 text-sm text-ink-secondary">
+            {items.map((item) => {
+              const product = products.find((entry) => entry.id === item.productId);
+              return (
+                <li
+                  key={`${item.productId}-${item.voltage ?? "sem"}`}
+                  className="flex items-start justify-between gap-3"
+                >
+                  <span className="min-w-0">
+                    {formatItemLabel(product?.name ?? "Produto", item.voltage)}
+                    <span className="text-ink-muted"> × {item.quantity}</span>
+                  </span>
+                  <span className="shrink-0 font-medium text-ink-primary tabular-nums">
+                    {formatCurrency((product?.price ?? 0) * item.quantity)}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
         ) : null}
         <dl className="mt-5 flex flex-col gap-2 border-t border-border-hairline pt-4 text-sm">
           <div className="flex items-center justify-between gap-4">

@@ -35,6 +35,8 @@ export interface IAdminProduct {
   image: string;
   featured: boolean;
   active: boolean;
+  /** Desligado: o produto não tem 110V/220V */
+  requiresVoltage: boolean;
   sortOrder: number;
   /** null quando o admin deixou o campo vazio */
   productionDays: number | null;
